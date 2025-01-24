@@ -16,7 +16,6 @@ on:
   push:
     branches: [main]
     paths: [lib/Hutch.Rackit/**]
-  pull_request: # TODO: Testing Only
 
 env:
   # Configure these
