@@ -12,8 +12,7 @@ on:
     paths:
       - app/Hutch.Relay/**
       - test/Hutch.Relay.Tests/**
-      - .github/workflows/release.Hutch.Relay.yml
-
+      - .github/workflows/release.relay.dev.yml
   pull_request: # TODO: Testing only
 
 env:
