@@ -1,0 +1,38 @@
+name: Build Relay and Run Tests
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - app/Hutch.Relay/**
+      - test/Hutch.Relay.Tests/**
+      - .github/workflows/check.relay.build-test.yml
+env:
+  # Configure these
+  build-config: release
+  dotnet-version: 9.0.x
+  project: ./app/Hutch.Relay
+  test-project: ./tests/Hutch.Relay.Tests
+
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_NOLOGO: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.dotnet-version }}
+      - name: dotnet build
+        run: >-
+          dotnet build
+          ${{ env.project }}
+          -c ${{ env.build-config }}
+      - name: Run Hutch.Relay Tests
+        run: >-
+          dotnet test
+          ${{ env.Hutch_Relay_test_project }}
+          -c ${{ env.build-config }}

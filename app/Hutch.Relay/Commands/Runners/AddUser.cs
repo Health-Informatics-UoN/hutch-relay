@@ -17,7 +17,9 @@ public class AddUser(ILoggerFactory logger, IConsole console, UserManager<RelayU
     {
       UserName = username
     };
+    
     var password = GeneratePassword.GenerateUniquePassword(16);
+    
     var result = await users.CreateAsync(user, password);
     if (!result.Succeeded)
     {
@@ -28,7 +30,7 @@ public class AddUser(ILoggerFactory logger, IConsole console, UserManager<RelayU
       foreach (var e in result.Errors)
       {
         _logger.LogError(e.Description);
-        errorRows.Add(new() { e.Description });
+        errorRows.Add([e.Description]);
       }
 
       console.Out.Write(ConsoleTableBuilder
@@ -39,10 +41,11 @@ public class AddUser(ILoggerFactory logger, IConsole console, UserManager<RelayU
 
       return;
     }
-    await subNodes.Create(user);
+    
+    var subnode = await subNodes.Create(user);
     var outputRows = new List<List<object>>
     {
-      new() { "Username", username, "Password", password },
+      new() { "Username", username, "Password", password, "Collection ID", subnode.Id },
     };
 
     console.Out.Write(ConsoleTableBuilder
