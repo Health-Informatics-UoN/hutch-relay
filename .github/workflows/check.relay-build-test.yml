@@ -1,4 +1,4 @@
-name: build.Hutch.Relay.yml
+name: Build Relay and Run Tests
 on:
   workflow_dispatch:
   pull_request:

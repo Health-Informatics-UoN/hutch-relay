@@ -1,4 +1,4 @@
-name: Build Hutch.Rackit
+name: Build RACKit and Run Tests
 
 on:
   workflow_dispatch:

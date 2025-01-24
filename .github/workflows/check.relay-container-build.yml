@@ -1,4 +1,4 @@
-name: Build Hutch.Relay Check
+name: Check Relay Container Builds
 
 on:
   pull_request:
