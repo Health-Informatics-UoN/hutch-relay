@@ -1,0 +1,11 @@
+# label affected logical areas of the repo
+"Area: CI":
+  - .github/**/*
+"Area: Hutch.Relay":
+  - app/Hutch.Relay/**/*
+"Area: Hutch.Rackit":
+  - lib/Hutch.Rackit/**/*
+
+# label types of changes contained in a PR
+"Contains: Migrations":
+  - app/**/Migrations/*.cs

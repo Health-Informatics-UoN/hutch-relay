@@ -1,0 +1,40 @@
+name: Build Hutch.Rackit
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - lib/Hutch.Rackit/**
+      - tests/Hutch.Rackit.Tests/**
+      - .github/workflows/build.Hutch.Rackit.yml
+
+env:
+  # Configure these
+  build-config: release
+  dotnet-version: 9.0.x
+  project: ./lib/Hutch.Rackit
+  test-project: ./tests/Hutch.Rackit.Tests
+
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_NOLOGO: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.dotnet-version }}
+      - name: dotnet build
+        run: >-
+          dotnet build
+          ${{ env.project }}
+          -c ${{ env.build-config }}
+      - name: Run RquestBridge Tests
+        run: >-
+            dotnet test
+            ${{ env.test-project }}
+            -c ${{ env.build-config }}

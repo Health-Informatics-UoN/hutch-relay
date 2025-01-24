@@ -1,0 +1,29 @@
+name: Build Hutch.Relay Check
+
+on:
+  pull_request:
+    paths:
+      - app/Hutch.Relay/**
+      - test/Hutch.Relay.Tests/**
+      - .github/workflows/build.Hutch.Relay.image.yml
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5.3.0
+        with:
+          context: .
+          file: app/Hutch.Relay/Dockerfile
+          push: false
+          platforms: linux/amd64,linux/arm64
