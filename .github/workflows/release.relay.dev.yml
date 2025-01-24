@@ -7,7 +7,9 @@ name: Publish a Relay Dev Release
 on:
   push:
     branches: [main]
-    paths: [app/Hutch.Relay/**]
+    paths: 
+      - app/Hutch.Relay/**
+      - .github/workflows/release.relay.dev.yml
 
 env:
   project: ./app/Hutch.Relay
@@ -15,7 +17,27 @@ env:
   DOTNET_NOLOGO: true
 
 jobs:
+  # Any initialisation other jobs depend on?
+  # e.g. getting the version number and putting in an output for easier use
+  init:
+    runs-on: ubuntu-latest
+
+    outputs:
+      source-version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # get app version from csproj
+      - name: Read version
+        id: version
+        uses: bbonkr/get-version-action@v1
+        with:
+          project: ${{ env.project }}/Hutch.Relay.csproj
+
+
   publish-binaries:
+    needs: [init]
     runs-on: ubuntu-latest
 
     env:
@@ -56,49 +78,51 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: hutch-relay_${{ matrix.artifact == 'dotnet' && format('{0}-{1}', matrix.artifact, env.dotnet-version) || matrix.artifact }}
+          name: hutch-relay-${{ needs.init.outputs.source-version }}_${{ matrix.artifact == 'dotnet' && format('{0}-{1}', matrix.artifact, env.dotnet-version) || matrix.artifact }}
           path: ${{ env.publish-dir }}
 
-  # Publish platform native EF Core migrations bundles
-  publish-migrations:
-    needs: [init]
-    runs-on: ubuntu-latest
+  # TODO: Publish platform native EF Core migrations bundles
+  # publish-migrations:
+  #   needs: [init]
+  #   runs-on: ubuntu-latest
 
-    env:
-      output-filename: migrate-relay-db
+  #   env:
+  #     output-filename: migrate-relay-db
 
-    strategy:
-      matrix:
-        include:
-          - artifact: win-x64
-            file-extension: ".exe"
-            args: >-
-              -r win-x64
-          - artifact: linux-x64
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - artifact: win-x64
+  #           file-extension: ".exe"
+  #           args: >-
+  #             -r win-x64
+  #         - artifact: linux-x64
 
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.dotnet-version }}
-      - run: dotnet tool restore
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: ${{ env.dotnet-version }}
+  #     - run: dotnet tool restore
 
-      - run: >-
-          dotnet ef migrations bundle
-          -p ${{ env.project }}
-          -s ${{ env.project }}
-          -o ${{ format('{0}{1}', env.output-filename, matrix.file-extension) }}
-          ${{ matrix.args }}
-          --self-contained
+  #     - run: >-
+  #         dotnet ef migrations bundle
+  #         -p ${{ env.project }}
+  #         -s ${{ env.project }}
+  #         -o ${{ format('{0}{1}', env.output-filename, matrix.file-extension) }}
+  #         ${{ matrix.args }}
+  #         --self-contained
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ${{ format('migrations-{0}_{1}', needs.init.outputs.version, matrix.artifact) }}
-          path: ${{ format('{0}{1}', env.output-filename, matrix.file-extension) }}
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: ${{ format('migrations-{0}_{1}', needs.init.outputs.source-version, matrix.artifact) }}
+  #         path: ${{ format('{0}{1}', env.output-filename, matrix.file-extension) }}
 
   # Publish Edge Container Image to GHCR
   publish-containers:
+    needs: [init]
     runs-on: ubuntu-latest
+    
     permissions:
       packages: write
 
@@ -124,13 +148,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # read source version
-      - name: Read version
-        id: version
-        uses: bbonkr/get-version-action@v1
-        with:
-          project: ${{ env.project }}
-
       - name: Docker Metadata action
         id: meta
         uses: docker/metadata-action@v5.5.1
@@ -142,6 +159,7 @@ jobs:
           # - RFC3339 is not suitable for docker tags, so we squash the date
           # - We tag both the short (7-char prefixed) and full sha commit hashes; both are useful
           # - `edge` represents latest main branch commit (potentially unstable)
+          # TODO: Add workflow run so we can backtrace to it to get other artifacts e.g. published binaries
           tags: |
             type=sha
             ${{ github.sha }}
@@ -153,7 +171,7 @@ jobs:
           # - version should be considered a semver candidate only, unless revision aligns with a git tag
           labels: |
             org.opencontainers.image.revision={{sha}}
-            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.version=${{ needs.init.outputs.source-version }}
             org.opencontainers.image.created={{date 'YYYY-MM-DD HH:mm:ss[Z]'}}
           # TODO: More Annotations may be desirable instead of labels for some metadata,
           # since we produce multiarch images

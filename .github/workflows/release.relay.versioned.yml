@@ -91,13 +91,12 @@ jobs:
             - Hutch Relay for Linux (x64) native
             - Hutch Relay for the .NET Runtime (cross platform)
 
-            ### Database Migrations bundles
-            
-            - Hutch Relay for Windows (x64) native
-            - Hutch Relay for Linux (x64) native
+            For Database migration guidance refer to the [documentation](https://health-informatics-uon.github.io/hutch/relay/deployment#database-migrations).
 
-            For other environments refer to the [documentation](https://health-informatics-uon.github.io/hutch/relay/deployment#database-migrations).
-
+  # TODO: ### Database Migrations bundles
+  
+  # - Hutch Relay for Windows (x64) native
+  # - Hutch Relay for Linux (x64) native
           generateReleaseNotes: true
           prerelease: ${{ steps.version.outputs.prerelease != '' }}
           makeLatest: false # TODO: can we reliably detect and automate this in future?
