@@ -6,13 +6,13 @@ on:
     paths:
       - app/Hutch.Relay/**
       - test/Hutch.Relay.Tests/**
-      - .github/workflows/build.Hutch.Relay.yml
+      - .github/workflows/check.relay.build-test.yml
 env:
   # Configure these
-  CI_build-config: release
-  CI_dotnet-version: 9.0.x
-  CI_project: ./app/Hutch.Relay/Hutch.Relay.csproj
-  Hutch_Relay_test_project: ./tests/Hutch.Relay.Tests/Hutch.Relay.Tests.csproj
+  build-config: release
+  dotnet-version: 9.0.x
+  project: ./app/Hutch.Relay
+  test-project: ./tests/Hutch.Relay.Tests
 
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_NOLOGO: true
@@ -25,14 +25,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.CI_dotnet-version }}
+          dotnet-version: ${{ env.dotnet-version }}
       - name: dotnet build
         run: >-
           dotnet build
-          ${{ env.CI_project }}
-          -c ${{ env.CI_build-config }}
+          ${{ env.project }}
+          -c ${{ env.build-config }}
       - name: Run Hutch.Relay Tests
         run: >-
           dotnet test
           ${{ env.Hutch_Relay_test_project }}
-          -c ${{ env.CI_build-config }}
+          -c ${{ env.build-config }}

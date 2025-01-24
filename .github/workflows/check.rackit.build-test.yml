@@ -7,7 +7,7 @@ on:
     paths:
       - lib/Hutch.Rackit/**
       - tests/Hutch.Rackit.Tests/**
-      - .github/workflows/build.Hutch.Rackit.yml
+      - .github/workflows/check.rackit.build-test.yml
 
 env:
   # Configure these

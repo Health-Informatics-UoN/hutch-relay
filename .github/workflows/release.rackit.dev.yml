@@ -9,13 +9,14 @@
 # TODO: consider preserving existing VersionSuffix pre-release tags e.g. `0.1.0-beta.1` => `0.1.0-beta.1.20240821082421+main.96u7bd07`
 # currently this workflow will replace `beta.1` with only the build timestamp
 
-name: Publish Hutch.RACKit Dev Feed
+name: Publish a RACKit Dev Release
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths: [lib/Hutch.Rackit/**]
+  pull_request: # TODO: Testing Only
 
 env:
   # Configure these

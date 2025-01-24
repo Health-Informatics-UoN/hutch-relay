@@ -5,8 +5,7 @@ on:
     paths:
       - app/Hutch.Relay/**
       - test/Hutch.Relay.Tests/**
-      - .github/workflows/build.Hutch.Relay.image.yml
-
+      - .github/workflows/check.relay.container-build.yml
 jobs:
   build:
     runs-on: ubuntu-latest
