@@ -15,9 +15,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - lib/Hutch.Rackit/**
-      - .github/workflows/release.rackit.dev.yml
+    paths: [lib/Hutch.Rackit/**]
 
 env:
   # Configure these
