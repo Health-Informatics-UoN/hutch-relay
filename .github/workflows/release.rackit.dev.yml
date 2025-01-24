@@ -30,6 +30,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    permissions:
+      packages: write
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -51,18 +54,9 @@ jobs:
           -c ${{ env.build-config }}
           -o ${{ github.workspace }}
           -p:VersionSuffix=${{ env.RUN_TIMESTAMP }}+${{ github.ref_name }}.${{ env.SHA }}
-      
-      - name: Add Github Packages Nuget Source
-        run: >-
-          dotnet nuget add source
-          --username ${{ github.actor }}
-          --password ${{ secrets.GITHUB_TOKEN }}
-          --store-password-in-clear-text
-          --name github
-          "https://nuget.pkg.github.com/health-informatics-uon/index.json"
-
+          
       - name: Publish to Github Packages Nuget
         run: >-
           dotnet nuget push *.nupkg
           --api-key ${{ secrets.GITHUB_TOKEN }}
-          --source github
+          --source "https://nuget.pkg.github.com/health-informatics-uon/index.json"
