@@ -7,9 +7,7 @@ name: Publish a Relay Dev Release
 on:
   push:
     branches: [main]
-    paths: 
-      - app/Hutch.Relay/**
-      - .github/workflows/release.relay.dev.yml
+    paths: [app/Hutch.Relay/**]
 
 env:
   project: ./app/Hutch.Relay

@@ -87,11 +87,14 @@ jobs:
             ## Assets available for download:
             
             - [Tagged Container images](https://github.com/Health-Informatics-UoN/hutch-relay/pkgs/container/hutch%2Frelay)
-            - Hutch Relay for Windows (x64) native
-            - Hutch Relay for Linux (x64) native
-            - Hutch Relay for the .NET Runtime (cross platform)
+  
+  # TODO: published Binaries
+  
+  # - Hutch Relay for Windows (x64) native
+  # - Hutch Relay for Linux (x64) native
+  # - Hutch Relay for the .NET Runtime (cross platform)
 
-            For Database migration guidance refer to the [documentation](https://health-informatics-uon.github.io/hutch/relay/deployment#database-migrations).
+  # For Database migration guidance refer to the [documentation](https://health-informatics-uon.github.io/hutch/relay/deployment#database-migrations).
 
   # TODO: ### Database Migrations bundles
   
