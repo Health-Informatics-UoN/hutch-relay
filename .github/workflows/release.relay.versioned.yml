@@ -33,7 +33,7 @@ jobs:
         id: read_version
         uses: bbonkr/get-version-action@v1
         with:
-          project: ${{ env.project }}
+          project: ${{ env.project }}/Hutch.Relay.csproj
 
       - name: Parse version from tag
         id: version
