@@ -1,5 +1,3 @@
-# TODO: Also publish .NET Binaries
-
 # This workflow is used for any merge to main and results in a built container image being pushed and tagged as a dev release
 # with commit hash and timestamp tags
 #
@@ -10,7 +8,6 @@ on:
   push:
     branches: [main]
     paths: [app/Hutch.Relay/**]
-  pull_request: # TODO: Testing only
 
 env:
   project: ./app/Hutch.Relay
@@ -124,21 +121,44 @@ jobs:
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
         with:
           registry: ${{ env.registry }}
-          username: ${{github.actor}}
-          password: ${{secrets.GITHUB_TOKEN}}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set timestamp env var
-        run: echo "RUN_TIMESTAMP=$(TZ="Etc/UTC" date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+      # read source version
+      - name: Read version
+        id: version
+        uses: bbonkr/get-version-action@v1
+        with:
+          project: ${{ env.project }}
 
       - name: Docker Metadata action
         id: meta
         uses: docker/metadata-action@v5.5.1
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
-          images: ${{ env.registry }}/${{ env.repo-owner}}/${{ env.image-name}}
+          images: ${{ env.registry }}/${{ env.repo-owner }}/${{ env.image-name }}
+          # Tag notes:
+          # - RFC3339 is not suitable for docker tags, so we squash the date
+          # - We tag both the short (7-char prefixed) and full sha commit hashes; both are useful
+          # - `edge` represents latest main branch commit (potentially unstable)
           tags: |
+            type=sha
             ${{ github.sha }}
-            ${{ env.RUN_TIMESTAMP }}
-            dev-latest
+            type=raw,value={{date 'YYYYMMDDHHmmss[Z]'}}
+            edge
+          # Label notes:
+          # - Static labels are applied in the Dockerfile
+          # - Date format in `org.opencontainers.image.created` must be RFC3339
+          # - version should be considered a semver candidate only, unless revision aligns with a git tag
+          labels: |
+            org.opencontainers.image.revision={{sha}}
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.created={{date 'YYYY-MM-DD HH:mm:ss[Z]'}}
+          # TODO: More Annotations may be desirable instead of labels for some metadata,
+          # since we produce multiarch images
+          annotations: |
+            org.opencontainers.image.description=Hutch Relay
 
       - name: Build and push Docker images
         uses: docker/build-push-action@v5.3.0
@@ -149,3 +169,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
