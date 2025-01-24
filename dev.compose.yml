@@ -1,0 +1,85 @@
+name: hutch-relay-dev
+
+services:
+  db:
+    image: postgres:16
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes: 
+      - pgdata:/var/lib/postgresql/data:Z
+
+  adminer:
+    image: wodby/adminer
+    depends_on:
+      - db
+    restart: always
+    ports:
+      - 9000:9000
+    environment:
+      ADMINER_DEFAULT_DB_DRIVER: pgsql
+      ADMINER_DEFAULT_DB_HOST: db
+      ADMINER_DESIGN: pepa-linha
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: always
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+
+  relay:
+    build:
+      dockerfile: app/Hutch.Relay/Dockerfile
+    restart: always
+    depends_on:
+      - rabbitmq
+      - db
+    ports:
+      - 8080:8080
+      - 8081:8081
+    environment:
+      Database__ApplyMigrationsOnStartup: true
+
+      DOTNET_Environment: Development
+      ConnectionStrings__Default: Server=db;Port=5432;Database=hutch-relay;User Id=postgres;Password=postgres
+      RelayTaskQueue__ConnectionString: amqp://user:password@rabbitmq:5672
+      Obfuscation__LowNumberSuppressionThreshold: 0
+      Obfuscation__RoundingTarget: 0
+
+      UpstreamTaskApi__BaseUrl: https://my-task-api.com
+      UpstreamTaskApi__CollectionId: dd52026b-5a61-4c89-b733-04ba141b3f31
+      UpstreamTaskApi__Username: user
+      UpstreamTaskApi__Password: password
+
+  bunny:
+    image: ghcr.io/health-informatics-uon/hutch/bunny:edge
+    restart: always
+    depends_on:
+      - db
+      - relay
+      - rabbitmq
+    environment:
+      DATASOURCE_DB_USERNAME: postgres
+      DATASOURCE_DB_PASSWORD: postgres
+      DATASOURCE_DB_DATABASE: hutch-omop
+      DATASOURCE_DB_DRIVERNAME: postgresql
+      DATASOURCE_DB_SCHEMA: public
+      DATASOURCE_DB_PORT: 5432
+      DATASOURCE_DB_HOST: db
+      TASK_API_BASE_URL: http://relay:8080
+      TASK_API_USERNAME: username
+      TASK_API_PASSWORD: password
+      TASK_API_TYPE:
+      LOW_NUMBER_SUPPRESSION_THRESHOLD:
+      ROUNDING_TARGET:
+      POLLING_INTERVAL: 5
+      COLLECTION_ID: 01949896-acee-7c3c-a981-7d7b9e8db97c
+
+volumes:
+  pgdata:
