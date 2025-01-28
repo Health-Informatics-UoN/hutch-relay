@@ -11,15 +11,16 @@ namespace Hutch.Relay.Commands.Runners;
 public class AddUser(ILoggerFactory logger, IConsole console, UserManager<RelayUser> users, SubNodeService subNodes)
 {
   private readonly ILogger<AddUser> _logger = logger.CreateLogger<AddUser>();
+
   public async Task Run(string username)
   {
     var user = new RelayUser()
     {
       UserName = username
     };
-    
+
     var password = GeneratePassword.GenerateUniquePassword(16);
-    
+
     var result = await users.CreateAsync(user, password);
     if (!result.Succeeded)
     {
@@ -41,11 +42,12 @@ public class AddUser(ILoggerFactory logger, IConsole console, UserManager<RelayU
 
       return;
     }
-    
-    var subnode = await subNodes.Create(user);
+
+    var subNode = await subNodes.Create(user);
     var outputRows = new List<List<object>>
     {
-      new() { "Username", username, "Password", password, "Collection ID", subnode.Id },
+      new() { "Username", "Password", "Collection ID" },
+      new() { username, password, subNode.Id },
     };
 
     console.Out.Write(ConsoleTableBuilder
