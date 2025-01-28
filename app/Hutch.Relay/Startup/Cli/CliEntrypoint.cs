@@ -13,7 +13,8 @@ public class CliEntrypoint : RootCommand
     // Add Commands here
     AddCommand(new Command("users", "Add Relay Users")
     {
-      new AddUser("add")
+      new AddUser("add"),
+      new ResetUserPassword("reset-password")
     });    
     
     AddCommand(new Command("ef", "Run EF database")
