@@ -4,6 +4,7 @@ using Hutch.Relay.Constants;
 using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
 using Hutch.Relay.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hutch.Relay.Commands;
@@ -15,7 +16,7 @@ internal class ResetUserPassword : Command
   {
     var argUserName = new Argument<string>("username", "The user to create a new password for.");
     Add(argUserName);
-    
+
     this.SetHandler(
       async (
         logger, config, console,
@@ -33,11 +34,13 @@ internal class ResetUserPassword : Command
               .AddSingleton<IConsole>(_ => console)
               .AddDbContext<ApplicationDbContext>(o => o.UseNpgsql(connectionString));
             s.AddLogging()
-              .AddIdentityCore<RelayUser>(DefaultIdentityOptions.Configure)
+              .AddDataProtection();
+            s.AddIdentityCore<RelayUser>(DefaultIdentityOptions.Configure)
+              .AddDefaultTokenProviders()
               .AddEntityFrameworkStores<ApplicationDbContext>();
-            s.AddTransient<Runners.AddUser>();
+            s.AddTransient<Runners.ResetUserPassword>();
           })
-          .GetRequiredService<Runners.AddUser>()
+          .GetRequiredService<Runners.ResetUserPassword>()
           .Run(username);
       },
       Bind.FromServiceProvider<ILoggerFactory>(),
