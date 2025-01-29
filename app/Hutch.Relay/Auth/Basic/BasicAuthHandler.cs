@@ -51,7 +51,7 @@ internal class BasicAuthHandler : AuthenticationHandler<BasicAuthSchemeOptions>
     }
     catch (Exception e)
     {
-      Logger.LogError(e, $"Failed to decode credentials: {header.Parameter}.");
+      Logger.LogError(e, "Failed to decode credentials: {Credentials}.", header.Parameter);
 
       throw new BasicAuthParsingException(
         $"Failed to decode credentials: {header.Parameter}.",
@@ -74,7 +74,7 @@ internal class BasicAuthHandler : AuthenticationHandler<BasicAuthSchemeOptions>
     var user = await _userManager.FindByNameAsync(clientId);
     if (user == null)
     {
-      Logger.LogWarning($"User not found: {clientId}");
+      Logger.LogWarning("User not found: {ClientId}", clientId);
       return null;
     }
 
@@ -82,7 +82,7 @@ internal class BasicAuthHandler : AuthenticationHandler<BasicAuthSchemeOptions>
     var isPasswordValid = await _userManager.CheckPasswordAsync(user, clientSecret);
     if (!isPasswordValid)
     {
-      Logger.LogWarning($"Invalid password for client: {clientId}");
+      Logger.LogWarning("Invalid password for client: {ClientId}", clientId);
       return null;
     }
 
@@ -118,11 +118,11 @@ internal class BasicAuthHandler : AuthenticationHandler<BasicAuthSchemeOptions>
 
         if (!clientCollections.Contains(routeCollectionId.ToString() ?? string.Empty))
         {
-          Logger.LogWarning($"collectionId \'{routeCollectionId}\' is not valid for clientId \'{clientId}\'.");
+          Logger.LogWarning("collectionId \'{RouteCollectionId}\' is not valid for clientId \'{ClientId}\'.", routeCollectionId, clientId);
           return AuthenticateResult.Fail("Collection ID is not valid for client credentials.");
         }
 
-        Logger.LogInformation($"Credentials validated for Client: {clientId}");
+        Logger.LogInformation("Credentials validated for Client: {ClientId}", clientId);
 
         return AuthenticateResult.Success(new AuthenticationTicket(
           claimsPrincipal,
@@ -131,7 +131,7 @@ internal class BasicAuthHandler : AuthenticationHandler<BasicAuthSchemeOptions>
       }
       else
       {
-        Logger.LogInformation($"Credentials failed validation for Client: {clientId}");
+        Logger.LogInformation("Credentials failed validation for Client: {ClientId}", clientId);
         return AuthenticateResult.Fail("Invalid credentials.");
       }
     }
