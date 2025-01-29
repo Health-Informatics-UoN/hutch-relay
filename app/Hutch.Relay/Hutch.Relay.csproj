@@ -27,4 +27,10 @@
     <ProjectReference Include="..\..\lib\Hutch.Rackit\Hutch.Rackit.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>Hutch.Relay.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
 </Project>

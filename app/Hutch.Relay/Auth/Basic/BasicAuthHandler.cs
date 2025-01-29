@@ -17,14 +17,12 @@ internal class BasicAuthHandler : AuthenticationHandler<BasicAuthSchemeOptions>
   private readonly ApplicationDbContext _db;
   private readonly UserManager<RelayUser> _userManager;
 
-  [Obsolete("Obsolete")]
   public BasicAuthHandler(
     IOptionsMonitor<BasicAuthSchemeOptions> options,
     ILoggerFactory logger,
     UrlEncoder encoder,
-    ISystemClock clock,
     ApplicationDbContext db, UserManager<RelayUser> userManager)
-    : base(options, logger, encoder, clock)
+    : base(options, logger, encoder)
   {
     _db = db;
     _userManager = userManager;
