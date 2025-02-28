@@ -48,6 +48,7 @@ public static class ConfigureCliServices
       .AddTransient<AddUser>()
       .AddTransient<ListUsers>()
       .AddTransient<ListUserSubNodes>()
+      .AddTransient<RemoveUserSubNodes>()
       .AddTransient<ResetUserPassword>();
 
     return b;

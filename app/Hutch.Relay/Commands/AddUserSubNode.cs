@@ -11,7 +11,7 @@ internal class AddUserSubNode : Command
     var argUserName = new Argument<string>("username", "The User to create a Sub Node for.");
     Add(argUserName);
 
-    var optAutoConfirm = new Option<bool>("--yes", "Automatically pass interactive confirmations affirmatively.");
+    var optAutoConfirm = new Option<bool>("--yes", "Automatically say yes to the final confirmation check.");
     optAutoConfirm.AddAlias("-y");
     Add(optAutoConfirm);
 

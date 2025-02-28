@@ -26,12 +26,23 @@ public class AddUserSubNode(
       return;
     }
 
+    stderr.Write(new Rule("[blue]Summary[/]")
+    {
+      Justification = Justify.Left
+    });
+
     stderr.MarkupLine($"[blue]Selected user:[/] {username}");
+    stderr.MarkupLine("[green]A new subnode will be created for this user.[/]");
 
     var confirm = autoConfirm ||
                   stderr.Prompt(new ConfirmationPrompt(
-                      "Do you want to create a new SubNode for the selected user?")
+                      "Do you want to proceed?")
                     { DefaultValue = false });
+
+    stderr.Write(new Rule("[blue]Results[/]")
+    {
+      Justification = Justify.Left
+    });
 
     if (!confirm)
     {
@@ -39,8 +50,8 @@ public class AddUserSubNode(
       return;
     }
 
-    var subNode = await subNodes.Create(user);
 
+    var subNode = await subNodes.Create(user);
 
     var table = new Table { Border = TableBorder.Rounded };
 

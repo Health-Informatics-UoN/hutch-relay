@@ -65,4 +65,21 @@ public class SubNodeService(ApplicationDbContext db) : ISubNodeService
       Owner = x.RelayUsers.First().UserName ?? string.Empty
     });
   }
+
+  public async Task Delete(string username, string id)
+  {
+    var entity = db.SubNodes
+      .Include(x => x.RelayUsers)
+      .SingleOrDefault(x => x.Id.ToString() == id);
+
+    if (entity is not null)
+    {
+      if (entity.RelayUsers.Select(x => x.UserName).Contains(username))
+      {
+        db.SubNodes.Remove(entity);
+        await db.SaveChangesAsync();
+      }
+      else throw new InvalidOperationException($"The specified username is not an owner of this sub node: {username}");
+    }
+  }
 }

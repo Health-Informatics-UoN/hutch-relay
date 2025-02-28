@@ -16,7 +16,8 @@ public class CliRootCommand : RootCommand
       new AddUser("add"),
       new ResetUserPassword("reset-password"),
       new AddUserSubNode("add-subnode"),
-      new ListUserSubNodes("list-subnodes")
+      new ListUserSubNodes("list-subnodes"),
+      new RemoveUserSubNodes("remove-subnodes")
     });
 
     AddCommand(new("ef", "Run EF database")
