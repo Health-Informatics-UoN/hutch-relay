@@ -5,27 +5,32 @@ using Hutch.Relay.Commands.Helpers;
 using Hutch.Relay.Data.Entities;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services;
+using Spectre.Console;
 
 namespace Hutch.Relay.Commands.Runners;
 
-public class ResetUserPassword(ILoggerFactory logger, IConsole console, UserManager<RelayUser> users)
+public class ResetUserPassword(
+  ILoggerFactory logger,
+  [FromKeyedServices("stdout")] IAnsiConsole stdout,
+  [FromKeyedServices("stderr")] IAnsiConsole stderr,
+  UserManager<RelayUser> users)
 {
-  private readonly ILogger<AddUser> _logger = logger.CreateLogger<AddUser>();
+  private readonly ILogger<ResetUserPassword> _logger = logger.CreateLogger<ResetUserPassword>();
 
   public async Task Run(string username)
   {
+    var rule = new Rule("[green]Reset User Password[/]")
+    {
+      Justification = Justify.Left
+    };
+    stderr.Write(rule);
+    
+    
     var user = await users.FindByNameAsync(username);
 
     if (user is null)
     {
-      var errorRows = new List<List<object>>();
-      errorRows.Add([$"\u26a0\ufe0f User not found with {username}."]);
-
-      console.Out.Write(ConsoleTableBuilder
-        .From(errorRows)
-        .WithCharMapDefinition(CharMapDefinition.FramePipDefinition)
-        .Export()
-        .ToString());
+      stderr.MarkupLine($"[red]:warning: User not found with username {username}.[/]");
 
       return;
     }
@@ -37,35 +42,29 @@ public class ResetUserPassword(ILoggerFactory logger, IConsole console, UserMana
     var result = await users.ResetPasswordAsync(user, resetToken, password);
     if (!result.Succeeded)
     {
-      _logger.LogInformation("User password reset failed with errors for {username}", username);
+      stderr.MarkupLine($"[red]:warning: User password reset failed with errors for {username}.[/]");
 
-      var errorRows = new List<List<object>>();
+      var errorRows = result.Errors
+        .Select(e => new Text(e.Description, new(Color.Red, Color.Black)))
+        .ToList();
 
-      foreach (var e in result.Errors)
+      stderr.Write(new Rule("[red]Errors[/]")
       {
-        _logger.LogError(e.Description);
-        errorRows.Add([e.Description]);
-      }
+        Justification = Justify.Left
+      });
 
-      console.Out.Write(ConsoleTableBuilder
-        .From(errorRows)
-        .WithCharMapDefinition(CharMapDefinition.FramePipDefinition)
-        .Export()
-        .ToString());
+      stderr.Write(new Rows(errorRows));
 
       return;
     }
+    
+    var table = new Table { Border = TableBorder.Rounded };
+    
+    table.AddColumn("[blue]Username[/]");
+    table.AddColumn("[blue]Password[/]");
 
-    var outputRows = new List<List<object>>
-    {
-      new() { "Username", "Password" },
-      new() { username, password },
-    };
+    table.AddRow(username, password);
 
-    console.Out.Write(ConsoleTableBuilder
-      .From(outputRows)
-      .WithCharMapDefinition(CharMapDefinition.FramePipDefinition)
-      .Export()
-      .ToString());
+    stdout.Write(table);
   }
 }

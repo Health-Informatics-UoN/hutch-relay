@@ -1,4 +1,5 @@
 using System.CommandLine.Builder;
+using Hutch.Relay.Startup.Cli;
 
 namespace Hutch.Relay.Commands.Helpers;
 
@@ -25,30 +26,35 @@ public static class CliMiddlewareExtensions
     });
 
   /// <summary>
-  /// Get some default behaviours such as config loading and basic
-  /// global services like logging from the .NET Generic Host
-  /// and use them for the CLI
+  /// Configure a Generic Host for the CLI and make its registered services available
   /// </summary>
   /// <param name="cli"></param>
   /// <param name="args"></param>
   /// <returns></returns>
-  public static CommandLineBuilder UseCliHostDefaults(this CommandLineBuilder cli, string[] args)
+  public static CommandLineBuilder UseCliHost(this CommandLineBuilder cli, string[] args, Func<HostApplicationBuilder, Task> configureHost)
   {
-    // in a shockingly similar pattern to aspnet,
-    // we use a generic host just to load config and bootstrap things
-    // never intending to use it to run anything <3
-    var bootstrapHost = Host.CreateDefaultBuilder(args).Build();
-
-    // In this case we once the host has been created, we inject configuration
-    // and some other default services (e.g. logging)
-    // into the System.CommandLine BindingContext for use in commands.
-    return cli.AddMiddleware(async (context, next) =>
+    // We used to build the host in advance, but now that we use it for full DI registration
+    // We don't want to build it in the case of RootCommandBypass
+    // So instead we build it inside the middleware,
+    // only if we reach it in the middleware pipeline,
+    // before handling a given Command
+    
+    return cli.AddMiddleware(async (context, next) => // TODO: move this to a better location for defining
     {
-      // Logging Services
-      context.BindingContext.AddService(s => bootstrapHost.Services.GetRequiredService<ILoggerFactory>());
+      // We create a generic host to load config and bootstrap stuff "for free"
+      var builder = Host.CreateApplicationBuilder(args);
 
-      // Host Configuration
-      context.BindingContext.AddService(s => bootstrapHost.Services.GetRequiredService<IConfiguration>());
+      // allow for external configuration to be applied
+      // (primarily DI service registration)
+      await configureHost.Invoke(builder);
+
+      var host = builder.Build();
+
+      // Then we use the middleware to add scoped access to the host's service catalog,
+      // so any command handler can use service location to run a scoped entrypoint service (e.g. a Command Runner)
+      // which will in turn trigger dependency injection of any required services via our host
+      context.BindingContext.AddService(s =>
+        host.Services.GetRequiredService<IServiceScopeFactory>());
 
       await next(context);
     });

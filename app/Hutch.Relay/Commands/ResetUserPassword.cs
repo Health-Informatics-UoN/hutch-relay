@@ -19,33 +19,16 @@ internal class ResetUserPassword : Command
 
     this.SetHandler(
       async (
-        logger, config, console,
+        scopeFactory,
         username) =>
       {
-        // figure out the connection string from the option, or config
-        var connectionString = config.GetConnectionString("Default");
-
-        // Configure DI and run the command handler
-        await this
-          .ConfigureServices(s =>
-          {
-            s.AddSingleton<ILoggerFactory>(_ => logger)
-              .AddSingleton<IConfiguration>(_ => config)
-              .AddSingleton<IConsole>(_ => console)
-              .AddDbContext<ApplicationDbContext>(o => o.UseNpgsql(connectionString));
-            s.AddLogging()
-              .AddDataProtection();
-            s.AddIdentityCore<RelayUser>(DefaultIdentityOptions.Configure)
-              .AddDefaultTokenProviders()
-              .AddEntityFrameworkStores<ApplicationDbContext>();
-            s.AddTransient<Runners.ResetUserPassword>();
-          })
-          .GetRequiredService<Runners.ResetUserPassword>()
-          .Run(username);
+        using var scope = scopeFactory.CreateScope();
+        
+        var runner = scope.ServiceProvider.GetRequiredService<Runners.ResetUserPassword>();
+        
+        await runner.Run(username);
       },
-      Bind.FromServiceProvider<ILoggerFactory>(),
-      Bind.FromServiceProvider<IConfiguration>(),
-      Bind.FromServiceProvider<IConsole>(),
+      Bind.FromServiceProvider<IServiceScopeFactory>(),
       argUserName);
   }
 }

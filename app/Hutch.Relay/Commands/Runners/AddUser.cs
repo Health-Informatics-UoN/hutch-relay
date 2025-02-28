@@ -5,15 +5,25 @@ using Hutch.Relay.Commands.Helpers;
 using Hutch.Relay.Data.Entities;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services;
+using Hutch.Relay.Startup.Cli;
+using Spectre.Console;
 
 namespace Hutch.Relay.Commands.Runners;
 
-public class AddUser(ILoggerFactory logger, IConsole console, UserManager<RelayUser> users, SubNodeService subNodes)
+public class AddUser(
+  [FromKeyedServices("stdout")] IAnsiConsole stdout,
+  [FromKeyedServices("stderr")] IAnsiConsole stderr,
+  UserManager<RelayUser> users,
+  SubNodeService subNodes)
 {
-  private readonly ILogger<AddUser> _logger = logger.CreateLogger<AddUser>();
 
   public async Task Run(string username)
   {
+    stderr.Write(new Rule("[green]Add User[/]")
+    {
+      Justification = Justify.Left
+    });
+
     var user = new RelayUser()
     {
       UserName = username
@@ -22,38 +32,36 @@ public class AddUser(ILoggerFactory logger, IConsole console, UserManager<RelayU
     var password = GeneratePassword.GenerateUniquePassword(16);
 
     var result = await users.CreateAsync(user, password);
+
+
     if (!result.Succeeded)
     {
-      _logger.LogInformation("User creation failed with errors for {username}", username);
+      stderr.MarkupLine($"[red]:warning: User creation failed with errors for {username}.[/]");
 
-      var errorRows = new List<List<object>>();
+      var errorRows = result.Errors
+        .Select(e => new Text(e.Description, new(Color.Red, Color.Black)))
+        .ToList();
 
-      foreach (var e in result.Errors)
+      stderr.Write(new Rule("[red]Errors[/]")
       {
-        _logger.LogError(e.Description);
-        errorRows.Add([e.Description]);
-      }
+        Justification = Justify.Left
+      });
 
-      console.Out.Write(ConsoleTableBuilder
-        .From(errorRows)
-        .WithCharMapDefinition(CharMapDefinition.FramePipDefinition)
-        .Export()
-        .ToString());
+      stderr.Write(new Rows(errorRows));
 
       return;
     }
 
     var subNode = await subNodes.Create(user);
-    var outputRows = new List<List<object>>
-    {
-      new() { "Username", "Password", "Collection ID" },
-      new() { username, password, subNode.Id },
-    };
 
-    console.Out.Write(ConsoleTableBuilder
-      .From(outputRows)
-      .WithCharMapDefinition(CharMapDefinition.FramePipDefinition)
-      .Export()
-      .ToString());
+    var table = new Table { Border = TableBorder.Rounded };
+
+    table.AddColumn("[blue]Username[/]");
+    table.AddColumn("[blue]Password[/]");
+    table.AddColumn("[blue]Collection ID[/]");
+
+    table.AddRow(username, password, subNode.Id.ToString());
+
+    stdout.Write(table);
   }
 }
