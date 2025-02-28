@@ -88,9 +88,10 @@ public class RemoveUserSubNodes(
           { Border = BoxBorder.Rounded, Header = new("[blue]SubNodes to remove[/]") }
         .Expand());
 
-    stderr.MarkupLine(deleteUser
-      ? $"[red]The Empty User will be removed[/]"
-      : $"[blue]The Empty User will [red]not[/] be removed[/]");
+    if (emptyUser)
+      stderr.MarkupLine(deleteUser
+        ? "[red]The Empty User will be removed[/]"
+        : "[blue]The Empty User will [red]not[/] be removed[/]");
 
     var confirm = autoConfirm ||
                   stderr.Prompt(new ConfirmationPrompt(
@@ -107,7 +108,7 @@ public class RemoveUserSubNodes(
       stderr.MarkupLine("[blue]:information: No SubNodes were removed.[/]");
       return;
     }
-    
+
     var targetSubNodeIds = removeAll ? userSubNodes : subNodeIds;
     foreach (var id in targetSubNodeIds)
       await subNodes.Delete(username, id);
@@ -122,8 +123,9 @@ public class RemoveUserSubNodes(
         Header = new($"[red]Removed SubNodes for User:[/] [green]{username}[/]")
       });
 
-    stderr.MarkupLine(deleteUser
-      ? $"[blue]:information: The Empty User was [red]removed[/].[/]"
-      : $"[blue]:information: The Empty User was [red]not[/] removed.[/]");
+    if (emptyUser)
+      stderr.MarkupLine(deleteUser
+        ? "[blue]:information: The Empty User was [red]removed[/].[/]"
+        : "[blue]:information: The Empty User was [red]not[/] removed.[/]");
   }
 }

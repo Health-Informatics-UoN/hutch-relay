@@ -39,7 +39,7 @@ public static class CliMiddlewareExtensions
     // only if we reach it in the middleware pipeline,
     // before handling a given Command
     
-    return cli.AddMiddleware(async (context, next) => // TODO: move this to a better location for defining
+    return cli.AddMiddleware(async (context, next) =>
     {
       // We create a generic host to load config and bootstrap stuff "for free"
       var builder = Host.CreateApplicationBuilder(args);
