@@ -74,7 +74,7 @@ jobs:
           -o ${{ env.publish-dir }}
           ${{ matrix.args }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: hutch-relay-${{ needs.init.outputs.source-version }}_${{ matrix.artifact == 'dotnet' && format('{0}-{1}', matrix.artifact, env.dotnet-version) || matrix.artifact }}
           path: ${{ env.publish-dir }}
