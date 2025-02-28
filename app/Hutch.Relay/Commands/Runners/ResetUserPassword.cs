@@ -1,22 +1,15 @@
-using System.CommandLine;
-using ConsoleTableExt;
 using Microsoft.AspNetCore.Identity;
 using Hutch.Relay.Commands.Helpers;
 using Hutch.Relay.Data.Entities;
-using Hutch.Relay.Models;
-using Hutch.Relay.Services;
 using Spectre.Console;
 
 namespace Hutch.Relay.Commands.Runners;
 
 public class ResetUserPassword(
-  ILoggerFactory logger,
   [FromKeyedServices("stdout")] IAnsiConsole stdout,
   [FromKeyedServices("stderr")] IAnsiConsole stderr,
   UserManager<RelayUser> users)
 {
-  private readonly ILogger<ResetUserPassword> _logger = logger.CreateLogger<ResetUserPassword>();
-
   public async Task Run(string username)
   {
     var rule = new Rule("[green]Reset User Password[/]")

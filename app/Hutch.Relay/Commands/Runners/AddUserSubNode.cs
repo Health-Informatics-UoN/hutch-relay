@@ -1,54 +1,54 @@
-using System.CommandLine;
-using ConsoleTableExt;
 using Microsoft.AspNetCore.Identity;
 using Hutch.Relay.Data.Entities;
 using Hutch.Relay.Services;
-using Hutch.Relay.Startup.Cli;
 using Spectre.Console;
 
 namespace Hutch.Relay.Commands.Runners;
 
 public class AddUserSubNode(
-  ILoggerFactory logger,
   [FromKeyedServices("stdout")] IAnsiConsole stdout,
   [FromKeyedServices("stderr")] IAnsiConsole stderr,
   UserManager<RelayUser> users,
   SubNodeService subNodes)
 {
-  private readonly ILogger<AddUserSubNode> _logger = logger.CreateLogger<AddUserSubNode>();
-
   public async Task Run(string username, bool autoConfirm = false)
   {
-    AnsiConsole.Create(new() { Out = new AnsiConsoleOutput(Console.Out) });
+    stderr.Write(new Rule("[green]Add Collection SubNode to User[/]")
+    {
+      Justification = Justify.Left
+    });
 
     var user = await users.FindByNameAsync(username);
+
     if (user is null)
     {
-      _logger.LogInformation("User could not be found with the username: {Username}", username);
-      stderr.Write($"User could not be found with the username: {username}");
+      stderr.MarkupLine($"[red]:warning: User could not be found with the username {username}[/]");
       return;
     }
 
-    // TODO: confirm prompt
-    var confirm = autoConfirm || stdout.Prompt(new ConfirmationPrompt("Run prompt example?"));
+    stderr.MarkupLine($"[blue]Selected user:[/] {username}");
+
+    var confirm = autoConfirm ||
+                  stderr.Prompt(new ConfirmationPrompt(
+                      "Do you want to create a new SubNode for the selected user?")
+                    { DefaultValue = false });
 
     if (!confirm)
     {
-      stdout.Write("SubNode was not created.");
+      stderr.MarkupLine("[blue]:information: SubNode was not created.[/]");
       return;
     }
-      
-    var subNode = await subNodes.Create(user);
-    var outputRows = new List<List<object>>
-    {
-      new() { username, subNode.Id },
-    };
 
-    stdout.Write(ConsoleTableBuilder
-      .From(outputRows)
-      .WithColumn("Username", "New Collection ID")
-      .WithCharMapDefinition(CharMapDefinition.FramePipDefinition)
-      .Export()
-      .ToString());
+    var subNode = await subNodes.Create(user);
+
+
+    var table = new Table { Border = TableBorder.Rounded };
+
+    table.AddColumn("[blue]Username[/]");
+    table.AddColumn("[blue]New Collection ID[/]");
+
+    table.AddRow(username, subNode.Id.ToString());
+
+    stdout.Write(table);
   }
 }

@@ -11,8 +11,10 @@ internal class AddUserSubNode : Command
     var argUserName = new Argument<string>("username", "The User to create a Sub Node for.");
     Add(argUserName);
 
-    var optAutoConfirm = new Option<bool>("-y", "Automatically pass interactive confirmations affirmatively.");
-    
+    var optAutoConfirm = new Option<bool>("--yes", "Automatically pass interactive confirmations affirmatively.");
+    optAutoConfirm.AddAlias("-y");
+    Add(optAutoConfirm);
+
     this.SetHandler(
       async (
         scopeFactory,
@@ -20,9 +22,9 @@ internal class AddUserSubNode : Command
         autoConfirm) =>
       {
         using var scope = scopeFactory.CreateScope();
-        
+
         var runner = scope.ServiceProvider.GetRequiredService<Runners.AddUserSubNode>();
-        
+
         await runner.Run(username, autoConfirm);
       },
       Bind.FromServiceProvider<IServiceScopeFactory>(),

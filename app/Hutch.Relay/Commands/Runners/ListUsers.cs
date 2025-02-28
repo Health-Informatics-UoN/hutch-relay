@@ -1,11 +1,5 @@
-using System.CommandLine;
-using ConsoleTableExt;
 using Microsoft.AspNetCore.Identity;
-using Hutch.Relay.Commands.Helpers;
 using Hutch.Relay.Data.Entities;
-using Hutch.Relay.Models;
-using Hutch.Relay.Services;
-using Hutch.Relay.Startup.Cli;
 using Microsoft.EntityFrameworkCore;
 using Spectre.Console;
 
