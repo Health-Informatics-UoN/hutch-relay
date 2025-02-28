@@ -44,4 +44,25 @@ public class SubNodeService(ApplicationDbContext db) : ISubNodeService
       Owner = x.RelayUsers.First().UserName ?? string.Empty
     });
   }
+
+  /// <summary>
+  /// List all registered sub nodes for a given user
+  /// </summary>
+  /// <returns>A list of nodes for the requested user</returns>
+  public async Task<IEnumerable<SubNodeModel>> List(string username)
+  {
+    var user = await db.RelayUsers.AsNoTracking().FirstOrDefaultAsync(x => x.UserName == username);
+    if (user is null) throw new KeyNotFoundException($"Could not find user with the given username: {username}");
+
+    var entities = await db.SubNodes.AsNoTracking()
+      .Include(x => x.RelayUsers)
+      .Where(x => x.RelayUsers.Contains(user))
+      .ToListAsync();
+
+    return entities.Select(x => new SubNodeModel
+    {
+      Id = x.Id,
+      Owner = x.RelayUsers.First().UserName ?? string.Empty
+    });
+  }
 }

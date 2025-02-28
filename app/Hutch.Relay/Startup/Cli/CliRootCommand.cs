@@ -8,16 +8,17 @@ public class CliRootCommand : RootCommand
   public CliRootCommand() : base("Hutch Relay")
   {
     AddGlobalOption(new Option<string>(new[] { "--environment", "-e" }));
-    
+
     // Add Commands here
     AddCommand(new("users", "Relay User actions")
     {
       new ListUsers("list"),
       new AddUser("add"),
       new ResetUserPassword("reset-password"),
-      new AddUserSubNode("add-subnode")
-    });    
-    
+      new AddUserSubNode("add-subnode"),
+      new ListUserSubNodes("list-subnodes")
+    });
+
     AddCommand(new("ef", "Run EF database")
     {
       new RunEfDatabase("database")
