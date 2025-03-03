@@ -1,38 +1,41 @@
 using Microsoft.AspNetCore.Identity;
 using Hutch.Relay.Commands.Helpers;
 using Hutch.Relay.Data.Entities;
-using Hutch.Relay.Services;
 using Spectre.Console;
 
 namespace Hutch.Relay.Commands.Runners;
 
-public class AddUser(
+public class ResetUserPassword(
   [FromKeyedServices("stdout")] IAnsiConsole stdout,
   [FromKeyedServices("stderr")] IAnsiConsole stderr,
-  UserManager<RelayUser> users,
-  SubNodeService subNodes)
+  UserManager<RelayUser> users)
 {
-
   public async Task Run(string username)
   {
-    stderr.Write(new Rule("[green]Add User[/]")
+    var rule = new Rule("[green]Reset User Password[/]")
     {
       Justification = Justify.Left
-    });
-
-    var user = new RelayUser()
-    {
-      UserName = username
     };
+    stderr.Write(rule);
+    
+    
+    var user = await users.FindByNameAsync(username);
+
+    if (user is null)
+    {
+      stderr.MarkupLine($"[red]:warning: User not found with username {username}.[/]");
+
+      return;
+    }
 
     var password = GeneratePassword.GenerateUniquePassword(16);
 
-    var result = await users.CreateAsync(user, password);
+    var resetToken = await users.GeneratePasswordResetTokenAsync(user);
 
-
+    var result = await users.ResetPasswordAsync(user, resetToken, password);
     if (!result.Succeeded)
     {
-      stderr.MarkupLine($"[red]:warning: User creation failed with errors for {username}.[/]");
+      stderr.MarkupLine($"[red]:warning: User password reset failed with errors for {username}.[/]");
 
       var errorRows = result.Errors
         .Select(e => new Text(e.Description, new(Color.Red, Color.Black)))
@@ -47,16 +50,13 @@ public class AddUser(
 
       return;
     }
-
-    var subNode = await subNodes.Create(user);
-
+    
     var table = new Table { Border = TableBorder.Rounded };
-
+    
     table.AddColumn("[blue]Username[/]");
     table.AddColumn("[blue]Password[/]");
-    table.AddColumn("[blue]Collection ID[/]");
 
-    table.AddRow(username, password, subNode.Id.ToString());
+    table.AddRow(username, password);
 
     stdout.Write(table);
   }

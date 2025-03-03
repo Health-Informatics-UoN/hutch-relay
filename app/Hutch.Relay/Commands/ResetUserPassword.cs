@@ -4,18 +4,19 @@ using Hutch.Relay.Constants;
 using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
 using Hutch.Relay.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hutch.Relay.Commands;
 
-internal class AddUser : Command
+internal class ResetUserPassword : Command
 {
-  public AddUser(string name)
-    : base(name, "Add a new User.")
+  public ResetUserPassword(string name)
+    : base(name, "Reset a User's password.")
   {
-    var argUserName = new Argument<string>("username", "The new user name.");
+    var argUserName = new Argument<string>("username", "The user to create a new password for.");
     Add(argUserName);
-    
+
     this.SetHandler(
       async (
         scopeFactory,
@@ -23,7 +24,7 @@ internal class AddUser : Command
       {
         using var scope = scopeFactory.CreateScope();
         
-        var runner = scope.ServiceProvider.GetRequiredService<Runners.AddUser>();
+        var runner = scope.ServiceProvider.GetRequiredService<Runners.ResetUserPassword>();
         
         await runner.Run(username);
       },
