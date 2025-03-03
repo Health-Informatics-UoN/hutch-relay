@@ -30,24 +30,52 @@ public static class CliMiddlewareExtensions
   /// </summary>
   /// <param name="cli"></param>
   /// <param name="args"></param>
+  /// <param name="configureHost"></param>
   /// <returns></returns>
-  public static CommandLineBuilder UseCliHost(this CommandLineBuilder cli, string[] args, Func<HostApplicationBuilder, Task> configureHost)
+  public static CommandLineBuilder UseCliHost(this CommandLineBuilder cli, string[] args,
+    Func<HostApplicationBuilder, Task> configureHost)
   {
     // We used to build the host in advance, but now that we use it for full DI registration
     // We don't want to build it in the case of RootCommandBypass
     // So instead we build it inside the middleware,
     // only if we reach it in the middleware pipeline,
     // before handling a given Command
-    
+
     return cli.AddMiddleware(async (context, next) =>
     {
+      //-- Modify Host Builder creation
+      
+      var hostBuilderSettings = new HostApplicationBuilderSettings
+      {
+        Args = args // pass on the cli args
+      };
+
+      // Override environment with the global cli option
+      var environment = context.ParseResult.CommandResult
+        .GetValueForOption(CliRootCommand.OptEnvironment);
+      if (environment is not null)
+        hostBuilderSettings.EnvironmentName = environment;
+
       // We create a generic host to load config and bootstrap stuff "for free"
-      var builder = Host.CreateApplicationBuilder(args);
+      var builder = Host.CreateApplicationBuilder(hostBuilderSettings);
+
+      
+      //-- Introduce extra configuration
+      
+      
+      // Override connection string with the global cli option
+      var connectionString = context.ParseResult.CommandResult
+        .GetValueForOption(CliRootCommand.OptConnectionString);
+      if (connectionString is not null)
+        builder.Configuration.AddInMemoryCollection([
+          new("ConnectionStrings:Default", connectionString)
+        ]);
 
       // allow for external configuration to be applied
       // (primarily DI service registration)
       await configureHost.Invoke(builder);
 
+      
       var host = builder.Build();
 
       // Then we use the middleware to add scoped access to the host's service catalog,

@@ -5,9 +5,18 @@ namespace Hutch.Relay.Startup.Cli;
 
 public class CliRootCommand : RootCommand
 {
+  public static readonly Option<string?> OptEnvironment =
+    new(["--environment", "-e"],
+      "Override the application host's Environment Name.");
+
+  public static readonly Option<string?> OptConnectionString =
+    new(["--connection-string"],
+      "Override the local datastore connection string.");
+
   public CliRootCommand() : base("Hutch Relay")
   {
-    AddGlobalOption(new Option<string>(new[] { "--environment", "-e" }));
+    AddGlobalOption(OptEnvironment);
+    AddGlobalOption(OptConnectionString);
 
     // Add Commands here
     AddCommand(new("users", "Relay User actions")
