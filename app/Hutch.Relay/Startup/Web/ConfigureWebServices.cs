@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hutch.Relay.Startup.Web;
 
-public static class ConfigureWebService
+public static class ConfigureWebServices
 {
   public static WebApplicationBuilder ConfigureServices(this WebApplicationBuilder builder)
   {
@@ -47,7 +47,8 @@ public static class ConfigureWebService
     // Other App Services
     builder.Services
       .AddTransient<IRelayTaskService, RelayTaskService>()
-      .AddTransient<ISubNodeService, SubNodeService>();
+      .AddTransient<ISubNodeService, SubNodeService>()
+      .AddTransient<DbManagementService>();
     
     // Obfuscation
     builder.Services

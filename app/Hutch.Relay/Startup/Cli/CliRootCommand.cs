@@ -29,9 +29,9 @@ public class CliRootCommand : RootCommand
       new RemoveUserSubNodes("remove-subnodes")
     });
 
-    AddCommand(new("ef", "Run EF database")
+    AddCommand(new("database", "Local Datastore Management actions")
     {
-      new RunEfDatabase("database")
+      new DatabaseUpdate("update")
     });
   }
 }

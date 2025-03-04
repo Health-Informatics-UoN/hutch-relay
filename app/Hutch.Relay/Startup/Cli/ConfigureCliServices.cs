@@ -39,7 +39,8 @@ public static class ConfigureCliServices
 
     // Application Services
     b.Services
-      .AddTransient<SubNodeService>();
+      .AddTransient<SubNodeService>()
+      .AddTransient<DbManagementService>();
 
     // Command Runners
     b.Services
@@ -48,7 +49,8 @@ public static class ConfigureCliServices
       .AddTransient<ListUsers>()
       .AddTransient<ListUserSubNodes>()
       .AddTransient<RemoveUserSubNodes>()
-      .AddTransient<ResetUserPassword>();
+      .AddTransient<ResetUserPassword>()
+      .AddTransient<DatabaseUpdate>();
 
     return b;
   }
