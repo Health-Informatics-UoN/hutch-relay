@@ -1,4 +1,5 @@
 using Hutch.Relay.Data;
+using Hutch.Relay.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hutch.Relay.Startup.Web;
@@ -19,19 +20,10 @@ public static class WebEntrypoint
     if (app.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
     {
       using var scope = app.Services.CreateScope();
-      var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-      try
-      {
-        await dbContext.Database.MigrateAsync();
-      }
-      catch (Exception ex)
-      {
-        var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
-        var logger = loggerFactory.CreateLogger("MigrationLogger");
-        logger.LogError(ex, "An error occurred while applying database migrations.");
-        throw;
-      }
+      var dbManager = scope.ServiceProvider.GetRequiredService<DbManagementService>();
+
+      await dbManager.UpdateDatabase();
     }
 
     // Configure the HTTP Request Pipeline
