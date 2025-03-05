@@ -5,6 +5,7 @@ using Hutch.Relay.Services.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using Hutch.Relay.Models;
 
 namespace Hutch.Relay.Controllers.LinkConnectorApi;
 
@@ -77,6 +78,33 @@ public class TaskController(
 
     return Ok("Job saved");
   }
+
+  [HttpPost("task")]
+  [SwaggerOperation("Create a new task.")]
+  [SwaggerResponse(201, "Task created successfully.")]
+  [SwaggerResponse(400, "Invalid input.")]
+  public async Task<IActionResult> Task([FromBody] AvailabilityInputJob task)
+  {
+
+      // TODO: feels there will loads of duplication from upstreamtaskpoller - 
+      // create main task
+      var relayTask = await relayTaskService.Create(new()
+      {
+        Id = task.Uuid, Collection = task.Collection
+      });
+
+      // loop through newTask collection list.. and create new task
+      foreach (var collection in task.Collection)
+      {
+        
+        
+      }
+      // and then subnodes...
+      
+
+      return CreatedAtAction(relayTask, new { id = relayTask.Id }, relayTask);
+  }
+
 
   # region Dummy NextJob
 
