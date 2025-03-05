@@ -27,6 +27,23 @@ public class TaskApiClient(
   public ApiClientOptions Options = configuredOptions.Value;
 
   /// <summary>
+  /// Ensure the Base URL contains the route prefix for the Task API endpoints,
+  /// adding it if it does not
+  /// </summary>
+  /// <returns></returns>
+  internal static string GetBaseUrlWithRoutePrefix(string baseUrl)
+  {
+    var parts = baseUrl.Split('/').ToList();
+    var lastPart = parts[^1];
+    var expectedPrefixPart = lastPart == string.Empty
+      ? parts[^2]
+      : lastPart;
+    if (expectedPrefixPart != TaskApiEndpoints.Prefix)
+      parts.Insert(expectedPrefixPart == lastPart ? parts.Count : parts.Count - 1, TaskApiEndpoints.Prefix);
+    return string.Join("/", parts);
+  }
+
+  /// <summary>
   /// Encode a username and password into the combined base64 format
   /// expected for a Basic Authentication header.
   /// </summary>
@@ -87,8 +104,11 @@ public class TaskApiClient(
     static string exceptionMessage(string propertyName)
       => $"The property '{propertyName}' was not specified, and no default is available to fall back to.";
 
+    var rawBaseUrl =
+      options?.BaseUrl ?? Options.BaseUrl ?? throw new ArgumentException(exceptionMessage(nameof(options.BaseUrl)));
+
     return await FetchNextJobAsync<T>(
-      options?.BaseUrl ?? Options.BaseUrl ?? throw new ArgumentException(exceptionMessage(nameof(options.BaseUrl))),
+      GetBaseUrlWithRoutePrefix(rawBaseUrl),
       options?.CollectionId ?? Options.CollectionId ??
       throw new ArgumentException(exceptionMessage(nameof(options.CollectionId))),
       options?.Username ?? Options.Username ?? throw new ArgumentException(exceptionMessage(nameof(options.Username))),
@@ -117,7 +137,7 @@ public class TaskApiClient(
     };
 
     var requestUrl = Url.Combine(
-      baseUrl,
+      GetBaseUrlWithRoutePrefix(baseUrl),
       TaskApiEndpoints.Base,
       TaskApiEndpoints.FetchNextJob,
       collectionId + typeSuffix);
@@ -177,8 +197,10 @@ public class TaskApiClient(
   /// <exception cref="ArgumentException">A required option is missing because it wasn't provided and is not present in the service defaults</exception>
   public async Task SubmitResultAsync(string jobId, JobResult result, ApiClientOptions? options = null)
   {
+    var rawBaseUrl = options?.BaseUrl ??
+                     Options.BaseUrl ?? throw new ArgumentException(ExceptionMessage(nameof(options.BaseUrl)));
     await SubmitResultAsync(
-      options?.BaseUrl ?? Options.BaseUrl ?? throw new ArgumentException(ExceptionMessage(nameof(options.BaseUrl))),
+      GetBaseUrlWithRoutePrefix(rawBaseUrl),
       options?.CollectionId ?? Options.CollectionId ??
       throw new ArgumentException(ExceptionMessage(nameof(options.CollectionId))),
       options?.Username ?? Options.Username ?? throw new ArgumentException(ExceptionMessage(nameof(options.Username))),
@@ -206,7 +228,7 @@ public class TaskApiClient(
     string jobId, JobResult result)
   {
     var requestUrl = Url.Combine(
-      baseUrl,
+      GetBaseUrlWithRoutePrefix(baseUrl),
       TaskApiEndpoints.Base,
       TaskApiEndpoints.SubmitResult,
       jobId,
@@ -256,13 +278,34 @@ internal static class JobTypeSuffixes
   public const string CohortAnalysis = ".c";
 }
 
+/// <summary>
+/// Task API endpoint magic strings for the endpoint RACKit currently offers client functionality for.
+/// </summary>
 internal static class TaskApiEndpoints
 {
-  public const string Base = "link_connector_api/task";
+  /// <summary>
+  /// This is the prefix to the Link Connector API surface.
+  /// We only append it if it's not included in the configured Base URL for the Task API
+  /// </summary>
+  public const string Prefix = "link_connector_api";
 
+  /// <summary>
+  /// This is the base path for the Task API
+  /// </summary>
+  public const string Base = "task";
+
+  /// <summary>
+  /// The Task API endpoint for checking the task queue 
+  /// </summary>
   public const string QueueStatus = "queue";
 
+  /// <summary>
+  /// The Task API endpoint for fetching the next job in the queue
+  /// </summary>
   public const string FetchNextJob = "nextjob";
 
+  /// <summary>
+  /// The Task API endpoint for submitting results
+  /// </summary>
   public const string SubmitResult = "result";
 }
