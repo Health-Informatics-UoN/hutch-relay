@@ -1,16 +1,15 @@
-using Microsoft.AspNetCore.Authorization;
 using System.Text.Json;
+using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
-
-namespace Hutch.Relay.Controllers;
-
-using Rackit.TaskApi.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
+namespace Hutch.Relay.Controllers.LinkConnectorApi;
+
 [ApiController]
-[Route("/[controller]")]
+[Route("/link_connector_api/[controller]")]
 [Authorize]
 public class TaskController(
   IRelayTaskService relayTaskService,
