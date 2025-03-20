@@ -48,9 +48,9 @@ public class TaskHandler(ILogger<TaskHandler> logger, TaskApiClient client)
             FileDescription = "code.distribution analysis results",
           }
           .WithData( // encodes the data and sets FileData and FileSize properties for us
-            """
+            $"""
             BIOBANK	CODE	COUNT	DESCRIPTION	MIN	Q1	MEDIAN	MEAN	Q3	MAX	ALTERNATIVES	DATASET	OMOP	OMOP_DESCR	CATEGORY
-            <collection id>	OMOP:443614	123	nan	nan	nan	nan	nan	nan	nan	nan	nan	443614	Chronic kidney disease stage 1	Condition
+            {job.Collection}	OMOP:443614	123										443614	Chronic kidney disease stage 1	Condition
             """)
       ]
     };
