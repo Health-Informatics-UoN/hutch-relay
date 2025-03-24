@@ -1,5 +1,7 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json.Serialization;
+using CsvHelper;
 
 namespace Hutch.Rackit.TaskApi.Models;
 
@@ -71,5 +73,37 @@ public static class ResultFileExtensions
     resultFile.FileData = Convert.ToBase64String(data);
     resultFile.FileSize = data.Length;
     return resultFile;
+  }
+
+  /// <summary>
+  /// Add <see cref="DistributionRecord"/> Results data to a ResultFile. This method encodes and sets the <see cref="ResultFile.FileData"/> and <see cref="ResultFile.FileSize"/>
+  /// properties based on the data provided.
+  /// </summary>
+  /// <param name="resultFile">the <see cref="ResultFile"/> to set properties on.</param>
+  /// <param name="distributionResults">The data to encode and set</param>
+  /// <returns>The modified <see cref="ResultFile"/>.</returns>
+  public static ResultFile WithDistributionResults(
+    this ResultFile resultFile,
+    List<DistributionRecord> distributionResults)
+  {
+    // Convert the results object to a TSV string
+    using var writer = new StringWriter();
+    using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+
+    csv.WriteRecords(distributionResults);
+    
+    // use WithData to encode as normal
+    return WithData(resultFile, writer.ToString());
+  }
+
+  /// <summary>
+  /// Decode and return <see cref="ResultFile.FileData"/>
+  /// </summary>
+  /// <param name="resultFile">The <see cref="ResultFile"/> to decode data from.</param>
+  /// <returns>The decoded contents of <see cref="ResultFile.FileData"/></returns>
+  public static string DecodeData(this ResultFile resultFile)
+  {
+    return Encoding.UTF8.GetString(
+      Convert.FromBase64String(resultFile.FileData));
   }
 }
