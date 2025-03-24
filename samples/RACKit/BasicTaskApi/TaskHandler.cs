@@ -8,7 +8,7 @@ namespace BasicTaskApi;
 public class TaskHandler(ILogger<TaskHandler> logger, TaskApiClient client)
 {
   public int TaskDelayMs { get; set; } = 10000;
-  
+
   public async Task HandleAvailabilityJob(AvailabilityJob job)
   {
     logger.LogInformation("Found Availability job: {Job}", JsonSerializer.Serialize(job));
@@ -42,34 +42,50 @@ public class TaskHandler(ILogger<TaskHandler> logger, TaskApiClient client)
     {
       Count = 1,
       DatasetCount = 1,
-      Files = [
+      Files =
+      [
         new ResultFile
           {
             FileDescription = "code.distribution analysis results",
           }
-          .WithData( // encodes the data and sets FileData and FileSize properties for us
-            $"""
-            BIOBANK	CODE	COUNT	DESCRIPTION	MIN	Q1	MEDIAN	MEAN	Q3	MAX	ALTERNATIVES	DATASET	OMOP	OMOP_DESCR	CATEGORY
-            {job.Collection}	OMOP:443614	123										443614	Chronic kidney disease stage 1	Condition
-            """)
+          .WithAnalysisFileName(AnalysisType.Distribution, DistributionCode.Generic)
+          // encodes the data and sets FileData and FileSize properties for us
+          .WithDistributionResults([
+            new()
+            {
+              Collection = job.Collection,
+              Code = "OMOP:443614",
+              Count = 123,
+              OmopCode = 443614,
+              OmopDescription = "Chronic kidney disease stage 1",
+              Category = "Condition"
+            }
+          ])
       ]
     };
-    
+
     var demographicsDistributionResult = new QueryResult
     {
       Count = 1,
       DatasetCount = 1,
-      Files = [
+      Files =
+      [
         new ResultFile
           {
             FileDescription = "demographics.distribution analysis results",
           }
-          .WithData( // encodes the data and sets FileData and FileSize properties for us
-            $"""
-            BIOBANK	CODE	DESCRIPTION	COUNT	MIN	Q1	MEDIAN	MEAN	Q3	MAX	ALTERNATIVES	DATASET	OMOP	OMOP_DESCR	CATEGORY
-            {job.Collection}	SEX	Sex	99							^MALE|44^FEMALE|55^	person			DEMOGRAPHICS
-            """
-            )
+          .WithAnalysisFileName(AnalysisType.Distribution, DistributionCode.Demographics)
+          .WithDistributionResults([
+            new()
+            {
+              Collection = job.Collection,
+              Code = "SEX", Description = "Sex",
+              Count = 99,
+              Alternatives = "^MALE|44^FEMALE|55^",
+              Dataset = "patient",
+              Category = "DEMOGRAPHICS"
+            }
+          ])
       ]
     };
 

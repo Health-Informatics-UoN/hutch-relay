@@ -1,3 +1,4 @@
+using System.Globalization;
 using CsvHelper.Configuration.Attributes;
 
 namespace Hutch.Rackit.TaskApi.Models;
@@ -8,6 +9,7 @@ namespace Hutch.Rackit.TaskApi.Models;
 /// produce files in the same structure, but use different fields for different purposes.  
 /// </summary>
 [Delimiter("\t")]
+[CultureInfo("en")]
 public class DistributionRecord
 {
   /// <summary>
@@ -68,7 +70,7 @@ public class DistributionRecord
   /// Raw OMOP Code for the term. If <see cref="Code"/> is prefixed `OMOP:` the values should match.
   /// </summary>
   [Name("OMOP")]
-  public int OmopCode { get; set; }
+  public int? OmopCode { get; set; }
   
   /// <summary>
   /// OMOP Description of the term. If <see cref="Code"/> is prefixed `OMOP:` this should match <see cref="Description"/>
