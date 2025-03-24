@@ -54,6 +54,24 @@ public class TaskHandler(ILogger<TaskHandler> logger, TaskApiClient client)
             """)
       ]
     };
+    
+    var demographicsDistributionResult = new QueryResult
+    {
+      Count = 1,
+      DatasetCount = 1,
+      Files = [
+        new ResultFile
+          {
+            FileDescription = "demographics.distribution analysis results",
+          }
+          .WithData( // encodes the data and sets FileData and FileSize properties for us
+            $"""
+            BIOBANK	CODE	DESCRIPTION	COUNT	MIN	Q1	MEDIAN	MEAN	Q3	MAX	ALTERNATIVES	DATASET	OMOP	OMOP_DESCR	CATEGORY
+            {job.Collection}	SEX	Sex	99							^MALE|44^FEMALE|55^	person			DEMOGRAPHICS
+            """
+            )
+      ]
+    };
 
     var unhandledResults = new QueryResult
     {
