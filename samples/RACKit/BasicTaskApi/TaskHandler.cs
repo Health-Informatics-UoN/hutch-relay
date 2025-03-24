@@ -91,6 +91,7 @@ public class TaskHandler(ILogger<TaskHandler> logger, TaskApiClient client)
         AnalysisType.Distribution => job.Code switch
         {
           DistributionCode.Generic => codeDistributionResult,
+          DistributionCode.Demographics => demographicsDistributionResult,
           _ => unhandledResults
         },
         _ => unhandledResults
