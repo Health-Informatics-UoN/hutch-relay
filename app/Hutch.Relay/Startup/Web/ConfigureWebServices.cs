@@ -31,13 +31,26 @@ public static class ConfigureWebServices
       });
     builder.Services.AddSwaggerGen(o => o.UseOneOfForPolymorphism());
 
-    // Upstream Task API
+    // Headless Mode
     builder.Services
-      .Configure<ApiClientOptions>(builder.Configuration.GetSection("UpstreamTaskApi"))
-      .AddHttpClient()
-      .AddTransient<ITaskApiClient, TaskApiClient>()
-      .AddScoped<UpstreamTaskPoller>()
-      .AddTransient<ResultsService>();
+      .Configure<HeadlessModeOptions>(builder.Configuration.GetSection("HeadlessMode"));
+    
+    var headlessModeOptions = builder.Configuration.GetSection("HeadlessMode").Get<HeadlessModeOptions>();
+    
+    if (!headlessModeOptions?.IsHeadlessModeEnabled ?? false)
+    {
+      // Upstream Task API
+      builder.Services
+        .Configure<ApiClientOptions>(builder.Configuration.GetSection("UpstreamTaskApi"))
+        .AddHttpClient()
+        .AddTransient<ITaskApiClient, TaskApiClient>()
+        .AddScoped<UpstreamTaskPoller>()
+        .AddTransient<ResultsService>();
+
+      // Hosted Services
+      builder.Services.AddHostedService<BackgroundUpstreamTaskPoller>();
+      builder.Services.AddHostedService<TaskCompletionHostedService>();
+    }
 
     // Task Queue
     builder.Services
@@ -54,10 +67,6 @@ public static class ConfigureWebServices
     builder.Services
       .Configure<ObfuscationOptions>(builder.Configuration.GetSection(("Obfuscation")))
       .AddTransient<IObfuscationService, ObfuscationService>();
-
-    // Hosted Services
-    builder.Services.AddHostedService<BackgroundUpstreamTaskPoller>();
-    builder.Services.AddHostedService<TaskCompletionHostedService>();
 
     return builder;
   }
