@@ -6,7 +6,7 @@ namespace Hutch.Rackit.Tests.ResultFileExtensionsTests;
 public class WithAnalysisFileNameTests
 {
   private const string _garbageString = "garbage";
-  
+
   [Theory]
   [InlineData("", "")]
   [InlineData(_garbageString, "")]
@@ -20,19 +20,25 @@ public class WithAnalysisFileNameTests
     string analysisType, string analysisCode)
   {
     var resultFile = new ResultFile();
-    
-    Assert.Throws<NotImplementedException>(() => 
+
+    Assert.Throws<NotImplementedException>(() =>
       resultFile.WithAnalysisFileName(analysisCode, analysisCode));
   }
 
   [Theory]
-  [InlineData(AnalysisType.Distribution, DistributionCode.Generic, "code.distribution")]
-  [InlineData(AnalysisType.Distribution, DistributionCode.Demographics, "demographics.distribution")]
+  [InlineData(
+    AnalysisType.Distribution,
+    DistributionCode.Generic,
+    "code.distribution")]
+  [InlineData(
+    AnalysisType.Distribution,
+    DistributionCode.Demographics,
+    "demographics.distribution")]
   public void WhenSupportedAnalysis_ShouldReturnCorrectFileName(
     string analysisType, string analysisCode, string expected)
   {
     var resultFile = new ResultFile().WithAnalysisFileName(analysisType, analysisCode);
-    
+
     Assert.Equal(expected, resultFile.FileName);
   }
 }
