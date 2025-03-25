@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Xunit;
 using Hutch.Relay.Auth.Basic;
 using Hutch.Relay.Data.Entities;

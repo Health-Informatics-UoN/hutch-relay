@@ -99,7 +99,7 @@ public class ResultsService(
   /// <param name="relayTask"><see cref="RelayTaskModel"/> providing details of the RelayTask to prepare a <see cref="JobResult"/> for.</param>
   /// <returns>The <see cref="JobResult"/> containing aggregated and obfuscated data from all Sub Tasks.</returns>
   /// <exception cref="ArgumentOutOfRangeException">The Task Type of this <see cref="RelayTaskModel"/> isn't supported by Relay. Who knows how it got this far.</exception>
-  protected async Task<JobResult> PrepareFinalJobResult(RelayTaskModel relayTask)
+  public async Task<JobResult> PrepareFinalJobResult(RelayTaskModel relayTask)
   {
     // Get all SubTasks for this RelayTask
     var subTasks = (await relayTaskService.ListSubTasks(relayTask.Id, incompleteOnly: false)).ToList();

@@ -3,7 +3,6 @@ using Hutch.Relay.Data.Entities;
 using Hutch.Relay.Services;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
-using Assert = Xunit.Assert;
 
 namespace Hutch.Relay.Tests.Services;
 
