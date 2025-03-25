@@ -131,8 +131,10 @@ public static class ResultFileExtensions
     string analysisCode)
   {
     var notImplementedMessage =
-      $"Hutch RACKit does not yet support building result files for {analysisType} Analysis. Please set the filename and data manually.";
-    
+      $"Hutch RACKit does not yet support building result files for {analysisCode}" +
+      $"{(string.IsNullOrEmpty(analysisCode) ? "" : ".")}{analysisType} Analysis. " +
+      $"Please set the filename and data manually.";
+
     resultFile.FileName = analysisType switch
     {
       AnalysisType.Distribution => analysisCode switch
