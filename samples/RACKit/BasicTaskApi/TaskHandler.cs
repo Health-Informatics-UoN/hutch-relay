@@ -36,8 +36,6 @@ public class TaskHandler(ILogger<TaskHandler> logger, TaskApiClient client)
   {
     logger.LogInformation("Found Collection Analysis job: {Job}", JsonSerializer.Serialize(job));
 
-    await Task.Delay(TaskDelayMs); // Wait while we "query". Nice for the GUI to show "sent to client" vs "job done"
-
     var codeDistributionResult = new QueryResult
     {
       Count = 1,
@@ -50,7 +48,7 @@ public class TaskHandler(ILogger<TaskHandler> logger, TaskApiClient client)
           }
           .WithAnalysisFileName(AnalysisType.Distribution, DistributionCode.Generic)
           // encodes the data and sets FileData and FileSize properties for us
-          .WithDistributionResults([
+          .WithData<GenericDistributionRecord>([
             new()
             {
               Collection = job.Collection,
@@ -75,7 +73,7 @@ public class TaskHandler(ILogger<TaskHandler> logger, TaskApiClient client)
             FileDescription = "demographics.distribution analysis results",
           }
           .WithAnalysisFileName(AnalysisType.Distribution, DistributionCode.Demographics)
-          .WithDistributionResults([
+          .WithData<DemographicsDistributionRecord>([
             new()
             {
               Collection = job.Collection,
