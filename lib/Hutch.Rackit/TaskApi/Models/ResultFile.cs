@@ -85,25 +85,23 @@ public static class ResultFileExtensions
   }
 
   /// <summary>
-  /// Add <see cref="DistributionRecord"/> Results data to a ResultFile. This method encodes and sets the <see cref="ResultFile.FileData"/> and <see cref="ResultFile.FileSize"/>
+  /// Add <see cref="IResultFileRecord"/> Results data to a ResultFile. This method encodes and sets the <see cref="ResultFile.FileData"/> and <see cref="ResultFile.FileSize"/>
   /// properties based on the data provided.
   /// </summary>
   /// <param name="resultFile">the <see cref="ResultFile"/> to set properties on.</param>
-  /// <param name="distributionResults">The data to encode and set</param>
+  /// <param name="results">The data to encode and set</param>
   /// <returns>The modified <see cref="ResultFile"/>.</returns>
-  public static ResultFile WithDistributionResults(
-    this ResultFile resultFile,
-    List<DistributionRecord> distributionResults)
+  public static ResultFile WithData<T>(this ResultFile resultFile, List<T> results) where T : IResultFileRecord
   {
     // Convert the results object to a TSV string
-    var config = CsvConfiguration.FromAttributes<DistributionRecord>();
+    var config = CsvConfiguration.FromAttributes<T>();
     using var writer = new StringWriter();
     using var csv = new CsvWriter(writer, config);
 
-    csv.WriteRecords(distributionResults);
+    csv.WriteRecords(results);
 
-    // use WithData to encode as normal
-    return WithData(resultFile, writer.ToString());
+    // encode as normal
+    return WithData(resultFile, writer.ToString().TrimEnd());
   }
 
   /// <summary>
