@@ -24,4 +24,15 @@ public class WithAnalysisFileNameTests
     Assert.Throws<NotImplementedException>(() => 
       resultFile.WithAnalysisFileName(analysisCode, analysisCode));
   }
+
+  [Theory]
+  [InlineData(AnalysisType.Distribution, DistributionCode.Generic, "code.distribution")]
+  [InlineData(AnalysisType.Distribution, DistributionCode.Demographics, "demographics.distribution")]
+  public void WhenSupportedAnalysis_ShouldReturnCorrectFileName(
+    string analysisType, string analysisCode, string expected)
+  {
+    var resultFile = new ResultFile().WithAnalysisFileName(analysisType, analysisCode);
+    
+    Assert.Equal(expected, resultFile.FileName);
+  }
 }
