@@ -7,7 +7,7 @@ namespace Hutch.Relay.Services.JobResultAggregators;
 
 public class AvailabilityAggregator : IQueryResultAggregator
 {
-  public QueryResult Aggregate(List<RelaySubTaskModel> subTasks, ObfuscationOptions obfuscationOptions)
+  public QueryResult Process(List<RelaySubTaskModel> subTasks, ObfuscationOptions obfuscationOptions)
   {
     var aggregateCount = 0;
 

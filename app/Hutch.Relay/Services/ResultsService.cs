@@ -117,7 +117,7 @@ public class ResultsService(
     {
       Uuid = relayTask.Id,
       CollectionId = relayTask.Collection,
-      Results = aggregator.Aggregate(subTasks, obfuscationOptions)
+      Results = aggregator.Process(subTasks, obfuscationOptions)
     };
   }
 
