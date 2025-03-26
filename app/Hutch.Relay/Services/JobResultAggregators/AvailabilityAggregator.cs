@@ -1,13 +1,12 @@
 using System.Text.Json;
 using Hutch.Rackit.TaskApi.Models;
-using Hutch.Relay.Config;
 using Hutch.Relay.Models;
 
 namespace Hutch.Relay.Services.JobResultAggregators;
 
-public class AvailabilityAggregator : IQueryResultAggregator
+public class AvailabilityAggregator(IObfuscator obfuscator) : IQueryResultAggregator
 {
-  public QueryResult Process(List<RelaySubTaskModel> subTasks, ObfuscationOptions obfuscationOptions)
+  public QueryResult Process(List<RelaySubTaskModel> subTasks)
   {
     var aggregateCount = 0;
 
@@ -25,10 +24,11 @@ public class AvailabilityAggregator : IQueryResultAggregator
       aggregateCount += result.Results.Count;
     }
 
-    // TODO: Review behaviour if no subtasks were valid - should we report failure Upstream instead of a 0 count?
+    // TODO: Review behaviour if no subtasks were valid:
+    // should we report failure Upstream instead of a 0 count?
 
     // Apply obfuscation as configured by the call site
-    var finalCount = Obfuscator.Obfuscate(aggregateCount, obfuscationOptions);
+    var finalCount = obfuscator.Obfuscate(aggregateCount);
 
     return new()
     {

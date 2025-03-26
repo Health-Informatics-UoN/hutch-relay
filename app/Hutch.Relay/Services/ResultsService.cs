@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using System.Net;
-using System.Text.Json;
 using Hutch.Rackit;
 using Hutch.Rackit.TaskApi.Contracts;
 using Hutch.Rackit.TaskApi.Models;
@@ -18,10 +16,10 @@ public class ResultsService(
   IOptions<ApiClientOptions> options,
   ITaskApiClient upstreamTasks,
   IRelayTaskService relayTaskService,
-  IOptions<ObfuscationOptions> obfuscationOptions)
+  [FromKeyedServices(nameof(AvailabilityAggregator))]
+  IQueryResultAggregator availabilityAggregator)
 {
   private readonly ApiClientOptions options = options.Value;
-  private readonly ObfuscationOptions obfuscationOptions = obfuscationOptions.Value;
 
   /// <summary>
   /// Submit a <see cref="JobResult"/> payload Upstream
@@ -83,11 +81,23 @@ public class ResultsService(
   /// <param name="task"><see cref="RelayTaskModel"/> for the task to Complete.</param>
   public async Task CompleteRelayTask(RelayTaskModel task)
   {
-    var finalResult = await PrepareFinalJobResult(task);
-    
-    await SubmitResults(task, finalResult);
-    
-    await relayTaskService.SetComplete(task.Id);
+    try
+    {
+      var finalResult = await PrepareFinalJobResult(task);
+
+      // Only submit results if Prepare succeeded
+      await SubmitResults(task, finalResult);
+    }
+    catch (ArgumentOutOfRangeException e)
+    {
+      // Catch and log, but otherwise no particular handling for Unsupported Task Types
+      logger.LogError(e.Message);
+    }
+    finally
+    {
+      // We should try and close out the task regardless of whether an exception occurred
+      await relayTaskService.SetComplete(task.Id);
+    }
   }
 
   /// <summary>
@@ -107,7 +117,7 @@ public class ResultsService(
     // Select the appropriate Results Aggregator
     IQueryResultAggregator aggregator = relayTask.Type switch
     {
-      TaskTypes.TaskApi_Availability => new AvailabilityAggregator(),
+      TaskTypes.TaskApi_Availability => availabilityAggregator,
       _ => throw new ArgumentOutOfRangeException(
         $"Relay tried to handle a Task Type it doesn't support Results Aggregation for: {relayTask.Type}")
     };
@@ -117,7 +127,7 @@ public class ResultsService(
     {
       Uuid = relayTask.Id,
       CollectionId = relayTask.Collection,
-      Results = aggregator.Process(subTasks, obfuscationOptions)
+      Results = aggregator.Process(subTasks)
     };
   }
 
