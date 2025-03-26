@@ -5,6 +5,7 @@ using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
+using Hutch.Relay.Services.JobResultAggregators;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
@@ -35,19 +36,26 @@ public class ResultsServiceTests
     var tasks = new Mock<IRelayTaskService>();
     tasks.Setup(x =>
         x.ListSubTasks(
-          It.Is<string>(y => y == relayTask.Id), 
+          It.Is<string>(y => y == relayTask.Id),
           It.Is<bool>(y => y == true)))
       .Returns(() => Task.FromResult<IEnumerable<RelaySubTaskModel>>(new List<RelaySubTaskModel>()));
-    
+
+    var aggregator = new Mock<IQueryResultAggregator>();
+    aggregator
+      .Setup(x => 
+        x.Process(It.IsAny<List<RelaySubTaskModel>>()))
+      .Returns(() => new() { Count = 0 });
+
     var resultsService = new ResultsService(
       null!,
       Options.Create<ApiClientOptions>(new()),
       null!,
       tasks.Object,
-      Options.Create<ObfuscationOptions>(new()));
+      aggregator.Object
+    );
 
     var actual = await resultsService.PrepareFinalJobResult(relayTask);
-    
+
     // Check the relevant base properties
     Assert.Equal(expected.Uuid, actual.Uuid);
     Assert.Equal(expected.CollectionId, actual.CollectionId);
