@@ -2,7 +2,6 @@ using System.Net;
 using Hutch.Rackit;
 using Hutch.Rackit.TaskApi.Contracts;
 using Hutch.Rackit.TaskApi.Models;
-using Hutch.Relay.Config;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services.Contracts;
@@ -26,8 +25,7 @@ public class ResultsService(
   /// </summary>
   /// <param name="relayTask"><see cref="RelayTaskModel"/> describing the RelayTask to submit results for.</param>
   /// <param name="jobResult">The <see cref="JobResult"/> payload to submit.</param>
-  public async Task SubmitResults(RelayTaskModel relayTask, JobResult jobResult
-  )
+  public async Task SubmitResults(RelayTaskModel relayTask, JobResult jobResult)
   {
     var retryCount = 0;
     const int delayInSeconds = 5;
