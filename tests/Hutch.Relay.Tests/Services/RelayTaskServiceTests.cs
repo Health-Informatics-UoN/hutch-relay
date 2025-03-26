@@ -1,3 +1,4 @@
+using Hutch.Relay.Constants;
 using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
 using Hutch.Relay.Models;
@@ -28,6 +29,7 @@ public class RelayTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>,
     var relayTask = new RelayTask
     {
       Id = "valid-id-1",
+      Type = TaskTypes.TaskApi_Availability,
       Collection = "Sample Collection"
     };
     _dbContext.RelayTasks.Add(relayTask);
@@ -41,6 +43,7 @@ public class RelayTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>,
     // Assert
     Assert.NotNull(result);
     Assert.Equal(relayTask.Id, result.Id);
+    Assert.Equal(relayTask.Type, result.Type);
     Assert.Equal(relayTask.Collection, result.Collection);
   }
 
@@ -61,6 +64,7 @@ public class RelayTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>,
     var model = new RelayTaskModel
     {
       Id = "valid-id-7",
+      Type = TaskTypes.TaskApi_CodeDistribution,
       Collection = "New Collection"
     };
 
@@ -73,11 +77,13 @@ public class RelayTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>,
     Assert.NotNull(result);
     Assert.NotNull(result.Id);
     Assert.Equal(model.Collection, result.Collection);
+    Assert.Equal(model.Type, result.Type);
     Assert.Null(result.CompletedAt);
 
     var entityInDb = await _dbContext.RelayTasks.FindAsync(result.Id);
     Assert.NotNull(entityInDb);
     Assert.Equal(model.Collection, entityInDb.Collection);
+    Assert.Equal(model.Type, entityInDb.Type);
   }
   
   [Fact]
@@ -87,6 +93,7 @@ public class RelayTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>,
     var relayTask = new RelayTask
     {
       Id = "valid-id-2",
+      Type = TaskTypes.TaskApi_DemographicsDistribution,
       Collection = "Sample Collection",
     };
     _dbContext.RelayTasks.Add(relayTask);
@@ -112,16 +119,19 @@ public class RelayTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>,
     var incompleteTask1 = new RelayTask
     {
       Id = "incomplete-id-1",
+      Type = TaskTypes.TaskApi_Availability,
       Collection = "Collection 1"
     };
     var incompleteTask2 = new RelayTask
     {
       Id = "incomplete-id-2",
+      Type = TaskTypes.TaskApi_DemographicsDistribution,
       Collection = "Collection 2"
     };
     var completedTask = new RelayTask
     {
       Id = "completed-id",
+      Type = TaskTypes.TaskApi_CodeDistribution,
       Collection = "Collection 3",
       CompletedAt = DateTime.UtcNow.AddMinutes(3)
     };

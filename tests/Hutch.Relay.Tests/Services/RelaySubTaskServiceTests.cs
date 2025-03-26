@@ -1,3 +1,4 @@
+using Hutch.Relay.Constants;
 using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
 using Hutch.Relay.Services;
@@ -43,6 +44,7 @@ public class RelaySubTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixture
     var relayTask = new RelayTask
     {
       Id = taskId,
+      Type = TaskTypes.TaskApi_Availability,
       Collection = "test-collection"
     };
 
@@ -70,7 +72,7 @@ public class RelaySubTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixture
     var relaySubTask = new RelaySubTask
     {
       Id = subtaskId,
-      RelayTask = new() { Id = "test-task-id-1" },
+      RelayTask = new() { Id = "test-task-id-1", Type = TaskTypes.TaskApi_DemographicsDistribution },
       Owner = new()
       {
         Id = Guid.NewGuid(),
