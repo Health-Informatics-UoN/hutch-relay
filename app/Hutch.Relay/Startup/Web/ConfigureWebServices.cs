@@ -9,6 +9,7 @@ using Hutch.Relay.Data.Entities;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
 using Hutch.Relay.Services.Hosted;
+using Hutch.Relay.Services.JobResultAggregators;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hutch.Relay.Startup.Web;
@@ -53,7 +54,10 @@ public static class ConfigureWebServices
     // Obfuscation
     builder.Services
       .Configure<ObfuscationOptions>(builder.Configuration.GetSection(("Obfuscation")))
-      .AddTransient<Obfuscator>();
+      .AddTransient<IObfuscator, Obfuscator>();
+    
+    // Aggregators
+    builder.Services.AddKeyedTransient<IQueryResultAggregator,AvailabilityAggregator>(nameof(AvailabilityAggregator));
 
     // Hosted Services
     builder.Services.AddHostedService<BackgroundUpstreamTaskPoller>();
