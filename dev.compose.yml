@@ -47,7 +47,7 @@ services:
       Database__ApplyMigrationsOnStartup: true
 
       DOTNET_Environment: Development
-      ConnectionStrings__Default: Server=db;Port=5432;Database=hutch-relay;User Id=postgres;Password=postgres
+      ConnectionStrings__Default: Server=db;Port=5432;Database=hutch_relay;User Id=postgres;Password=postgres
       RelayTaskQueue__ConnectionString: amqp://user:password@rabbitmq:5672
       Obfuscation__LowNumberSuppressionThreshold: 0
       Obfuscation__RoundingTarget: 0
@@ -67,12 +67,12 @@ services:
     environment:
       DATASOURCE_DB_USERNAME: postgres
       DATASOURCE_DB_PASSWORD: postgres
-      DATASOURCE_DB_DATABASE: hutch-omop
+      DATASOURCE_DB_DATABASE: hutch_omop
       DATASOURCE_DB_DRIVERNAME: postgresql
       DATASOURCE_DB_SCHEMA: public
       DATASOURCE_DB_PORT: 5432
       DATASOURCE_DB_HOST: db
-      TASK_API_BASE_URL: http://relay:8080
+      TASK_API_BASE_URL: http://relay:8080/link_connector_api
       TASK_API_USERNAME: username
       TASK_API_PASSWORD: password
       TASK_API_TYPE:
