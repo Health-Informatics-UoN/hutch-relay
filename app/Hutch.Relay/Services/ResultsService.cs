@@ -137,10 +137,15 @@ public class ResultsService(
     var incompleteTasks = await relayTaskService.ListIncomplete();
     foreach (var task in incompleteTasks)
     {
-      logger.LogInformation("Task:{Task} is about to expire.", task.Id);
+      var expiryThreshold = TimeSpan.FromMinutes(1); // TODO: should this be configurable?
+
       var timeInterval = DateTimeOffset.UtcNow.Subtract(task.CreatedAt);
-      if (timeInterval > TimeSpan.FromMinutes(4.5)) // TODO: should this be configurable?
+      logger.LogInformation("Incomplete Task:{Task} has been running for {TimeInterval}...", task.Id,
+        timeInterval.ToString());
+      if (timeInterval > expiryThreshold)
       {
+        logger.LogInformation("Task:{Task} has reached the expiry threshold of {ExpiryThreshold}. Completing...",
+          task.Id, expiryThreshold.ToString());
         await CompleteRelayTask(task);
       }
     }
