@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using Hutch.Rackit;
 using Hutch.Rackit.TaskApi.Contracts;
 using Hutch.Rackit.TaskApi.Models;
+using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
@@ -43,6 +44,7 @@ public class UpstreamTaskPollerTests()
     var relayTask = new RelayTaskModel()
     {
       Id = Guid.NewGuid().ToString(),
+      Type = TaskTypes.TaskApi_Availability,
       Collection = "test",
     };
     var relaySubTask = new RelaySubTaskModel()

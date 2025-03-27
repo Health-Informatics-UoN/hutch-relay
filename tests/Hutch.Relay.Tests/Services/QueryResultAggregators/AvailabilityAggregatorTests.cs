@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Hutch.Rackit.TaskApi.Models;
+using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.JobResultAggregators;
@@ -58,7 +59,7 @@ public class AvailabilityAggregatorTests
       {
         Id = Guid.NewGuid(),
         Owner = new() { Id = Guid.NewGuid(), Owner = "test" },
-        RelayTask = new(),
+        RelayTask = new() { Id = "test", Type = TaskTypes.TaskApi_Availability, Collection = "test" },
         Result = JsonSerializer.Serialize(new JobResult
         {
           Results = new()
@@ -102,7 +103,7 @@ public class AvailabilityAggregatorTests
         {
           Id = Guid.NewGuid(),
           Owner = new() { Id = Guid.NewGuid(), Owner = "test" },
-          RelayTask = new(),
+          RelayTask = new() { Id = "test", Type = TaskTypes.TaskApi_DemographicsDistribution, Collection = "test" },
           Result = JsonSerializer.Serialize(new JobResult
           {
             Results = new()

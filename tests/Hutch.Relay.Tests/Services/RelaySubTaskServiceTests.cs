@@ -72,7 +72,7 @@ public class RelaySubTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixture
     var relaySubTask = new RelaySubTask
     {
       Id = subtaskId,
-      RelayTask = new() { Id = "test-task-id-1", Type = TaskTypes.TaskApi_DemographicsDistribution },
+      RelayTask = new() { Id = "test-task-id-1", Type = TaskTypes.TaskApi_DemographicsDistribution, Collection = "" },
       Owner = new()
       {
         Id = Guid.NewGuid(),
