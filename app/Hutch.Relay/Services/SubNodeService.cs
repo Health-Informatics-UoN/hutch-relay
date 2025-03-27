@@ -8,6 +8,14 @@ namespace Hutch.Relay.Services;
 
 public class SubNodeService(ApplicationDbContext db) : ISubNodeService
 {
+  public void EnsureSubNodes()
+  {
+    var subNodesExist = db.SubNodes.AsNoTracking().Any();
+    if (subNodesExist) return;
+    
+    throw new InvalidOperationException("There are no subnodes configured!");
+  }
+  
   /// <summary>
   /// Create a new SubNode associated with the provided user
   /// </summary>

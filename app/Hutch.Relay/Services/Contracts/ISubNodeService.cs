@@ -6,6 +6,12 @@ namespace Hutch.Relay.Services.Contracts;
 public interface ISubNodeService
 {
   /// <summary>
+  /// Check if there are any SubNodes configured
+  /// </summary>
+  /// <exception cref="InvalidOperationException">Thrown when there are no subnodes configured.</exception>
+  public void EnsureSubNodes();
+  
+  /// <summary>
   /// Create a new SubNode associated with the provided user
   /// </summary>
   /// <param name="relayUser">The relay user registering the SubNode</param>
