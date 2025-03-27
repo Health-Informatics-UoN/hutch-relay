@@ -93,7 +93,10 @@ public class UpstreamTaskPoller(
         // TODO: maintain an exception limit that eventually DOES quit?
         
         // Delay before resuming the loop
-        await Task.Delay(5000, cancellationToken);
+        await Task
+          .Delay(5000, cancellationToken)
+          // Stop this Task from throwing when cancelled
+          .ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing | ConfigureAwaitOptions.ContinueOnCapturedContext);
       }
     }
   }
