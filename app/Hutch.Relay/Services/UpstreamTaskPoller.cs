@@ -51,7 +51,7 @@ public class UpstreamTaskPoller(
       {
         await foreach (var job in jobs.WithCancellation(cancellationToken))
         {
-          logger.LogInformation("Task handled: ({Type}) {Id}", typeof(T).Name, job.Uuid);
+          logger.LogInformation("Task retrieved: ({Type}) {Id}", typeof(T).Name, job.Uuid);
 
           var subnodes = (await subNodes.List()).ToList();
           if (subnodes.Count == 0)
@@ -63,7 +63,9 @@ public class UpstreamTaskPoller(
           // Create a parent task
           var relayTask = await relayTasks.Create(new()
           {
-            Id = job.Uuid, Collection = job.Collection
+            Id = job.Uuid,
+            Type = IRelayTaskService.GetTaskApiType(job),
+            Collection = job.Collection
           });
 
           // Fan out to subtasks

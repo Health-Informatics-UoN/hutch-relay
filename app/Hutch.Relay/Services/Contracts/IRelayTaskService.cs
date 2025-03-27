@@ -1,9 +1,43 @@
+using Hutch.Rackit.TaskApi;
+using Hutch.Rackit.TaskApi.Models;
+using Hutch.Relay.Constants;
+using Hutch.Relay.Data.Entities;
 using Hutch.Relay.Models;
 
 namespace Hutch.Relay.Services.Contracts;
 
 public interface IRelayTaskService
 {
+  #region TaskType Helpers
+
+  // In future we can have other helpers for other Task Type sources if necessary
+
+  /// <summary>
+  /// Get the RelayTask Type value from a Task API job
+  /// </summary>
+  /// <param name="task">The payload received from the Task API as a <see cref="TaskApiBaseResponse"/> derivative.</param>
+  /// <typeparam name="T">The specific job type of the <see cref="TaskApiBaseResponse"/></typeparam>
+  /// <returns>a standardised <see cref="TaskTypes"/> name for Relay to store on the <see cref="RelayTask"/> for later use.</returns>
+  /// <exception cref="ArgumentOutOfRangeException"></exception>
+  public static string GetTaskApiType<T>(T task) where T : TaskApiBaseResponse
+  {
+    return task switch
+    {
+      AvailabilityJob
+        => TaskTypes.TaskApi_Availability,
+
+      CollectionAnalysisJob { Analysis: AnalysisType.Distribution, Code: DistributionCode.Generic }
+        => TaskTypes.TaskApi_CodeDistribution,
+
+      CollectionAnalysisJob { Analysis: AnalysisType.Distribution, Code: DistributionCode.Demographics }
+        => TaskTypes.TaskApi_DemographicsDistribution,
+
+      _ => throw new ArgumentOutOfRangeException(nameof(task), task, "Unsupported Task API Task Type")
+    };
+  }
+
+  #endregion
+  
   /// <summary>
   /// Get a RelayTask by id
   /// </summary>
