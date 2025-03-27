@@ -8,6 +8,8 @@ namespace Hutch.Relay.Services;
 
 public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
 {
+  
+
   /// <summary>
   /// Get a RelayTask by id
   /// </summary>
@@ -199,7 +201,8 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
   /// <exception cref="KeyNotFoundException">The RelaySubTask does not exist.</exception>
   public async Task<RelaySubTaskModel> GetSubTask(Guid id)
   {
-    var entity = await db.RelaySubTasks.AsNoTracking().Include(relaySubTask => relaySubTask.Owner)
+    var entity = await db.RelaySubTasks.AsNoTracking()
+                   .Include(relaySubTask => relaySubTask.Owner)
                    .ThenInclude(subNode => subNode.RelayUsers)
                    .Include(relaySubTask => relaySubTask.RelayTask)
                    .SingleOrDefaultAsync(t => t.Id == id)
@@ -216,7 +219,8 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
       RelayTask = new()
       {
         Id = entity.RelayTask.Id,
-        Type = entity.RelayTask.Type
+        Type = entity.RelayTask.Type,
+        Collection = entity.RelayTask.Collection,
       },
       Result = entity.Result
     };
@@ -237,7 +241,8 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
 
     if (incompleteOnly) query = query.Where(x => x.Result == null);
 
-    var relaySubTasks = await query.Include(relaySubTask => relaySubTask.Owner)
+    var relaySubTasks = await query
+      .Include(relaySubTask => relaySubTask.Owner)
       .ThenInclude(subNode => subNode.RelayUsers)
       .Include(relaySubTask => relaySubTask.RelayTask).ToListAsync();
 
@@ -252,7 +257,8 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
       RelayTask = new()
       {
         Id = x.RelayTask.Id,
-        Type = x.RelayTask.Type
+        Type = x.RelayTask.Type,
+        Collection = x.RelayTask.Collection,
       },
       Result = x.Result
     });
