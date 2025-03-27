@@ -27,7 +27,7 @@ public class UpstreamTaskPoller(
       throw new InvalidOperationException(
         "The RelayTask Queue Backend is not ready; please check the logs and your configuration.");
 
-    // Start polling for job types:
+    // Start polling for job types: // TODO: Should this be configurable?
     var availabilityQueries =
       upstreamTasks.PollJobQueue<AvailabilityJob>(options.Value, stoppingToken);
     var collectionAnalyses =
