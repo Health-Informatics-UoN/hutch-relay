@@ -5,5 +5,5 @@ namespace Hutch.Relay.Data.Entities;
 
 public class RelayUser: IdentityUser
 {
-  public ICollection<SubNode> SubNodes { get; set; } = new Collection<SubNode>();
+  public ICollection<SubNode> SubNodes { get; set; } = [];
 }
