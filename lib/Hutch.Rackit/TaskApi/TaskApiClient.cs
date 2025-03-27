@@ -161,6 +161,9 @@ public class TaskApiClient(
 
       try
       {
+        // Debug Log the raw payload before any parsing into RACKit models occurs
+        logger.LogDebug("Job received: {Payload}", await result.Content.ReadAsStringAsync());
+        
         return await result.Content.ReadFromJsonAsync<T>();
       }
       catch (JsonException e)
