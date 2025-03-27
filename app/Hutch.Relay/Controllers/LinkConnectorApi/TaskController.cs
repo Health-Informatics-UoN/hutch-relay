@@ -1,4 +1,6 @@
+using System.Net;
 using System.Text.Json;
+using Hutch.Rackit;
 using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
@@ -54,11 +56,7 @@ public class TaskController(
     // Check if the parent Task has already been submitted.
     if (subtask.RelayTask.CompletedAt is not null)
     {
-      return Conflict(new
-      {
-        // TODO: Revisit this: it isn't technically Task API spec compliant
-        message = $"The task has already been submitted."
-      });
+      return Conflict(new JobFileConflictResponse());
     }
 
     // Update the SubTask results
@@ -70,7 +68,17 @@ public class TaskController(
     //  If all Subtasks on the parent Task received - then submit to TaskApi
     if (!incompleteSubTasks.Any())
     {
-      await resultsService.CompleteRelayTask(subtask.RelayTask);
+      try
+      {
+        await resultsService.CompleteRelayTask(subtask.RelayTask);
+      }
+      catch (RackitApiClientException e)
+      {
+        if (e.UpstreamApiResponse is { StatusCode: HttpStatusCode.Conflict })
+          return Conflict(new JobFileConflictResponse());
+
+        throw;
+      }
     }
 
     return Ok("Job saved");

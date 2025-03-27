@@ -253,7 +253,7 @@ public class TaskApiClient(
     {
       const string message = "Unsuccessful Response from Submit Results Endpoint";
       logger.LogError(message);
-      logger.LogDebug("Response Body: {Body}", body);
+      logger.LogDebug("Response Status {Status}, and Body: {Body}", response.StatusCode, body);
 
       throw new RackitApiClientException(message, response);
     }

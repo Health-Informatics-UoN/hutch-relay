@@ -52,6 +52,7 @@ public class ResultsService(
 
           await Task.Delay(delayInSeconds * 1000);
         }
+        else throw;
       }
     }
   }

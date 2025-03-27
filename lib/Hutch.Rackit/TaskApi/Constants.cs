@@ -19,3 +19,8 @@ public static class DistributionCode
 
   public const string Icd = "ICD-MAIN";
 }
+
+public static class ResultResponseStatus
+{
+  public const string Conflict = "CONFLICT";
+}
