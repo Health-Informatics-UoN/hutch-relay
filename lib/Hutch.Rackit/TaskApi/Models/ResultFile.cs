@@ -137,8 +137,8 @@ public static class ResultFileExtensions
     {
       AnalysisType.Distribution => analysisCode switch
       {
-        DistributionCode.Generic => "code.distribution",
-        DistributionCode.Demographics => "demographics.distribution",
+        DistributionCode.Generic => ResultFileName.CodeDistribution,
+        DistributionCode.Demographics => ResultFileName.DemographicsDistribution,
         _ => throw new NotImplementedException(notImplementedMessage)
       },
       _ => throw new NotImplementedException(notImplementedMessage)

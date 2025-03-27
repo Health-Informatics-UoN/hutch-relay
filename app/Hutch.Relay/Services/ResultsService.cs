@@ -16,7 +16,10 @@ public class ResultsService(
   ITaskApiClient upstreamTasks,
   IRelayTaskService relayTaskService,
   [FromKeyedServices(nameof(AvailabilityAggregator))]
-  IQueryResultAggregator availabilityAggregator)
+  IQueryResultAggregator availabilityAggregator,
+  [FromKeyedServices(nameof(GenericDistributionAggregator))]
+  IQueryResultAggregator codeDistributionAggregator
+)
 {
   private readonly ApiClientOptions options = options.Value;
 
@@ -117,6 +120,7 @@ public class ResultsService(
     IQueryResultAggregator aggregator = relayTask.Type switch
     {
       TaskTypes.TaskApi_Availability => availabilityAggregator,
+      TaskTypes.TaskApi_CodeDistribution => codeDistributionAggregator,
       _ => throw new ArgumentOutOfRangeException(
         $"Relay tried to handle a Task Type it doesn't support Results Aggregation for: {relayTask.Type}")
     };

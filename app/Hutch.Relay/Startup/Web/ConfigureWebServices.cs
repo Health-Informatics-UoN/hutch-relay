@@ -57,7 +57,9 @@ public static class ConfigureWebServices
       .AddTransient<IObfuscator, Obfuscator>();
     
     // Aggregators
-    builder.Services.AddKeyedTransient<IQueryResultAggregator,AvailabilityAggregator>(nameof(AvailabilityAggregator));
+    builder.Services
+      .AddKeyedTransient<IQueryResultAggregator,AvailabilityAggregator>(nameof(AvailabilityAggregator))
+      .AddKeyedTransient<IQueryResultAggregator,GenericDistributionAggregator>(nameof(GenericDistributionAggregator));
 
     // Hosted Services
     builder.Services.AddHostedService<BackgroundUpstreamTaskPoller>();

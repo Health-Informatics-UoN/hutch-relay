@@ -20,6 +20,13 @@ public static class DistributionCode
   public const string Icd = "ICD-MAIN";
 }
 
+public static class ResultFileName
+{
+  public const string CodeDistribution = "code.distribution";
+
+  public const string DemographicsDistribution = "demographics.distribution";
+}
+
 public static class ResultResponseStatus
 {
   public const string Conflict = "CONFLICT";

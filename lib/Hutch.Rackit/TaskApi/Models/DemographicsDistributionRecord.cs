@@ -13,7 +13,7 @@ namespace Hutch.Rackit.TaskApi.Models;
 [CultureInfo("en")]
 [NewLine("\n")]
 [Encoding("utf-8")]
-public class DemographicsDistributionRecord : IResultFileRecord
+public record DemographicsDistributionRecord : IResultFileRecord
 {
   /// <summary>
   /// Collection ID representing the Biobank or Dataset these results are for

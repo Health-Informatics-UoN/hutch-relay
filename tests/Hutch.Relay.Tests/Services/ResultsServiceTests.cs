@@ -51,6 +51,7 @@ public class ResultsServiceTests
       Options.Create<ApiClientOptions>(new()),
       null!,
       tasks.Object,
+      aggregator.Object,
       aggregator.Object
     );
 
