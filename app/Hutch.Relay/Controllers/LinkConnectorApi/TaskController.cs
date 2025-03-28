@@ -1,4 +1,6 @@
+using System.Net;
 using System.Text.Json;
+using Hutch.Rackit;
 using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
@@ -14,10 +16,9 @@ namespace Hutch.Relay.Controllers.LinkConnectorApi;
 public class TaskController(
   IRelayTaskService relayTaskService,
   ResultsService resultsService,
-  IRelayTaskQueue queues,
-  IObfuscationService obfuscationService) : ControllerBase
+  IRelayTaskQueue queues
+) : ControllerBase
 {
-
   [HttpGet("nextjob/{collectionId}")]
   [SwaggerOperation("Fetch next job from queue.")]
   [SwaggerResponse(200, Type = typeof(TaskApiBaseResponse))]
@@ -41,7 +42,7 @@ public class TaskController(
     return Ok(Convert.ChangeType(task, type));
   }
 
-  [HttpPost("result/{uuid}/{collectionId}")]
+  [HttpPost("result/{uuid:guid}/{collectionId}")]
   [SwaggerOperation("Upload job result by UUID and CollectionId.")]
   [SwaggerResponse(200)]
   [SwaggerResponse(401)]
@@ -55,24 +56,29 @@ public class TaskController(
     // Check if the parent Task has already been submitted.
     if (subtask.RelayTask.CompletedAt is not null)
     {
-      return Conflict(new { message = $"The task has already been submitted." });
+      return Conflict(new JobFileConflictResponse());
     }
 
     // Update the SubTask results
     await relayTaskService.SetSubTaskResult(uuid, JsonSerializer.Serialize(result));
+
     // Check if there are incomplete Subtasks that belong to the same Task
-    var incompleteSubTasks = await relayTaskService.ListSubTasks(subtask.RelayTask.Id, incompleteOnly: true);
+    var incompleteSubTasks = (await relayTaskService.ListSubTasks(subtask.RelayTask.Id, incompleteOnly: true)).ToList();
+
     //  If all Subtasks on the parent Task received - then submit to TaskApi
-    if (!incompleteSubTasks.ToList().Any())
+    if (!incompleteSubTasks.Any())
     {
-      //Aggregate SubTasks Result.Count
-      var finalResult = await resultsService.AggregateResults(subtask.RelayTask.Id);
-      // Obfuscate the result
-      finalResult.Results.Count = obfuscationService.Obfuscate(finalResult.Results.Count);
-      // Submit the results to TaskApi
-      await resultsService.SubmitResults(subtask.RelayTask, finalResult);
-      // Set Task as Complete
-      await relayTaskService.SetComplete(subtask.RelayTask.Id);
+      try
+      {
+        await resultsService.CompleteRelayTask(subtask.RelayTask);
+      }
+      catch (RackitApiClientException e)
+      {
+        if (e.UpstreamApiResponse is { StatusCode: HttpStatusCode.Conflict })
+          return Conflict(new JobFileConflictResponse());
+
+        throw;
+      }
     }
 
     return Ok("Job saved");

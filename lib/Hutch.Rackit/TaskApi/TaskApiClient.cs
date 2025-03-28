@@ -161,6 +161,9 @@ public class TaskApiClient(
 
       try
       {
+        // Debug Log the raw payload before any parsing into RACKit models occurs
+        logger.LogDebug("Job received: {Payload}", await result.Content.ReadAsStringAsync());
+        
         return await result.Content.ReadFromJsonAsync<T>();
       }
       catch (JsonException e)
@@ -250,7 +253,7 @@ public class TaskApiClient(
     {
       const string message = "Unsuccessful Response from Submit Results Endpoint";
       logger.LogError(message);
-      logger.LogDebug("Response Body: {Body}", body);
+      logger.LogDebug("Response Status {Status}, and Body: {Body}", response.StatusCode, body);
 
       throw new RackitApiClientException(message, response);
     }

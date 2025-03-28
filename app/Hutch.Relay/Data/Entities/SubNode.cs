@@ -6,5 +6,5 @@ public class SubNode
 {
   public Guid Id { get; set; }
 
-  public ICollection<RelayUser> RelayUsers { get; set; } = new Collection<RelayUser>();
+  public ICollection<RelayUser> RelayUsers { get; set; } = [];
 }

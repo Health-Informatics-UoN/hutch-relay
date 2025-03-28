@@ -27,7 +27,7 @@ public class UpstreamTaskPoller(
       throw new InvalidOperationException(
         "The RelayTask Queue Backend is not ready; please check the logs and your configuration.");
 
-    // Start polling for job types:
+    // Start polling for job types: // TODO: Should this be configurable?
     var availabilityQueries =
       upstreamTasks.PollJobQueue<AvailabilityJob>(options.Value, stoppingToken);
     var collectionAnalyses =
@@ -49,21 +49,25 @@ public class UpstreamTaskPoller(
     {
       try
       {
+        // Check for subnodes before we even start polling,
+        // to avoid pulling jobs and losing them / making http requests with no purpose
+        subNodes.EnsureSubNodes();
+
         await foreach (var job in jobs.WithCancellation(cancellationToken))
         {
-          logger.LogInformation("Task handled: ({Type}) {Id}", typeof(T).Name, job.Uuid);
+          logger.LogInformation("Task retrieved: ({Type}) {Id}", typeof(T).Name, job.Uuid);
 
+          // Get up-to-date Sub Nodes list
           var subnodes = (await subNodes.List()).ToList();
-          if (subnodes.Count == 0)
-          {
-            logger.LogWarning("There are no subnodes configured!");
-            break;
-          }
+          // Make sure there still are some; leave the loop if not
+          if (!subnodes.Any()) break;
 
           // Create a parent task
           var relayTask = await relayTasks.Create(new()
           {
-            Id = job.Uuid, Collection = job.Collection
+            Id = job.Uuid,
+            Type = IRelayTaskService.GetTaskApiType(job),
+            Collection = job.Collection
           });
 
           // Fan out to subtasks
@@ -83,10 +87,20 @@ public class UpstreamTaskPoller(
       }
       catch (Exception e)
       {
+        var delayTime = TimeSpan.FromSeconds(5);
         // Swallow exceptions and just log; the while loop will restart polling
-        logger.LogError(e, "An error occurred handling '{TypeName}' tasks", typeof(T).Name);
+        logger.LogError(e,
+          "An error occurred handling '{TypeName}' tasks. Waiting {DelaySeconds} to retry.",
+          typeof(T).Name,
+          Math.Floor(delayTime.TotalSeconds));
 
         // TODO: maintain an exception limit that eventually DOES quit?
+
+        // Delay before resuming the loop
+        await Task
+          .Delay(delayTime, cancellationToken)
+          // Stop this Task from throwing when cancelled
+          .ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing | ConfigureAwaitOptions.ContinueOnCapturedContext);
       }
     }
   }

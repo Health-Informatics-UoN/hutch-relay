@@ -8,6 +8,8 @@ namespace Hutch.Relay.Services;
 
 public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
 {
+  
+
   /// <summary>
   /// Get a RelayTask by id
   /// </summary>
@@ -21,9 +23,10 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
                    .SingleOrDefaultAsync(t => t.Id == id)
                  ?? throw new KeyNotFoundException();
 
-    return new RelayTaskModel
+    return new()
     {
       Id = entity.Id,
+      Type = entity.Type,
       CreatedAt = entity.CreatedAt,
       CompletedAt = entity.CompletedAt,
       Collection = entity.Collection
@@ -40,15 +43,17 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
     var entity = new RelayTask
     {
       Id = model.Id,
+      Type = model.Type,
       Collection = model.Collection
     };
 
     db.RelayTasks.Add(entity);
     await db.SaveChangesAsync();
 
-    return new RelayTaskModel
+    return new()
     {
       Id = entity.Id,
+      Type = entity.Type,
       CreatedAt = entity.CreatedAt,
       CompletedAt = entity.CompletedAt,
       Collection = entity.Collection
@@ -72,9 +77,10 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
     db.RelayTasks.Update(entity);
     await db.SaveChangesAsync();
 
-    return new RelayTaskModel
+    return new()
     {
       Id = entity.Id,
+      Type = entity.Type,
       CreatedAt = entity.CreatedAt,
       CompletedAt = entity.CompletedAt,
       Collection = entity.Collection
@@ -95,6 +101,7 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
     return query.Select(x => new RelayTaskModel
     {
       Id = x.Id,
+      Type = x.Type,
       Collection = x.Collection,
       CreatedAt = x.CreatedAt
     });
@@ -136,6 +143,7 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
       RelayTask = new() // TODO: Automapper or something more sane than this?
       {
         Id = parent.Id,
+        Type = parent.Type,
         Collection = parent.Collection,
         CreatedAt = parent.CreatedAt,
         CompletedAt = parent.CompletedAt,
@@ -177,6 +185,7 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
       RelayTask = new()
       {
         Id = entity.RelayTask.Id,
+        Type = entity.RelayTask.Type,
         Collection = entity.RelayTask.Collection,
         CreatedAt = entity.RelayTask.CreatedAt,
         CompletedAt = entity.RelayTask.CompletedAt,
@@ -192,23 +201,26 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
   /// <exception cref="KeyNotFoundException">The RelaySubTask does not exist.</exception>
   public async Task<RelaySubTaskModel> GetSubTask(Guid id)
   {
-    var entity = await db.RelaySubTasks.AsNoTracking().Include(relaySubTask => relaySubTask.Owner)
+    var entity = await db.RelaySubTasks.AsNoTracking()
+                   .Include(relaySubTask => relaySubTask.Owner)
                    .ThenInclude(subNode => subNode.RelayUsers)
                    .Include(relaySubTask => relaySubTask.RelayTask)
                    .SingleOrDefaultAsync(t => t.Id == id)
                  ?? throw new KeyNotFoundException();
 
-    return new RelaySubTaskModel()
+    return new()
     {
       Id = entity.Id,
-      Owner = new SubNodeModel
+      Owner = new()
       {
         Id = entity.Owner.Id,
         Owner = entity.Owner.RelayUsers.First().UserName ?? string.Empty
       },
-      RelayTask = new RelayTaskModel()
+      RelayTask = new()
       {
-        Id = entity.RelayTask.Id
+        Id = entity.RelayTask.Id,
+        Type = entity.RelayTask.Type,
+        Collection = entity.RelayTask.Collection,
       },
       Result = entity.Result
     };
@@ -229,21 +241,24 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
 
     if (incompleteOnly) query = query.Where(x => x.Result == null);
 
-    var relaySubTasks = await query.Include(relaySubTask => relaySubTask.Owner)
+    var relaySubTasks = await query
+      .Include(relaySubTask => relaySubTask.Owner)
       .ThenInclude(subNode => subNode.RelayUsers)
       .Include(relaySubTask => relaySubTask.RelayTask).ToListAsync();
 
     return relaySubTasks.Select(x => new RelaySubTaskModel()
     {
       Id = x.Id,
-      Owner = new SubNodeModel()
+      Owner = new()
       {
         Id = x.Owner.Id,
         Owner = x.Owner.RelayUsers.First().UserName ?? string.Empty
       },
-      RelayTask = new RelayTaskModel()
+      RelayTask = new()
       {
-        Id = x.RelayTask.Id
+        Id = x.RelayTask.Id,
+        Type = x.RelayTask.Type,
+        Collection = x.RelayTask.Collection,
       },
       Result = x.Result
     });

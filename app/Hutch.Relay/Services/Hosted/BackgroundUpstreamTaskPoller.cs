@@ -10,7 +10,7 @@ public class BackgroundUpstreamTaskPoller(
   {
     while (!stoppingToken.IsCancellationRequested)
     {
-      using var scope = serviceScopeFactory.CreateScope();
+      using var scope = serviceScopeFactory.CreateScope(); // TODO: We need more granular scope for EF, e.g. each polling thread? each job handling thread?
       var poller = scope.ServiceProvider.GetRequiredService<UpstreamTaskPoller>();
 
       await poller.PollAllQueues(stoppingToken);

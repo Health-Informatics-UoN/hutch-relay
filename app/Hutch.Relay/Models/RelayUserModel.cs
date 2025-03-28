@@ -5,5 +5,5 @@ namespace Hutch.Relay.Models;
 
 public class RelayUserModel : IdentityUser
 {
-  public ICollection<SubNodeModel> SubNodes { get; set; } = new Collection<SubNodeModel>();
+  public ICollection<SubNodeModel> SubNodes { get; set; } = [];
 }

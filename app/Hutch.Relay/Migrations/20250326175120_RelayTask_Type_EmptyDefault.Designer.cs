@@ -3,6 +3,7 @@ using System;
 using Hutch.Relay.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hutch.Relay.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250326175120_RelayTask_Type_EmptyDefault")]
+    partial class RelayTask_Type_EmptyDefault
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -43,7 +46,7 @@ namespace Hutch.Relay.Migrations
 
                     b.HasIndex("RelayTaskId");
 
-                    b.ToTable("RelaySubTasks", (string)null);
+                    b.ToTable("RelaySubTasks");
                 });
 
             modelBuilder.Entity("Hutch.Relay.Data.Entities.RelayTask", b =>
@@ -72,7 +75,7 @@ namespace Hutch.Relay.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("RelayTasks", (string)null);
+                    b.ToTable("RelayTasks");
                 });
 
             modelBuilder.Entity("Hutch.Relay.Data.Entities.SubNode", b =>
@@ -83,7 +86,7 @@ namespace Hutch.Relay.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SubNodes", (string)null);
+                    b.ToTable("SubNodes");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -303,7 +306,7 @@ namespace Hutch.Relay.Migrations
 
                     b.HasIndex("SubNodesId");
 
-                    b.ToTable("RelayUserSubNode", (string)null);
+                    b.ToTable("RelayUserSubNode");
                 });
 
             modelBuilder.Entity("Hutch.Relay.Data.Entities.RelayUser", b =>
