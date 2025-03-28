@@ -87,14 +87,18 @@ public class UpstreamTaskPoller(
       }
       catch (Exception e)
       {
+        var delayTime = TimeSpan.FromSeconds(5);
         // Swallow exceptions and just log; the while loop will restart polling
-        logger.LogError(e, "An error occurred handling '{TypeName}' tasks. Waiting 5s to retry.", typeof(T).Name);
+        logger.LogError(e,
+          "An error occurred handling '{TypeName}' tasks. Waiting {DelaySeconds} to retry.",
+          typeof(T).Name,
+          Math.Floor(delayTime.TotalSeconds));
 
         // TODO: maintain an exception limit that eventually DOES quit?
-        
+
         // Delay before resuming the loop
         await Task
-          .Delay(5000, cancellationToken)
+          .Delay(delayTime, cancellationToken)
           // Stop this Task from throwing when cancelled
           .ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing | ConfigureAwaitOptions.ContinueOnCapturedContext);
       }
