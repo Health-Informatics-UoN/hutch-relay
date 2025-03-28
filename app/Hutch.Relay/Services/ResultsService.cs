@@ -138,7 +138,7 @@ public class ResultsService(
     var incompleteTasks = await relayTaskService.ListIncomplete();
     foreach (var task in incompleteTasks)
     {
-      var expiryThreshold = TimeSpan.FromMinutes(1); // TODO: should this be configurable?
+      var expiryThreshold = TimeSpan.FromMinutes(4); // TODO: should this be configurable?
 
       var timeInterval = DateTimeOffset.UtcNow.Subtract(task.CreatedAt);
       logger.LogInformation("Incomplete Task:{Task} has been running for {TimeInterval}...", task.Id,
