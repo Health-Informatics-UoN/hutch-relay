@@ -142,11 +142,19 @@ public class ResultsService(
     var incompleteTasks = await relayTaskService.ListIncomplete();
     foreach (var task in incompleteTasks)
     {
-      var expiryThreshold = TimeSpan.FromMinutes(4); // TODO: should this be configurable?
-
+      // TODO: should this be configurable?
+      var expiryThreshold = task.Type switch
+      {
+        TaskTypes.TaskApi_DemographicsDistribution
+          or TaskTypes.TaskApi_CodeDistribution
+          => TimeSpan.FromHours(1.8), // Default Task API configurations wait 2 hours between sending and processing distribution
+        _ => TimeSpan.FromMinutes(4) // Default Task API configurations expect Availability results within 5 mins
+      };
+      
       var timeInterval = DateTimeOffset.UtcNow.Subtract(task.CreatedAt);
-      logger.LogInformation("Incomplete Task:{Task} has been running for {TimeInterval}...", task.Id,
+      logger.LogDebug("Incomplete Task:{Task} has been running for {TimeInterval}...", task.Id,
         timeInterval.ToString());
+      
       if (timeInterval > expiryThreshold)
       {
         logger.LogInformation("Task:{Task} has reached the expiry threshold of {ExpiryThreshold}. Completing...",
