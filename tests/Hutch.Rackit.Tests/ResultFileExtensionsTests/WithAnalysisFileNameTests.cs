@@ -22,7 +22,7 @@ public class WithAnalysisFileNameTests
     var resultFile = new ResultFile();
 
     Assert.Throws<NotImplementedException>(() =>
-      resultFile.WithAnalysisFileName(analysisCode, analysisCode));
+      resultFile.WithAnalysisFileName(analysisType, analysisCode));
   }
 
   [Theory]
