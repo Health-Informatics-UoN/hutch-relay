@@ -72,7 +72,7 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
                    .SingleOrDefaultAsync(t => t.Id == id)
                  ?? throw new KeyNotFoundException();
 
-    entity.CompletedAt = DateTimeOffset.Now;
+    entity.CompletedAt = DateTimeOffset.UtcNow;
 
     db.RelayTasks.Update(entity);
     await db.SaveChangesAsync();

@@ -90,7 +90,7 @@ public class UpstreamTaskPoller(
         var delayTime = TimeSpan.FromSeconds(5);
         // Swallow exceptions and just log; the while loop will restart polling
         logger.LogError(e,
-          "An error occurred handling '{TypeName}' tasks. Waiting {DelaySeconds} to retry.",
+          "An error occurred handling '{TypeName}' tasks. Waiting {DelaySeconds}s before resuming polling.",
           typeof(T).Name,
           Math.Floor(delayTime.TotalSeconds));
 
