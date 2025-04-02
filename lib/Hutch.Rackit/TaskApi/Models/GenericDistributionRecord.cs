@@ -45,12 +45,12 @@ public record GenericDistributionRecord : IResultFileRecord
   public string Description { get; set; } = string.Empty;
 
   // Optional additional stats
-  [Name("MIN")] [Index(4)] public float? Min { get; set; }
-  [Index(5)] public float? Q1 { get; set; }
-  [Name("MEDIAN")] [Index(6)] public float? Median { get; set; }
-  [Name("MEAN")] [Index(7)] public float? Mean { get; set; }
-  [Index(8)] public float? Q3 { get; set; }
-  [Name("MAX")] [Index(9)] public float? Max { get; set; }
+  [Name("MIN")] [Index(4)] public double? Min { get; set; }
+  [Index(5)] public double? Q1 { get; set; }
+  [Name("MEDIAN")] [Index(6)] public double? Median { get; set; }
+  [Name("MEAN")] [Index(7)] public double? Mean { get; set; }
+  [Index(8)] public double? Q3 { get; set; }
+  [Name("MAX")] [Index(9)] public double? Max { get; set; }
 
   /// <summary>
   /// Represents the distribution of the Count across sub-values for this Code.
