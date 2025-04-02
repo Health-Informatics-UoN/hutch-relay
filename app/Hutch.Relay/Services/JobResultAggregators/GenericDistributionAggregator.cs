@@ -106,7 +106,13 @@ file static class GenericDistributionAggregatorExtensions
   {
     foreach (var record in records)
     {
-      if (!accumulator.records.TryGetValue(record.Code, out var accumulatorRecord))
+      if (accumulator.records.TryGetValue(record.Code, out var accumulatorRecord))
+      {
+        // Key was already present
+        // merge Count but otherwise keep the base Accumulator record's properties
+        accumulatorRecord.Count += record.Count;
+      }
+      else
       {
         // Create a brand new "base" record, inheriting most (but not all) from the current value
         accumulator.records.Add(
@@ -116,12 +122,6 @@ file static class GenericDistributionAggregatorExtensions
             // Override Collection with the Upstream ID instead of Downstream
             Collection = accumulator.collectionId,
           });
-      }
-      else
-      {
-        // Key was already present
-        // merge Count but otherwise keep the base Accumulator record's properties
-        accumulatorRecord.Count += record.Count;
       }
     }
   }
