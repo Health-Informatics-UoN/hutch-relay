@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services.JobResultAggregators;
@@ -151,17 +152,38 @@ public class DemographicsDistributionAggregatorTests
   }
 
 
+  [Theory]
+  [InlineData(true)]
+  [InlineData(false)]
   public void AccumulateData_WhenResultsIncludeAgeRecords_CorrectAlternativesAccumulation(bool ageOnly)
   {
+    // TODO: When AGE aggregation support is added, revisit this
+    // When AGE records are included in inputs
+    //   - AGE never appears in the accumulated state (i.e. ignore AGE records)
+    //   - Other records are accumulated as normal
     DemographicsAccumulator initialAccumulator = new("test_collection");
 
     DemographicsDistributionRecord ageRecord = new()
       { Collection = "sub_collection", Code = "AGE", Count = 16, Min = 9, Max = 25, Mean = 16.75, Median = 15.5 };
-  }
 
-  public void AccumulateData_WhenResultsIncludeAgeRecords_AgeRecordsAreIgnored(bool ageOnly)
-  {
-    DemographicsAccumulator initialAccumulator = new("test_collection");
+    DemographicsDistributionRecord sexRecord = new()
+      { Code = "SEX", Collection = "sub_collection", Alternatives = "^MALE|155^FEMALE|135^" };
+
+    List<DemographicsDistributionRecord> inputRecords = ageOnly ? [ageRecord] : [ageRecord, sexRecord];
+
+    Dictionary<string, List<int>> expectedSexAlternatives =
+      new() { ["MALE"] = [155], ["FEMALE"] = [135] };
+
+    var actual = initialAccumulator.AccumulateData(inputRecords);
+
+    // AGE never appears in the accumulated state (i.e. ignore AGE records)
+    Assert.False(actual.Alternatives.ContainsKey("AGE"));
+
+    if (!ageOnly)
+    {
+      // Other records are accumulated as normal
+      Assert.Equivalent(expectedSexAlternatives, actual.Alternatives["SEX"].Alternatives);
+    }
   }
 
   #endregion

@@ -34,12 +34,11 @@ internal static class DemographicsDistributionAggregatorExtensions
   {
     foreach (var record in records)
     {
+      if (record.Code == "AGE") continue;
+
       if (accumulator.Alternatives.TryGetValue(record.Code, out var alternativesAccumulator))
       {
         // Key was already present
-
-        // TODO: Different Logic for Age goes here? for now ignore Age demographics
-        if (record.Code == "AGE") continue;
 
         // Add Alternatives
         var alternatives = record.GetAlternatives();
