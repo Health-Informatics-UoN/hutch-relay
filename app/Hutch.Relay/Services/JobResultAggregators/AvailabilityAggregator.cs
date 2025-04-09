@@ -8,6 +8,10 @@ public class AvailabilityAggregator(IObfuscator obfuscator) : IQueryResultAggreg
 {
   public QueryResult Process(List<RelaySubTaskModel> subTasks)
   {
+    // TODO: Availability Results *CAN* contain Results Files too
+    // If (when) Relay will support this, those files will need to be aggregated
+    // Similar to e.g. Demographics Distribution
+    
     var aggregateCount = 0;
 
     // Aggregate across all valid subtasks

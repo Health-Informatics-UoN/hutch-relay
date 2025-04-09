@@ -42,7 +42,7 @@ public class ResultsServiceTests
 
     var aggregator = new Mock<IQueryResultAggregator>();
     aggregator
-      .Setup(x => 
+      .Setup(x =>
         x.Process(It.IsAny<List<RelaySubTaskModel>>()))
       .Returns(() => new() { Count = 0 });
 
@@ -51,6 +51,7 @@ public class ResultsServiceTests
       Options.Create<ApiClientOptions>(new()),
       null!,
       tasks.Object,
+      aggregator.Object,
       aggregator.Object,
       aggregator.Object
     );

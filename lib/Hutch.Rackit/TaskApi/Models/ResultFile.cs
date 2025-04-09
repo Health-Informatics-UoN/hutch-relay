@@ -55,6 +55,9 @@ public class ResultFile
   public string FileType { get; set; } = "BCOS";
 }
 
+/// <summary>
+/// Extensions methods for the <see cref="ResultFile"/> model
+/// </summary>
 public static class ResultFileExtensions
 {
   /// <summary>
@@ -145,5 +148,37 @@ public static class ResultFileExtensions
     };
 
     return resultFile;
+  }
+}
+
+/// <summary>
+/// Additional helpers for working with <see cref="ResultFile"/> models
+/// </summary>
+public static class ResultFileHelpers
+{
+  /// <summary>
+  /// Parse decoded <see cref="ResultFile.FileData"/> into a list of <see cref="IResultFileRecord"/> models
+  /// </summary>
+  /// <example>
+  /// <code>
+  /// List&lt;GenericDistributionRecord&gt; data = []; // some data
+  /// ResultFile resultFile = new().WithData(data); // encodes as base64 TSV
+  /// var decoded = resultFile.DecodeData(); // decode from base64
+  /// var parsed = ResultFileHelpers.ParseResultFileData&lt;GenericDistributionRecord&gt;(decoded);
+  /// Assert.Equivalent(data, parsed); // true
+  /// </code>
+  /// </example>
+  /// <param name="tsvData"></param>
+  /// <typeparam name="T"></typeparam>
+  /// <returns></returns>
+  public static List<T> ParseFileData<T>(string tsvData) where T : IResultFileRecord
+  {
+    var config = CsvConfiguration.FromAttributes<T>();
+    config.MissingFieldFound = null; // The model will initialise missing fields
+
+    using var reader = new StringReader(tsvData);
+    using var tsv = new CsvReader(reader, config);
+
+    return tsv.GetRecords<T>().ToList();
   }
 }
