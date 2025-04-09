@@ -10,17 +10,6 @@ namespace Hutch.Relay.Services.JobResultAggregators;
 
 public class GenericDistributionAggregator(IObfuscator obfuscator) : IQueryResultAggregator
 {
-  private static List<GenericDistributionRecord> ParseResultFile(string tsvData)
-  {
-    var config = CsvConfiguration.FromAttributes<GenericDistributionRecord>();
-    config.MissingFieldFound = null; // The model will initialise missing fields
-
-    using var reader = new StringReader(tsvData);
-    using var tsv = new CsvReader(reader, config);
-
-    return tsv.GetRecords<GenericDistributionRecord>().ToList();
-  }
-
   public QueryResult Process(List<RelaySubTaskModel> subTasks)
   {
     // Aggregation State
@@ -52,7 +41,7 @@ public class GenericDistributionAggregator(IObfuscator obfuscator) : IQueryResul
         if (rawFileData.Split("\n").Length < 2) continue;
 
         // If we actually have data, go ahead and parse
-        var records = ParseResultFile(rawFileData);
+        var records = ResultFileHelpers.ParseFileData<GenericDistributionRecord>(rawFileData);
 
         accumulator.AccumulateData(records);
       }

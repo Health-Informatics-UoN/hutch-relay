@@ -1,20 +1,111 @@
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using Hutch.Rackit.TaskApi;
 using Hutch.Rackit.TaskApi.Models;
+using Hutch.Relay.Config;
+using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
+using Hutch.Relay.Services;
 using Hutch.Relay.Services.JobResultAggregators;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Options;
+using Moq;
 using Xunit;
 
 namespace Hutch.Relay.Tests.Services.QueryResultAggregators;
 
 public class DemographicsDistributionAggregatorTests
 {
+  // We don't do in depth obfuscation tests here; they are done in the Obfuscator test suite.
+  // But we do attempt to ensure that the Obfuscator is being applied to aggregate outputs
+
   // Later testing
   //   - Test that the validated accumulator correctly finalises into expected outputs for a given input
-  //      - Test the Finaliser method(s)
   //      - Test `Process()` end-to-end much like CodeDistribution does today
 
-  #region AccumulateData
+  #region Test Data
+
+  private static RelaySubTaskModel GenerateSubTaskWithResultsData(List<GenericDistributionRecord> data)
+  {
+    var subTaskId = Guid.NewGuid();
+    var subNodeId = data.FirstOrDefault()?.Collection ?? Guid.NewGuid().ToString();
+
+    return new()
+    {
+      Id = subTaskId,
+      Owner = new() { Id = Guid.NewGuid(), Owner = "test_user" },
+      RelayTask = new()
+      {
+        Id = Guid.NewGuid().ToString(),
+        Collection = "parent_collection",
+        Type = TaskTypes.TaskApi_DemographicsDistribution,
+      },
+      Result = JsonSerializer.Serialize(new JobResult
+      {
+        Uuid = subTaskId.ToString(),
+        CollectionId = subNodeId,
+        Results = new()
+        {
+          Count = data.Count,
+          DatasetCount = 1,
+          Files =
+          [
+            new ResultFile()
+              .WithAnalysisFileName(AnalysisType.Distribution, DistributionCode.Demographics)
+              .WithData(data)
+          ]
+        }
+      })
+    };
+  }
+
+  private readonly List<RelaySubTaskModel> ProcessSubTasks =
+  [
+    GenerateSubTaskWithResultsData([
+      new()
+      {
+        Collection = "sub_collection1",
+        Code = "SEX",
+        Description = "Sex",
+        Count = 145,
+        Alternatives = "^MALE|70^FEMALE|75^",
+        Dataset = "person",
+        Category = "Demographics"
+      },
+      new()
+      {
+        Collection = "sub_collection1",
+        Code = "GENOMICS",
+        Description = "Genomics",
+        Count = 1005,
+        Alternatives = "^No|1005^Imputed whole genome data|0^",
+        Dataset = "person",
+        Category = "Demographics"
+      },
+    ]),
+    GenerateSubTaskWithResultsData([
+      new()
+      {
+        Collection = "sub_collection2",
+        Code = "SEX",
+        Description = "Sex",
+        Count = 1435,
+        Alternatives = "^MALE|720^FEMALE|715^",
+        Dataset = "person",
+        Category = "Demographics"
+      },
+      new()
+      {
+        Collection = "sub_collection2",
+        Code = "GENOMICS",
+        Description = "Genomics",
+        Count = 1477,
+        Alternatives = "^No|1321^Imputed whole genome data|156^",
+        Dataset = "person",
+        Category = "Demographics"
+      },
+    ])
+  ];
 
   private readonly DemographicsAccumulator _singleCodeAccumulator =
     new("test_collection")
@@ -26,7 +117,9 @@ public class DemographicsDistributionAggregatorTests
           Collection = "sub_collection",
           Code = "EXISTING_CODE",
           Description = "TEST_DESCRIPTION",
-          Alternatives = "^BRACKET1|50^BRACKET2|70^"
+          Alternatives = "^BRACKET1|50^BRACKET2|70^",
+          Dataset = "Person",
+          Category = "Demographic"
         })
         {
           Alternatives =
@@ -37,6 +130,47 @@ public class DemographicsDistributionAggregatorTests
         }
       }
     };
+
+  private readonly DemographicsAccumulator _multiCodeAccumulator =
+    new("test_collection")
+    {
+      Alternatives =
+      {
+        ["CODE1"] = new(new()
+        {
+          Collection = "sub_collection",
+          Code = "CODE1",
+          Description = "TEST_DESCRIPTION",
+          Alternatives = "^BRACKET1|50^BRACKET2|70^"
+        })
+        {
+          Alternatives =
+          {
+            ["BRACKET1"] = [50],
+            ["BRACKET2"] = [70, 80]
+          }
+        },
+        ["CODE2"] = new(new()
+        {
+          Collection = "sub_collection2",
+          Code = "CODE2",
+          Description = "TEST_DESCRIPTION",
+          Alternatives = "^BRACKET_A|20^BRACKET2_B|320^"
+        })
+        {
+          Alternatives =
+          {
+            ["BRACKET_A"] = [20, 54, 7], // 81
+            ["BRACKET_B"] = [320, 80, 67, 90], // 557
+            ["BRACKET_C"] = [32] // 32
+          }
+        }
+      }
+    };
+
+  #endregion
+
+  #region AccumulateData
 
   [Fact]
   public void AccumulateData_WhenFirstRowForCode_CorrectAlternativesAccumulation()
@@ -61,7 +195,9 @@ public class DemographicsDistributionAggregatorTests
       Collection = "sub_collection",
       Code = "EXISTING_CODE",
       Description = "TEST_DESCRIPTION",
-      Alternatives = "^BRACKET1|50^BRACKET2|70^"
+      Alternatives = "^BRACKET1|50^BRACKET2|70^",
+      Dataset = "Person",
+      Category = "Demographic"
     };
 
     var actual = initialAccumulator.AccumulateData(inputRecords);
@@ -104,7 +240,9 @@ public class DemographicsDistributionAggregatorTests
       Collection = "sub_collection",
       Code = "EXISTING_CODE",
       Description = "TEST_DESCRIPTION",
-      Alternatives = "^BRACKET1|50^BRACKET2|70^"
+      Alternatives = "^BRACKET1|50^BRACKET2|70^",
+      Dataset = "Person",
+      Category = "Demographic"
     };
 
     var actual = initialAccumulator.AccumulateData(inputRecords);
@@ -184,6 +322,193 @@ public class DemographicsDistributionAggregatorTests
       // Other records are accumulated as normal
       Assert.Equivalent(expectedSexAlternatives, actual.Alternatives["SEX"].Alternatives);
     }
+  }
+
+  #endregion
+
+  #region FinaliseAggregation
+
+  // FinaliseAggregation
+  //  Against each coded base record
+  //    - retains key Base record values (Dataset, Category, (Description)...)
+  //    - Sets correct Collection ID (Parent Task)
+  //    - Sums Alternatives
+  //    - Obfuscates Sum
+  //    - Calculates final dependent values (e.g. Count)
+
+  [Fact]
+  public void FinaliseAggregation_CorrectBaseRecordProperties()
+  {
+    //    - retains key Base record values (Dataset, Category, (Description)...)
+    //    - Sets correct Collection ID (Parent Task)
+    var demographicsAccumulator = _multiCodeAccumulator;
+
+    var actual = demographicsAccumulator.FinaliseAggregation();
+
+    Assert.All(actual,
+      x =>
+      {
+        // Base Record matches
+        Assert.Equal(_multiCodeAccumulator.Alternatives[x.Code].BaseRecord.Description, x.Description);
+        Assert.Equal(_multiCodeAccumulator.Alternatives[x.Code].BaseRecord.Dataset, x.Dataset);
+        Assert.Equal(_multiCodeAccumulator.Alternatives[x.Code].BaseRecord.Category, x.Category);
+
+        // Base Record changes
+        Assert.Equal(_multiCodeAccumulator.CollectionId, x.Collection);
+      });
+  }
+
+  [Fact]
+  public void FinaliseAggregation_SumsAlternativesCorrectly()
+  {
+    var demographicsAccumulator = _multiCodeAccumulator;
+
+
+    Dictionary<string, string> expectedAlternatives = new()
+    {
+      ["CODE1"] = "^BRACKET1|50^BRACKET2|150^",
+      ["CODE2"] = "^BRACKET_A|81^BRACKET_B|557^BRACKET_C|32^"
+    };
+
+    var actual = demographicsAccumulator.FinaliseAggregation();
+
+    foreach (var record in actual)
+    {
+      Assert.Equal(expectedAlternatives[record.Code], record.Alternatives);
+    }
+  }
+
+  [Fact]
+  public void FinaliseAggregation_Obfuscator_CalledOncePerAlternativesKey()
+  {
+    var demographicsAccumulator = _multiCodeAccumulator;
+
+    var obfuscator = new Mock<IObfuscator>();
+
+    demographicsAccumulator.FinaliseAggregation(obfuscator.Object);
+
+    obfuscator.Verify(
+      x => x.Obfuscate(It.IsAny<int>()),
+      Times.Exactly(_multiCodeAccumulator.Alternatives.Values
+        .Select(x => x.Alternatives.Count)
+        .Sum()));
+  }
+
+  [Fact]
+  public void FinaliseAggregation_SetsCorrectRowCount()
+  {
+    var demographicsAccumulator = _multiCodeAccumulator;
+
+    Dictionary<string, int> expectedCodeCounts = new()
+    {
+      ["CODE1"] = 200,
+      ["CODE2"] = 670,
+    };
+
+    // Pass an obfuscator explicitly with everything turned off
+    // so it doesn't mess with our manual summing ;)
+    var obfuscator = new Obfuscator(Options.Create(new ObfuscationOptions
+      { RoundingTarget = 0, LowNumberSuppressionThreshold = 0 }));
+
+    var actual = demographicsAccumulator.FinaliseAggregation(obfuscator);
+
+    Assert.All(actual, record => Assert.Equal(expectedCodeCounts[record.Code], record.Count));
+  }
+
+  #endregion
+
+  #region Process
+
+  [Fact]
+  public void Process_WhenNoSubTasks_ReturnEmptyQueryResult()
+  {
+    var subTasks = new List<RelaySubTaskModel>();
+
+    var expected = new QueryResult
+    {
+      Count = 0,
+      Files = [],
+      DatasetCount = 0
+    };
+
+    var obfuscator = new Mock<IObfuscator>();
+
+    var aggregator = new DemographicsDistributionAggregator(obfuscator.Object);
+
+    var actual = aggregator.Process(subTasks);
+
+    Assert.Equivalent(expected, actual);
+  }
+
+  [Fact]
+  public void Process_AggregatorObfuscator_CalledOncePerAlternativesKey()
+  {
+    // This mainly ensures that the obfuscator used in the aggregator instance
+    // is the one used internally (i.e. with the correct configuration, not a different (e.g. default) instance)
+
+    var subTasks = ProcessSubTasks;
+
+    // Unique Alternative Keys across all subtasks
+    // Note this depends on the test data, manually calulated
+    var expectedTimes = 4;
+
+    var obfuscator = new Mock<IObfuscator>();
+
+    var aggregator = new DemographicsDistributionAggregator(obfuscator.Object);
+    aggregator.Process(subTasks);
+
+    obfuscator.Verify(x => x.Obfuscate(It.IsAny<int>()), Times.Exactly(expectedTimes));
+  }
+
+  [Fact]
+  public void Process_ExpectedFinalResult()
+  {
+    var subTasks = ProcessSubTasks;
+
+    var expected = new QueryResult()
+    {
+      Count = 2,
+      DatasetCount = 1,
+      Files =
+      [
+        new ResultFile
+        {
+          FileDescription = "demographics.distribution analysis results",
+          FileName = ResultFileName.DemographicsDistribution,
+        }.WithData([
+          new DemographicsDistributionRecord()
+          {
+            Code = "SEX",
+            Description = "Sex",
+            Collection = subTasks.First().RelayTask.Collection,
+            Count = 1580,
+            Alternatives = "^MALE|790^FEMALE|790^",
+            Dataset = "person",
+            Category = "Demographics",
+          },
+          new DemographicsDistributionRecord()
+          {
+            Code = "GENOMICS",
+            Description = "Genomics",
+            Collection = subTasks.First().RelayTask.Collection,
+            Count = 2482,
+            Alternatives = "^No|2326^Imputed whole genome data|156^",
+            Dataset = "person",
+            Category = "Demographics",
+          },
+        ])
+      ]
+    };
+
+    var obfuscator = new Mock<IObfuscator>();
+    obfuscator.Setup(x => x.Obfuscate(It.IsAny<int>()))
+      .Returns((int value) => value);
+
+    var aggregator = new DemographicsDistributionAggregator(obfuscator.Object);
+
+    var actual = aggregator.Process(subTasks);
+
+    Assert.Equivalent(expected, actual);
   }
 
   #endregion
