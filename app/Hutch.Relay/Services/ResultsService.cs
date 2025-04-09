@@ -18,7 +18,9 @@ public class ResultsService(
   [FromKeyedServices(nameof(AvailabilityAggregator))]
   IQueryResultAggregator availabilityAggregator,
   [FromKeyedServices(nameof(GenericDistributionAggregator))]
-  IQueryResultAggregator codeDistributionAggregator
+  IQueryResultAggregator codeDistributionAggregator,
+  [FromKeyedServices(nameof(DemographicsDistributionAggregator))]
+  IQueryResultAggregator demographicsDistributionAggregator
 )
 {
   private readonly ApiClientOptions options = options.Value;
@@ -121,6 +123,7 @@ public class ResultsService(
     {
       TaskTypes.TaskApi_Availability => availabilityAggregator,
       TaskTypes.TaskApi_CodeDistribution => codeDistributionAggregator,
+      TaskTypes.TaskApi_DemographicsDistribution => demographicsDistributionAggregator,
       _ => throw new ArgumentOutOfRangeException(
         $"Relay tried to handle a Task Type it doesn't support Results Aggregation for: {relayTask.Type}")
     };

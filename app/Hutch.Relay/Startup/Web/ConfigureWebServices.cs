@@ -59,7 +59,8 @@ public static class ConfigureWebServices
     // Aggregators
     builder.Services
       .AddKeyedTransient<IQueryResultAggregator,AvailabilityAggregator>(nameof(AvailabilityAggregator))
-      .AddKeyedTransient<IQueryResultAggregator,GenericDistributionAggregator>(nameof(GenericDistributionAggregator));
+      .AddKeyedTransient<IQueryResultAggregator,GenericDistributionAggregator>(nameof(GenericDistributionAggregator))
+      .AddKeyedTransient<IQueryResultAggregator,DemographicsDistributionAggregator>(nameof(DemographicsDistributionAggregator));
 
     // Hosted Services
     builder.Services.AddHostedService<BackgroundUpstreamTaskPoller>();
