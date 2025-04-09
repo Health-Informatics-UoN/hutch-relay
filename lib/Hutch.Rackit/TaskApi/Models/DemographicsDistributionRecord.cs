@@ -114,7 +114,7 @@ public static class DemographicsDistributionRecordExtensions
     this DemographicsDistributionRecord record,
     Dictionary<string, int> alternatives)
   {
-    if (record.Code == "AGE") // AGE doesn't use alternatives
+    if (alternatives.Count == 0 || record.Code == "AGE") // AGE doesn't use alternatives
     {
       record.Alternatives = string.Empty;
     }
@@ -123,7 +123,7 @@ public static class DemographicsDistributionRecordExtensions
       // We know the expected keys / order for this Code
       record.Alternatives = AlternativeKeys[record.Code].Split(",")
         .Aggregate("^", (current, k) =>
-          current + $"{k}|{alternatives[k]}^");
+          current + $"{k}|{alternatives.GetValueOrDefault(k)}^");
     }
     else
     {
