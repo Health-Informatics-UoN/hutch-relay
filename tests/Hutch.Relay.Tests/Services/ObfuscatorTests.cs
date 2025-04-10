@@ -21,8 +21,8 @@ public class ObfuscatorTests
   // test negative number rounding target
   [InlineData(20, -1, 2718, 2718)]
   // test threshold equality
-  [InlineData(2717, 0, 2718, 2718)]
-  [InlineData(2718, 0, 2718, 0)]
+  [InlineData(2718, 0, 2718, 2718)]
+  [InlineData(2719, 0, 2718, 0)]
 
   // test obfuscation on something to be rounded up/down
   [InlineData(0, 10, 2718, 2720)]
@@ -58,8 +58,8 @@ public class ObfuscatorTests
   [Theory]
   // Note that these test cases explicitly expect the defaults to be 10;
   // If the defaults change, the test is still valid but the cases must change
-  [InlineData(10, 0)] // suppress first, then round
-  [InlineData(11, 10)] // above suppression threshold
+  [InlineData(9, 0)] // suppress first, then round
+  [InlineData(10, 10)] // above suppression threshold
   [InlineData(14, 10)] // round down
   [InlineData(15, 20)] // round up
 

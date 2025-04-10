@@ -20,13 +20,13 @@ namespace Hutch.Relay.Services;
 public interface IObfuscator
 {
   /// <summary>
-  /// Applies low number suppression to the value. If the value is greater than the threshold, it will remain the same. Otherwise, it will be set to 0.
+  /// Applies low number suppression to the value. If the value is greater than or equal the threshold, it will remain the same. Otherwise, it will be set to 0.
   /// </summary>
   /// <param name="value">The value to apply suppression to.</param>
-  /// <param name="threshold">The threshold at which (and below) values are suppressed.</param>
+  /// <param name="threshold">The threshold below which values are suppressed.</param>
   /// <returns>The (potentially) suppressed value.</returns>
   protected static int LowNumberSuppression(int value, int threshold = ObfuscationDefaults.LowNumberSuppressionThreshold)
-    => value > threshold ? value : 0;
+    => value >= threshold ? value : 0;
 
   /// <summary>
   /// Applies rounding to the value. The value will be rounded to the nearest specified target number.
