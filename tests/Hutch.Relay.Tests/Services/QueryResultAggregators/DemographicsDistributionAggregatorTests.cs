@@ -18,6 +18,7 @@ public class DemographicsDistributionAggregatorTests
 {
   // We don't do in depth obfuscation tests here; they are done in the Obfuscator test suite.
   // But we do attempt to ensure that the Obfuscator is being applied to aggregate outputs
+  // Note that obfuscation defaults will affect test cases, unless you manually configure them off!
 
   // Later testing
   //   - Test that the validated accumulator correctly finalises into expected outputs for a given input
@@ -369,8 +370,13 @@ public class DemographicsDistributionAggregatorTests
       ["CODE1"] = "^BRACKET1|50^BRACKET2|150^",
       ["CODE2"] = "^BRACKET_A|81^BRACKET_B|557^BRACKET_C|32^"
     };
+    
+    // Pass an obfuscator explicitly with everything turned off
+    // so it doesn't mess with our manual summing ;)
+    var obfuscator = new Obfuscator(Options.Create(new ObfuscationOptions
+      { RoundingTarget = 0, LowNumberSuppressionThreshold = 0 }));
 
-    var actual = demographicsAccumulator.FinaliseAggregation();
+    var actual = demographicsAccumulator.FinaliseAggregation(obfuscator);
 
     foreach (var record in actual)
     {
