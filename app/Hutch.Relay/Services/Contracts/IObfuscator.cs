@@ -1,4 +1,5 @@
 using Hutch.Relay.Config;
+using Hutch.Relay.Constants;
 
 namespace Hutch.Relay.Services;
 
@@ -24,7 +25,7 @@ public interface IObfuscator
   /// <param name="value">The value to apply suppression to.</param>
   /// <param name="threshold">The threshold at which (and below) values are suppressed.</param>
   /// <returns>The (potentially) suppressed value.</returns>
-  protected static int LowNumberSuppression(int value, int threshold)
+  protected static int LowNumberSuppression(int value, int threshold = ObfuscationDefaults.LowNumberSuppressionThreshold)
     => value > threshold ? value : 0;
 
   /// <summary>
@@ -33,7 +34,7 @@ public interface IObfuscator
   /// <param name="value">The value to be rounded.</param>
   /// <param name="target">The target nearest factor to round to.</param>
   /// <returns>The rounded value.</returns>
-  protected static int Rounding(int value, int target)
+  protected static int Rounding(int value, int target = ObfuscationDefaults.RoundingTarget)
     => target * (int)Math.Round((float)value / target);
 
   /// <summary>
