@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace Hutch.Relay.Services;
 
 /// <summary>
-/// This is a background worker (IHostedService) for polling for tasks from an upstream system (e.g. Relay or BC|RQuest)
+/// For polling for tasks from an upstream system (e.g. Relay or BC|RQuest)
 /// </summary>
 public class UpstreamTaskPoller(
   ILogger<UpstreamTaskPoller> logger,
@@ -87,8 +87,12 @@ public class UpstreamTaskPoller(
       }
       catch (Exception e)
       {
+        // "critical" exceptions should terminate; preferable in e.g. container environments
+        if (e.LogLevel() == LogLevel.Critical) throw;
+
+        // Swallow non-critical exceptions and just log; the while loop will restart polling
         var delayTime = TimeSpan.FromSeconds(5);
-        // Swallow exceptions and just log; the while loop will restart polling
+
         logger.LogError(e,
           "An error occurred handling '{TypeName}' tasks. Waiting {DelaySeconds}s before resuming polling.",
           typeof(T).Name,
