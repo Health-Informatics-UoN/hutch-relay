@@ -1,0 +1,159 @@
+specification {
+  color person #48aa77
+
+  element actor {
+    notation 'Person, User'
+
+    style {
+      shape person
+    }
+  }
+
+  element system
+  element container
+  element component
+}
+
+model {
+  researcher = actor 'Researcher'
+
+  upstream = system 'Upstream Discovery Service' {
+    style {
+      shape browser
+    }
+  }
+
+  researcher -> upstream
+
+  hutch-relay = system 'Relay' {
+    container relay 'Relay' {
+      style {
+        icon tech:net-core
+      }
+      component rackit 'Task API Client' {
+        technology 'RACKit'
+      }
+      component task-handler 'Task Handler'
+      component aggregator 'Aggregation and Obfuscation'
+      component task-api 'Task API'
+
+      rackit -> upstream 'polls' {
+        technology 'HTTPS'
+      }
+      rackit -> upstream 'submits results' {
+        technology 'HTTPS'
+      }
+
+      rackit -> task-handler 'tasks'
+
+      task-handler -> datastore 'reads/writes state'
+      task-handler -> rabbitmq 'federates tasks'
+
+      task-api -> datastore 'reads/writes state'
+      task-api -> rabbitmq 'fetches tasks'
+
+      aggregator -> datastore 'aggregates results'
+      aggregator -> rackit 'results'
+
+      downstream -> task-api 'polls' {
+        technology 'HTTPS'
+      }
+      downstream -> task-api 'makes API calls' {
+        technology 'HTTPS'
+      }
+      
+    }
+
+    container datastore 'Database' {
+      style {
+        shape storage
+        icon tech:postgresql
+      }
+    }
+
+    container rabbitmq 'RabbitMQ' {
+      style {
+        shape queue
+        icon tech:rabbitmq
+      }
+    }
+  }
+
+  downstream = system 'Downstream Discovery Client' {
+    style {
+      icon https://bunny.health/icons/favicon.ico
+    }
+  }
+}
+
+views {
+
+  /**
+   * @likec4-generated(v1)
+   * iKRoYXNo2Sg1ZGQzMTRhN2Q0ZDhhYjMzY2ZlZTZiOTY5MDE4ODEzNjc1MGIwYmMzqmF1dG9MYXlvdXSBqWRpcmVjdGlvbqJCVKF4NaF5LaV3aWR0aM0C6KZoZWlnaHTNAxKlbm9kZXOEqnJlc2VhcmNoZXKCoWKUNS3NAUDMtKFjwqpkb3duc3RyZWFtgqFilMzRzQKLzQF1zLShY8KraHV0Y2gtcmVsYXmCoWKUzQGIzQFXzQFAzLShY8KodXBzdHJlYW2CoWKUzQHdMM0BQMy0oWPCpWVkZ2Vzg6cxbGZiYXlsgqJjcJGCoXjLQHlDMzMzMzOhectAYQtKYoktZ6FwlJLMq80Cr5LMu80CL5LM2M0BQ5LM6cy+pzFhb252MjeDomNwkYKheMtAgl77qThoI6F5y0BzSAAAAAAAoWyEoXjNAlOhec0BHqV3aWR0aDmmaGVpZ2h0KKFwlJLNAdjNAVeSzQGtzQEoks0BeMztks0BTMy8
+   * pWJkbjU0g6JjcJGCoXjLQHzm3A0ShOehectAgpMzMzMzM6FshKF4zQHToXnNAkqld2lkdGg5pmhlaWdodCihcJSSzQJYzQKvks0CT80CgJLNAkTNAkaSzQI7zQIV
+   */
+  view index {
+    title 'Hutch Relay Context'
+
+    include *
+    autoLayout BottomTop
+
+    style * {
+      color muted
+    }
+
+    style researcher {
+      color person
+    }
+
+    style hutch-relay._ {
+      color primary
+    }
+  }
+
+  /**
+   * @likec4-generated(v1)
+   * iKRoYXNo2SgyMDE2NzI4ZmQ3MGJiMGI2ODgzZjUyYTgyNWI1MWVhZTI3OTRlNWRjqmF1dG9MYXlvdXSBqWRpcmVjdGlvbqJUQqF4B6F50M2ld2lkdGjNA62maGVpZ2h0zQO0pW5vZGVzhqpkb3duc3RyZWFtgqFilBHQzc0Bdcy0oWPCq2h1dGNoLXJlbGF5gqFilAfNASnNAz/NAlihY8OodXBzdHJlYW2CoWKUzQHd0M/NAUDMtKFjwrFodXRjaC1yZWxheS5yZWxheYKhYpTNAd7NAWDNAUDMtKFjwrVodXRjaC1yZWxheS5kYXRhc3RvcmWCoWKUzQHdzQKlzQFAzLShY8K0aHV0Y2gtcmVsYXkucmFiYml0bXGCoWKULs0CWs0BQMysoWPCpWVkZ2VzhKZ1ZHY2Y2yDomNwkYKheMtAd0qfUS7hYqF5y0BofMzMzMzMoWyEoXjNAaWheczxpXdpZHRoOaZoZWlnaHQooXCUks0C
+   * fsy0ks0Cfszlks0Cfs0BI5LNAn7NAVanMWw4OTZtZYOiY3CRgqF4y0CD7La+nx0loXnLQIH8AAAAAAChbISheM0CfKF5zQJdpXdpZHRoGaZoZWlnaHQSoXCUks0CDs0CFJLNAdHNAkWSzQGFzQKBks0BRs0Cs6ZhanU0d3KDomNwkYKheMtAe7ErtRK7UqF5zQIpoWyEoXjNAaShec0CNqV3aWR0aBmmaGVpZ2h0EqFwlJLNAn7NAhSSzQJ+zQJEks0Cfs0CgJLNAn7NArGnMTdiM2w3NoOiY3CRgqF4y0CD7OG9WcJ1oXnLQHHbMzMzMzOhbISheM0CfaF5zPOld2lkdGg5pmhlaWdodCihcJSSzQLuzQIUks0DK80CRZLNA3bNAoCSzQO0zQKy
+   */
+  view of hutch-relay {
+    title 'Hutch Relay Containers'
+
+    include *
+    autoLayout TopBottom
+
+    style * {
+      color muted
+    }
+
+    style hutch-relay._ {
+      color primary
+    }
+  }
+
+  /**
+   * @likec4-generated(v1)
+   * iKRoYXNo2ShmNGRhZTE4MDA4YjE3NDgyOTZjMThkMTBmZGM1ZWEwYTI2YWJkOWE1qmF1dG9MYXlvdXSBqWRpcmVjdGlvbqJUQqF4zKqhedDRpXdpZHRozQbPpmhlaWdodM0FlqVub2Rlc4mqZG93bnN0cmVhbYKhYpTNAr/Q0c0Bdcy0oWPCsWh1dGNoLXJlbGF5LnJlbGF5gqFilM0Cqs0BIM0DRM0C86Fjw6h1cHN0cmVhbYKhYpTNBIvQ1c0BQMy0oWPCtWh1dGNoLXJlbGF5LmRhdGFzdG9yZYKhYpTNAszNBEXNAUDMtKFjwrRodXRjaC1yZWxheS5yYWJiaXRtcYKhYpTM3M0CXc0BQMysoWPCumh1dGNoLXJlbGF5LnJlbGF5LnRhc2stYXBpgqFilM0C0s0BY80BQMy0oWPCvGh1dGNoLXJlbGF5LnJlbGF5LmFnZ3JlZ2F0b3KCoWKUzQSFzQM2zQFAzLShY8K4aHV0Y2gt
+   * cmVsYXkucmVsYXkucmFja2l0gqFilM0Ehs0BV80BQMy0oWPCvmh1dGNoLXJlbGF5LnJlbGF5LnRhc2staGFuZGxlcoKhYpTNA63NAmLNAUDMtKFjwqVlZGdlc4mnMXZ1czlvM4OiY3CRgqF4y0CLtKB6RMawoXnLQGjzMzMzMzOhbISheM0DdKF5zPKld2lkdGg5pmhlaWdodCihcJSSzQN2zLSSzQN2zOWSzQN2zQEjks0Dds0BVqcxeXA2YTBrg6JjcJGCoXjLQJMekPiFdxWhectAgSjMzMzMzaFshKF4zQS6oXnNAjeld2lkdGglpmhlaWdodBKhcJSSzQUkzQNXks0FJM0DhpLNBSTNA8CSzQUkzQPwpm5tNmN6OYOiY3CRgqF4y0CUlYApC6akoXnLQIbiZmZmZmahbISheM0FJqF5zQKhpXdpZHRoLaZoZWlnaHQSoXCUks0FJM0CFJLNBSTNAj6SzQUkzQJvks0FJM0Cmacx
+   * MHpkOG51g6JjcJGCoXjLQJSf3YNQ6XOhectAcZMzMzMzM6FshKF4zQUooXnM8qV3aWR0aDmmaGVpZ2h0KKFwl5LNBITNAzaSzQP+zQNmks0DOs0DsJLNApPNA/qSzQKSzQP7ks0Ckc0D+5LNAo/NA/ynMXh3OXNjd4OiY3CRgqF4y0CPxdaoi+zroXnLQIuHMzMzMzOhbISheM0D3aF5zQOupXdpZHRocqZoZWlnaHQSoXCXks0FXs0ErpLNBXPNBMqSzQWKzQToks0Fo80FAZLNBbfNBRWSzQXNzQUoks0F5M0FOqcxaHIybGZ4g6JjcJGCoXjLQImlmZmZmZqhectAhcQCRbv4VaFshKF4zQLkoXnNArild2lkdGhjpmhlaWdodBKhcJSSzQSEzQSCks0Dq80EvpLNAijNBSmSzQFKzQVnpzEwcnc4b2iDomNwkYKheMtAkZh3yBOmEaF5y0CQFTMzMzMzoWyEoXjNBEmhec0EGKV3
+   * aWR0aHemaGVpZ2h0EqFwmpLNBcTNAc2SzQYbzQHfks0Ggc0CBJLNBr3NAlCSzQd5zQNCks0HGc0D3ZLNBr3NBQGSzQa4zQUSks0GsM0FI5LNBqjNBTOmMmN2a2N3g6JjcJGCoXjLQIt/Qi90IvehectAhfMzMzMzM6FshKF4zQNvoXnNAy6ld2lkdGhypmhlaWdodBKhcJqSzQQWzQIBks0EKM0CCJLNBDvNAg+SzQRNzQIUks0FDc0CUJLNBYvNAfySzQX7zQKjks0Ggs0DbJLNBoHNBJeSzQZ1zQUypzE5OHhma2SDomNwkYKheMtAhNszMzMzM6F5y0CBMUzm6PMmoWyEoXjNAnehec0COKV3aWR0aFamaGVpZ2h0EqFwl5LNAvLNAhSSzQJmzQJ6ks0Bi80DLJLNAQ/NA/qSzNTNBF2SzLfNBOCSzKrNBTc=
+   */
+  view of hutch-relay.relay {
+    title 'Relay Components'
+    include *
+    autoLayout TopBottom
+
+    style * {
+      color muted
+    }
+
+    style hutch-relay._ {
+      color secondary
+    }
+
+    style relay._ {
+      color primary
+    }
+  }
+}
