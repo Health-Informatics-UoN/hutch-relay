@@ -2,10 +2,12 @@ using System.Runtime.CompilerServices;
 using Hutch.Rackit;
 using Hutch.Rackit.TaskApi.Contracts;
 using Hutch.Rackit.TaskApi.Models;
+using Hutch.Relay.Config;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -22,13 +24,13 @@ public class UpstreamTaskPollerTests()
   public async Task PollAllQueues_WithInvalidQueueConfig_ThrowsInvalidOperation()
   {
     // Arrange
-    var options = Options.Create<ApiClientOptions>(new());
+    var options = Options.Create<TaskApiPollingOptions>(new());
 
     var queues = new Mock<IRelayTaskQueue>();
     queues.Setup(x =>
       x.IsReady(It.IsAny<string>())).Returns(Task.FromResult(false));
 
-    var poller = new UpstreamTaskPoller(_logger, options, null!, null!, null!, queues.Object);
+    var poller = new UpstreamTaskPoller(_logger, options, null!, null!, queues.Object, null!);
 
     // Act, Assert
     await Assert.ThrowsAsync<InvalidOperationException>(async () => await poller.PollAllQueues(new()));
@@ -67,7 +69,7 @@ public class UpstreamTaskPollerTests()
         x.PollJobQueue<CollectionAnalysisJob>(It.IsAny<ApiClientOptions?>(), It.IsAny<CancellationToken>()))
       .Returns(SimulatePolling<CollectionAnalysisJob>(cts.Token));
 
-    var options = Options.Create<ApiClientOptions>(new());
+    var options = Options.Create<TaskApiPollingOptions>(new());
 
     var subNodes = new Mock<ISubNodeService>();
     subNodes.Setup(x => x.List()).Returns(Task.FromResult<IEnumerable<SubNodeModel>>([relaySubTask.Owner]));
@@ -101,7 +103,17 @@ public class UpstreamTaskPollerTests()
       return Task.CompletedTask;
     });
 
-    var poller = new UpstreamTaskPoller(_logger, options, upstream.Object, subNodes.Object, tasks.Object, queues.Object);
+    // Setup a scope factory that mostly just resolves dependencies with our setup mocks
+    var serviceScopeFactory = new ServiceCollection()
+      .AddScoped<ScopedTaskHandler>()
+      .AddScoped<ILogger<ScopedTaskHandler>>(x => LoggerFactory.Create(b => b.AddDebug()).CreateLogger<ScopedTaskHandler>())
+      .AddScoped<IRelayTaskService>(x => tasks.Object)
+      .AddScoped<IRelayTaskQueue>(x => queues.Object)
+      .AddScoped<ISubNodeService>(x => subNodes.Object)
+     .BuildServiceProvider()
+     .GetRequiredService<IServiceScopeFactory>();
+
+    var poller = new UpstreamTaskPoller(_logger, options, upstream.Object, subNodes.Object, queues.Object, serviceScopeFactory);
 
     // Act
     // set a timer to cancel polling after a few
@@ -116,7 +128,14 @@ public class UpstreamTaskPollerTests()
     };
     timer.Start();
 
-    await poller.PollAllQueues(cts.Token);
+    try
+    {
+      await poller.PollAllQueues(cts.Token);
+    }
+    catch (OperationCanceledException)
+    {
+      // Expected
+    }
 
     // Assert
     Assert.Multiple(() =>
