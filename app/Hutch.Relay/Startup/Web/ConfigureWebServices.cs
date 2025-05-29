@@ -66,7 +66,7 @@ public static class ConfigureWebServices
     builder.Services
       .AddHostedService<BackgroundUpstreamTaskPoller>()
       .AddScoped<ScopedTaskHandler>();
-    // builder.Services.AddHostedService<TaskCompletionHostedService>();
+    builder.Services.AddHostedService<TaskCompletionHostedService>();
 
     return builder;
   }
