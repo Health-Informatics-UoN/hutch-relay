@@ -32,6 +32,9 @@ public interface IRelayTaskService
       CollectionAnalysisJob { Analysis: AnalysisType.Distribution, Code: DistributionCode.Demographics }
         => TaskTypes.TaskApi_DemographicsDistribution,
 
+      CollectionAnalysisJob { Analysis: AnalysisType.Distribution, Code: DistributionCode.Icd }
+        => throw new ArgumentOutOfRangeException(nameof(task), task, "Unsupported Task API Task Type: ICD-MAIN Distribution"),
+
       _ => throw new ArgumentOutOfRangeException(nameof(task), task, "Unsupported Task API Task Type")
     };
   }

@@ -124,25 +124,38 @@ public class ScopedTaskHandler(
     if (subnodes.Count == 0) return;
 
     // Create a parent task
-    var relayTask = await relayTasks.Create(new()
+    try
     {
-      Id = job.Uuid,
-      Type = IRelayTaskService.GetTaskApiType(job),
-      Collection = job.Collection
-    });
 
-    // Fan out to subtasks
-    foreach (var subnode in subnodes)
+      var relayTask = await relayTasks.Create(new()
+      {
+        Id = job.Uuid,
+        Type = IRelayTaskService.GetTaskApiType(job),
+        Collection = job.Collection
+      });
+
+      // Fan out to subtasks
+      foreach (var subnode in subnodes)
+      {
+        var subTask = await relayTasks.CreateSubTask(relayTask.Id, subnode.Id);
+
+        // Update the job for the target subnode
+        job.Uuid = subTask.Id.ToString();
+        job.Collection = subnode.Id.ToString();
+        job.Owner = subnode.Owner;
+
+        // Queue the task for the subnode
+        await queues.Send(subnode.Id.ToString(), job);
+      }
+    }
+    catch (ArgumentOutOfRangeException e)
     {
-      var subTask = await relayTasks.CreateSubTask(relayTask.Id, subnode.Id);
-
-      // Update the job for the target subnode
-      job.Uuid = subTask.Id.ToString();
-      job.Collection = subnode.Id.ToString();
-      job.Owner = subnode.Owner;
-
-      // Queue the task for the subnode
-      await queues.Send(subnode.Id.ToString(), job);
+      if (e.Message.Contains("ICD-MAIN"))
+      {
+        logger.LogWarning("Skipping unsupported ICD-MAIN Distribution task: {Id}", job.Uuid);
+        return;
+      }
+      throw;
     }
   }
 }
