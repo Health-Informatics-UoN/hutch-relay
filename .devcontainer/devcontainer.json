@@ -9,7 +9,8 @@
         "vscode": {
             "extensions": [
                 "nromanov.dotrush",
-                "EditorConfig.EditorConfig"
+                "EditorConfig.EditorConfig",
+                "ms-azuretools.vscode-docker"
             ]
         }
     }

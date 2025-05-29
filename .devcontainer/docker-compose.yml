@@ -14,6 +14,9 @@ services:
 
     # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
     network_mode: service:db
+
+    environment:
+      Database__ApplyMigrationsOnStartup: true
     
     # Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
     # user: root
@@ -29,9 +32,19 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
-      POSTGRES_DB: postgres
       
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: unless-stopped
+    network_mode: service:db # put us all on the same network so Relay can use localhost
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+
+    # Use "forwardPorts" in **devcontainer.json** to forward rabbitmq ports (e.g. 5672, 15672) locally. 
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
 volumes:
