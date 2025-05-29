@@ -63,8 +63,10 @@ public static class ConfigureWebServices
       .AddKeyedTransient<IQueryResultAggregator,DemographicsDistributionAggregator>(nameof(DemographicsDistributionAggregator));
 
     // Hosted Services
-    builder.Services.AddHostedService<BackgroundUpstreamTaskPoller>();
-    builder.Services.AddHostedService<TaskCompletionHostedService>();
+    builder.Services
+      .AddHostedService<BackgroundUpstreamTaskPoller>()
+      .AddScoped<ScopedTaskHandler>();
+    // builder.Services.AddHostedService<TaskCompletionHostedService>();
 
     return builder;
   }
