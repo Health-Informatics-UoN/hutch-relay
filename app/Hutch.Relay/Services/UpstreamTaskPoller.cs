@@ -152,7 +152,7 @@ public class ScopedTaskHandler(
     {
       if (e.Message.Contains("ICD-MAIN"))
       {
-        logger.LogWarning("Skipping unsupported ICD-MAIN Distribution task: {Id}", job.Uuid);
+        logger.LogInformation("Skipping unsupported ICD-MAIN Distribution task: {Id}", job.Uuid);
         return;
       }
       throw;
