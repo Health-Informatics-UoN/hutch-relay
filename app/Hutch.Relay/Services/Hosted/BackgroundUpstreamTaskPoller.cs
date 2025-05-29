@@ -1,3 +1,5 @@
+using Hutch.Relay.Services.Contracts;
+
 namespace Hutch.Relay.Services.Hosted;
 
 /// <summary>
@@ -11,9 +13,10 @@ public class BackgroundUpstreamTaskPoller(
     while (!stoppingToken.IsCancellationRequested)
     {
       // use a shortlived scope to run some db checks without keeping a context open
-      using(var initScope = serviceScopeFactory.CreateScope()) {
-        var subnodes = initScope.ServiceProvider.GetRequiredService<SubNodeService>();
-        
+      using (var initScope = serviceScopeFactory.CreateScope())
+      {
+        var subnodes = initScope.ServiceProvider.GetRequiredService<ISubNodeService>();
+
         // Ensure we have subnodes before we start polling; this is considered critical
         subnodes.EnsureSubNodes();
       }

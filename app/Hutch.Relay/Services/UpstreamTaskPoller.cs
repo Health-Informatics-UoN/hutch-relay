@@ -1,6 +1,8 @@
 using Hutch.Rackit;
 using Hutch.Rackit.TaskApi.Contracts;
 using Hutch.Rackit.TaskApi.Models;
+using Hutch.Relay.Config;
+using Hutch.Relay.Extensions;
 using Hutch.Relay.Services.Contracts;
 using Microsoft.Extensions.Options;
 
@@ -11,7 +13,7 @@ namespace Hutch.Relay.Services;
 /// </summary>
 public class UpstreamTaskPoller(
   ILogger<UpstreamTaskPoller> logger,
-  IOptions<ApiClientOptions> options,
+  IOptions<TaskApiPollingOptions> options,
   ITaskApiClient upstreamTasks,
   ISubNodeService subNodes,
   IRelayTaskService relayTasks,
@@ -60,7 +62,7 @@ public class UpstreamTaskPoller(
           // Get up-to-date Sub Nodes list
           var subnodes = (await subNodes.List()).ToList();
           // Make sure there still are some; leave the loop if not
-          if (!subnodes.Any()) break;
+          if (subnodes.Count == 0) break;
 
           // Create a parent task
           var relayTask = await relayTasks.Create(new()
@@ -87,24 +89,33 @@ public class UpstreamTaskPoller(
       }
       catch (Exception e)
       {
-        // "critical" exceptions should terminate; preferable in e.g. container environments
-        if (e.LogLevel() == LogLevel.Critical) throw;
+        // By default, exceptions should terminate; preferable in e.g. container environments
+        // unless configured otherwise, or for gracefully handled specific cases
 
-        // Swallow non-critical exceptions and just log; the while loop will restart polling
-        var delayTime = TimeSpan.FromSeconds(5);
-
+        // Always log
         logger.LogError(e,
-          "An error occurred handling '{TypeName}' tasks. Waiting {DelaySeconds}s before resuming polling.",
-          typeof(T).Name,
-          Math.Floor(delayTime.TotalSeconds));
+          "An error occurred handling '{TypeName}' tasks.",
+          typeof(T).Name);
 
-        // TODO: maintain an exception limit that eventually DOES quit?
+        if (e.LogLevel() != LogLevel.Critical && options.Value.ResumeOnError)
+        {
+          // Swallow non-critical exceptions and just log; the while loop will restart polling
+          var delayTime = TimeSpan.FromSeconds(options.Value.ErrorDelay);
 
-        // Delay before resuming the loop
-        await Task
-          .Delay(delayTime, cancellationToken)
-          // Stop this Task from throwing when cancelled
-          .ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing | ConfigureAwaitOptions.ContinueOnCapturedContext);
+          logger.LogInformation(e,
+            "Waiting {DelaySeconds}s before resuming polling.",
+            Math.Floor(delayTime.TotalSeconds));
+
+          // TODO: maintain an exception limit that eventually DOES quit?
+
+          // Delay before resuming the loop
+          await Task
+            .Delay(delayTime, cancellationToken)
+            // Stop this Task from throwing when cancelled
+            .ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing | ConfigureAwaitOptions.ContinueOnCapturedContext);
+        }
+        else throw;
+
       }
     }
   }
