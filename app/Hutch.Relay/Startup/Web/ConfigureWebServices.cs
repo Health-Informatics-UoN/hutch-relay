@@ -35,6 +35,7 @@ public static class ConfigureWebServices
     // Upstream Task API
     builder.Services
       .Configure<TaskApiPollingOptions>(builder.Configuration.GetSection("UpstreamTaskApi"))
+      .Configure<ApiClientOptions>(builder.Configuration.GetSection("UpstreamTaskApi"))
       .AddHttpClient()
       .AddTransient<ITaskApiClient, TaskApiClient>()
       .AddScoped<UpstreamTaskPoller>()
