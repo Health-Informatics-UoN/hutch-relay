@@ -19,6 +19,7 @@ public static class ConfigureWebServices
 {
   public static WebApplicationBuilder ConfigureServices(this WebApplicationBuilder builder)
   {
+    // Logging
     builder.Services.AddSerilog((services, lc) => lc
       .ReadFrom.Configuration(builder.Configuration)
       .ReadFrom.Services(services)
@@ -74,6 +75,11 @@ public static class ConfigureWebServices
       .AddHostedService<BackgroundUpstreamTaskPoller>()
       .AddScoped<ScopedTaskHandler>();
     builder.Services.AddHostedService<TaskCompletionHostedService>();
+
+    // Monitoring
+    builder.Services.Configure<MonitoringOptions>(builder.Configuration.GetSection("Monitoring"));
+    builder.Services.AddHealthChecks()
+      .AddDbContextCheck<ApplicationDbContext>();
 
     return builder;
   }
