@@ -5,6 +5,7 @@ using Hutch.Relay.Data.Entities;
 using Hutch.Relay.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using Spectre.Console;
 
 namespace Hutch.Relay.Startup.Cli;
@@ -13,6 +14,11 @@ public static class ConfigureCliServices
 {
   public static HostApplicationBuilder ConfigureServices(this HostApplicationBuilder b)
   {
+    b.Services.AddSerilog((services, lc) => lc
+      .ReadFrom.Configuration(b.Configuration)
+      .ReadFrom.Services(services)
+      .Enrich.FromLogContext());
+
     // Console output services
     b.Services
       .AddKeyedSingleton<IAnsiConsole>("stdout",

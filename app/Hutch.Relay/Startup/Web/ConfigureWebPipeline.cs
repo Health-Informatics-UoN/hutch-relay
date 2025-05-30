@@ -1,3 +1,5 @@
+using Serilog;
+
 namespace Hutch.Relay.Startup.Web;
 
 public static class ConfigureWebPipeline
@@ -9,6 +11,7 @@ public static class ConfigureWebPipeline
   /// <returns></returns>
   public static WebApplication UseWebPipeline(this WebApplication app)
   {
+    app.UseSerilogRequestLogging();
     app.UseHttpsRedirection();
     app.UseSwagger();
     app.UseSwaggerUI();
