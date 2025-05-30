@@ -19,10 +19,14 @@ public static class ConfigureWebServices
 {
   public static WebApplicationBuilder ConfigureServices(this WebApplicationBuilder builder)
   {
+    // Logging
     builder.Services.AddSerilog((services, lc) => lc
       .ReadFrom.Configuration(builder.Configuration)
       .ReadFrom.Services(services)
       .Enrich.FromLogContext());
+
+    // Monitoring
+    builder.Services.Configure<MonitoringOptions>(builder.Configuration.GetSection("Monitoring"));
 
     var connectionString = builder.Configuration.GetConnectionString("Default");
     builder.Services.AddDbContext<ApplicationDbContext>(o => { o.UseNpgsql(connectionString); });
