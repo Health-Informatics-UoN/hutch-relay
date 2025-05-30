@@ -27,6 +27,7 @@ public static class ConfigureWebServices
 
     // Monitoring
     builder.Services.Configure<MonitoringOptions>(builder.Configuration.GetSection("Monitoring"));
+    builder.Services.AddHealthChecks();
 
     var connectionString = builder.Configuration.GetConnectionString("Default");
     builder.Services.AddDbContext<ApplicationDbContext>(o => { o.UseNpgsql(connectionString); });

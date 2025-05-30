@@ -1,3 +1,5 @@
+using Hutch.Relay.Config;
+using Microsoft.Extensions.Options;
 using Serilog;
 
 namespace Hutch.Relay.Startup.Web;
@@ -11,12 +13,16 @@ public static class ConfigureWebPipeline
   /// <returns></returns>
   public static WebApplication UseWebPipeline(this WebApplication app)
   {
+    var monitoringOptions = app.Services.GetRequiredService<IOptions<MonitoringOptions>>().Value;
+
     app.UseSerilogRequestLogging();
     app.UseHttpsRedirection();
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseAuthentication();
     app.UseAuthorization();
+    
+    app.MapHealthChecks(monitoringOptions.HealthEndpoint);
     app.MapControllers();
 
     return app;
