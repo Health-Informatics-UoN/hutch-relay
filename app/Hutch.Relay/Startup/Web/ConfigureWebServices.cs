@@ -25,10 +25,6 @@ public static class ConfigureWebServices
       .ReadFrom.Services(services)
       .Enrich.FromLogContext());
 
-    // Monitoring
-    builder.Services.Configure<MonitoringOptions>(builder.Configuration.GetSection("Monitoring"));
-    builder.Services.AddHealthChecks();
-
     var connectionString = builder.Configuration.GetConnectionString("Default");
     builder.Services.AddDbContext<ApplicationDbContext>(o => { o.UseNpgsql(connectionString); });
 
@@ -79,6 +75,11 @@ public static class ConfigureWebServices
       .AddHostedService<BackgroundUpstreamTaskPoller>()
       .AddScoped<ScopedTaskHandler>();
     builder.Services.AddHostedService<TaskCompletionHostedService>();
+
+    // Monitoring
+    builder.Services.Configure<MonitoringOptions>(builder.Configuration.GetSection("Monitoring"));
+    builder.Services.AddHealthChecks()
+      .AddDbContextCheck<ApplicationDbContext>();
 
     return builder;
   }
