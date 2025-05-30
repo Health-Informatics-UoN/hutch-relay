@@ -1,5 +1,6 @@
 using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
+using Hutch.Relay.Extensions;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +13,11 @@ public class SubNodeService(ApplicationDbContext db) : ISubNodeService
   {
     var subNodesExist = db.SubNodes.AsNoTracking().Any();
     if (subNodesExist) return;
-    
-    throw new InvalidOperationException("There are no subnodes configured!");
+
+    throw new InvalidOperationException("There are no subnodes configured!")
+      .WithLogLevel(LogLevel.Critical);
   }
-  
+
   /// <summary>
   /// Create a new SubNode associated with the provided user
   /// </summary>

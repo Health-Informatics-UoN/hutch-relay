@@ -34,6 +34,7 @@ public static class ConfigureWebServices
 
     // Upstream Task API
     builder.Services
+      .Configure<TaskApiPollingOptions>(builder.Configuration.GetSection("UpstreamTaskApi"))
       .Configure<ApiClientOptions>(builder.Configuration.GetSection("UpstreamTaskApi"))
       .AddHttpClient()
       .AddTransient<ITaskApiClient, TaskApiClient>()
@@ -63,7 +64,9 @@ public static class ConfigureWebServices
       .AddKeyedTransient<IQueryResultAggregator,DemographicsDistributionAggregator>(nameof(DemographicsDistributionAggregator));
 
     // Hosted Services
-    builder.Services.AddHostedService<BackgroundUpstreamTaskPoller>();
+    builder.Services
+      .AddHostedService<BackgroundUpstreamTaskPoller>()
+      .AddScoped<ScopedTaskHandler>();
     builder.Services.AddHostedService<TaskCompletionHostedService>();
 
     return builder;

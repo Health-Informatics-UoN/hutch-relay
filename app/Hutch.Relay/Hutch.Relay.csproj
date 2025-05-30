@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <Version>1.0.0-beta.1</Version>
+    <Version>1.0.0-beta.2</Version>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -32,5 +32,4 @@
       <_Parameter1>Hutch.Relay.Tests</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
-
 </Project>
