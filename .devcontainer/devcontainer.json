@@ -11,7 +11,8 @@
                 "nromanov.dotrush",
                 "EditorConfig.EditorConfig",
                 "ms-azuretools.vscode-docker",
-                "adrianwilczynski.user-secrets"
+                "adrianwilczynski.user-secrets",
+                "patcx.vscode-nuget-gallery"
             ]
         }
     }
