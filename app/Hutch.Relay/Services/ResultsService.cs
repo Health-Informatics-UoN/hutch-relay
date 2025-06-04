@@ -80,10 +80,9 @@ public class ResultsService(
   ///       Submitting the final results Upstream
   ///     </item>
   ///     <item>
-  ///       Marking the <see cref="Data.Entities.RelayTask"/> as complete in the Relay datastore.
+  ///       Deleting or completing the <see cref="Data.Entities.RelayTask"/> in the Relay datastore.
   ///     </item>
   ///   </list>
-  /// 1. 
   /// </summary>
   /// <param name="task"><see cref="RelayTaskModel"/> for the task to Complete.</param>
   public async Task CompleteRelayTask(RelayTaskModel task)
