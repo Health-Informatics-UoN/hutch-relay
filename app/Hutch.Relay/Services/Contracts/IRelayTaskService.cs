@@ -40,7 +40,7 @@ public interface IRelayTaskService
   }
 
   #endregion
-  
+
   /// <summary>
   /// Get a RelayTask by id
   /// </summary>
@@ -63,6 +63,12 @@ public interface IRelayTaskService
   /// <returns></returns>
   /// <exception cref="KeyNotFoundException">The RelayTask does not exist.</exception>
   Task<RelayTaskModel> SetComplete(string id);
+
+  /// <summary>
+  /// Delete a <see cref="RelayTask"/> and all its <see cref="RelaySubTask"/>s.
+  /// </summary>
+  /// <param name="id">The id of the task to delete.</param>
+  Task Delete(string id);
 
   /// <summary>
   /// List RelayTasks that have not been completed.
