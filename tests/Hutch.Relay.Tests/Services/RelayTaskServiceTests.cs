@@ -21,7 +21,31 @@ public class RelayTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>,
     _dbContext.RelayTasks.RemoveRange(_dbContext.RelayTasks);
     await _dbContext.SaveChangesAsync();
   }
-  
+
+  [Fact]
+  public async Task Delete_WithValidId_DeletesRelayTask()
+  {
+    // Arrange
+    var relayTask = new RelayTask
+    {
+      Id = "valid-id-1",
+      Type = TaskTypes.TaskApi_Availability,
+      Collection = "Sample Collection"
+    };
+
+    _dbContext.RelayTasks.Add(relayTask);
+    await _dbContext.SaveChangesAsync();
+
+    var service = new RelayTaskService(_dbContext);
+
+    // Act
+    await service.Delete("valid-id-1");
+
+    // Assert
+    var result = await _dbContext.RelayTasks.FindAsync("valid-id-1");
+    Assert.Null(result);
+  }
+
   [Fact]
   public async Task Get_WithValidId_ReturnsRelayTaskModel()
   {
@@ -52,11 +76,11 @@ public class RelayTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>,
   {
     // Arrange
     var service = new RelayTaskService(_dbContext);
-  
+
     // Act / Assert
     await Assert.ThrowsAsync<KeyNotFoundException>(() => service.Get("DoesNotExist"));
   }
-  
+
   [Fact]
   public async Task Create_ValidRelayTaskModel_ReturnsCreatedRelayTaskModel()
   {
@@ -85,7 +109,7 @@ public class RelayTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>,
     Assert.Equal(model.Collection, entityInDb.Collection);
     Assert.Equal(model.Type, entityInDb.Type);
   }
-  
+
   [Fact]
   public async Task SetComplete_ValidId_UpdatesCompletedAtAndReturnsRelayTaskModel()
   {
@@ -105,13 +129,13 @@ public class RelayTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>,
     var result = await service.SetComplete("valid-id-2");
 
     // Assert
-    Assert.NotNull(result.CompletedAt); 
-    
+    Assert.NotNull(result.CompletedAt);
+
     var entityInDb = await _dbContext.RelayTasks.FindAsync("valid-id-2");
     Assert.NotNull(entityInDb);
     Assert.NotNull(entityInDb.CompletedAt);
   }
-  
+
   [Fact]
   public async Task ListIncomplete_ReturnsOnlyIncompleteTasks()
   {
@@ -146,8 +170,8 @@ public class RelayTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>,
 
     // Assert
     Assert.NotNull(result);
-    Assert.Equal(2, result.Count()); 
-    
+    Assert.Equal(2, result.Count());
+
     var incompleteTasks = result.ToList();
     Assert.Contains(incompleteTasks, x => x.Id == incompleteTask1.Id);
     Assert.Contains(incompleteTasks, x => x.Id == incompleteTask2.Id);
