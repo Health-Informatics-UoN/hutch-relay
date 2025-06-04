@@ -39,10 +39,65 @@ public class RelayTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>,
     var service = new RelayTaskService(_dbContext);
 
     // Act
-    await service.Delete("valid-id-1");
+    await service.Delete(relayTask.Id);
 
     // Assert
-    var result = await _dbContext.RelayTasks.FindAsync("valid-id-1");
+    var result = await _dbContext.RelayTasks.FindAsync(relayTask.Id);
+    Assert.Null(result);
+  }
+
+  [Fact]
+  public async Task Delete_WithValidId_DeletesRelaySubTasks()
+  {
+    // Arrange
+    List<Guid> subtaskIds = [Guid.NewGuid(), Guid.NewGuid()];
+
+    var relayTask = new RelayTask
+    {
+      Id = "test-task-id-1",
+      Type = TaskTypes.TaskApi_DemographicsDistribution,
+      Collection = ""
+    };
+    var owner = new SubNode() { Id = Guid.NewGuid(), RelayUsers = [new() { Id = "test-user-id-1", UserName = "testuser1@example.com" }] };
+
+    foreach (var subtaskId in subtaskIds)
+    {
+      var relaySubTask = new RelaySubTask
+      {
+        Id = subtaskId,
+        RelayTask = relayTask,
+        Owner = owner,
+        Result = null
+      };
+      _dbContext.RelaySubTasks.Add(relaySubTask);
+    }
+    _dbContext.RelayTasks.Add(relayTask);
+    await _dbContext.SaveChangesAsync();
+
+    var service = new RelayTaskService(_dbContext);
+
+    // Act
+    await service.Delete(relayTask.Id);
+
+    // Assert
+    foreach (var subtaskId in subtaskIds)
+    {
+      Assert.Null(await _dbContext.RelaySubTasks.FindAsync(subtaskId));
+    }
+  }
+
+  [Fact]
+  public async Task Delete_WithInvalidId_DoesNotThrow()
+  {
+    // Arrange
+    var invalidId = "invalid-id";
+    var service = new RelayTaskService(_dbContext);
+
+    // Act / Assert
+      await service.Delete(invalidId);
+
+    // Assert
+    var result = await _dbContext.RelayTasks.FindAsync(invalidId);
     Assert.Null(result);
   }
 
