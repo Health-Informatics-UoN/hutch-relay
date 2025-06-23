@@ -32,6 +32,7 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
+      POSTGRES_DB: hutch_omop # create a db ready for omop-lite; Relay will create its own db
       
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
@@ -46,6 +47,18 @@ services:
 
     # Use "forwardPorts" in **devcontainer.json** to forward rabbitmq ports (e.g. 5672, 15672) locally. 
     # (Adding the "ports" property to this file will not forward from a Codespace.)
+  
+  # used to bootstrap a small db with synthetic data in case of wanting to use Bunny
+  omop-lite:
+    image: ghcr.io/health-informatics-uon/omop-lite
+    depends_on:
+      - db
+    environment:
+      DB_PASSWORD: postgres
+      DB_NAME: hutch_omop
+      SYNTHETIC: true
+  
+  # TODO: add optional bunny? can we configure it?
 
 volumes:
   postgres-data:
