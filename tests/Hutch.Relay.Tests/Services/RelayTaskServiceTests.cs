@@ -3,23 +3,26 @@ using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace Hutch.Relay.Tests.Services;
 
-public class RelayTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>, IAsyncLifetime
+public class RelayTaskServiceTests : IDisposable
 {
-  private readonly ApplicationDbContext _dbContext = fixtures.DbContext;
+  // Specifying name ensures a separate DB to other test classes
+  private readonly ApplicationDbContext _dbContext;
 
-  public Task InitializeAsync()
+  public RelayTaskServiceTests()
   {
-    return Task.CompletedTask;
+    // Ensure a unique DB per Test
+    _dbContext = FixtureHelpers.NewDbContext($"Test_{Guid.NewGuid()}");
+    _dbContext.Database.EnsureCreated();
   }
-  public async Task DisposeAsync()
+
+  public void Dispose()
   {
-    // Clean up the database after each test
-    _dbContext.RelayTasks.RemoveRange(_dbContext.RelayTasks);
-    await _dbContext.SaveChangesAsync();
+    _dbContext.Database.EnsureDeleted();
   }
 
   [Fact]
@@ -94,7 +97,7 @@ public class RelayTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>,
     var service = new RelayTaskService(_dbContext);
 
     // Act / Assert
-      await service.Delete(invalidId);
+    await service.Delete(invalidId);
 
     // Assert
     var result = await _dbContext.RelayTasks.FindAsync(invalidId);
