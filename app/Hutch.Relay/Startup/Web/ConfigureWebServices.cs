@@ -27,6 +27,7 @@ public static class ConfigureWebServices
 
     var connectionString = builder.Configuration.GetConnectionString("Default");
     builder.Services.AddDbContext<ApplicationDbContext>(o => { o.UseNpgsql(connectionString); });
+    builder.Services.Configure<DatabaseOptions>(builder.Configuration.GetSection("Database"));
 
     builder.Services.AddIdentityCore<RelayUser>(DefaultIdentityOptions.Configure)
       .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -61,7 +62,7 @@ public static class ConfigureWebServices
 
     // Obfuscation
     builder.Services
-      .Configure<ObfuscationOptions>(builder.Configuration.GetSection(("Obfuscation")))
+      .Configure<ObfuscationOptions>(builder.Configuration.GetSection("Obfuscation"))
       .AddTransient<IObfuscator, Obfuscator>();
 
     // Aggregators
