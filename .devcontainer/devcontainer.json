@@ -32,7 +32,26 @@
 
   // Use 'postCreateCommand' to run commands after the container is created.
   "postCreateCommand": "./.devcontainer/postCreateCommand.sh", // create a user/subnode immediately; check logs for password / collection id
-  
+
   // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
   // "remoteUser": "root"
+
+  "secrets": {
+    "UpstreamTaskApi__BaseUrl": {
+      "description": "URL to the Upstream Task API",
+      "documentationUrl": "https://hutch.health/relay/config#upstream-task-api"
+    },
+    "UpstreamTaskApi__Username": {
+      "description": "Username for the Upstream Task API",
+      "documentationUrl": "https://hutch.health/relay/config#upstream-task-api"
+    },
+    "UpstreamTaskApi__Password": {
+      "description": "Password for the Upstream Task API",
+      "documentationUrl": "https://hutch.health/relay/config#upstream-task-api"
+    },
+    "UpstreamTaskApi__CollectionId": {
+      "description": "Collection ID for the Upstream Task API",
+      "documentationUrl": "https://hutch.health/relay/config#upstream-task-api"
+    }
+  }
 }
