@@ -120,7 +120,7 @@ public class GenericDistributionAggregatorTests
   [Theory]
   [MemberData(nameof(GetSubTasks))]
   public void ObfuscatorIsCalledOncePerAggregatedFileRow(List<RelaySubTaskModel> subTasks, int aggregatedRowCount,
-    List<int> expectedAggregates)
+    List<int> _) // expectedAggregates is not used in this test
   {
     var obfuscator = new Mock<IObfuscator>();
 

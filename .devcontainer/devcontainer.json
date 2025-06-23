@@ -1,39 +1,57 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/dotnet-postgres
 {
-    "name": "C# (.NET) and PostgreSQL",
-    "dockerComposeFile": "docker-compose.yml",
-    "service": "app",
-    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "nromanov.dotrush",
-                "EditorConfig.EditorConfig",
-                "ms-azuretools.vscode-docker",
-                "adrianwilczynski.user-secrets",
-                "patcx.vscode-nuget-gallery"
-            ]
-        }
+  "name": "C# (.NET) and PostgreSQL",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "nromanov.dotrush",
+        "EditorConfig.EditorConfig",
+        "ms-azuretools.vscode-docker",
+        "adrianwilczynski.user-secrets",
+        "patcx.vscode-nuget-gallery"
+      ]
     }
+  },
+  // Features to add to the dev container. More info: https://containers.dev/features.
+  // "features": {},
+  // Configure tool-specific properties.
+  // "customizations": {},
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [
+    5432 // postgres
+  ],
+  // "portsAttributes": {
+  //		"5001": {
+  //			"protocol": "https"
+  //		}
+  // }
 
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+  // Use 'postCreateCommand' to run commands after the container is created.
+  "postCreateCommand": "./.devcontainer/postCreateCommand.sh",
 
-	// Configure tool-specific properties.
-	// "customizations": {},
+  // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+  // "remoteUser": "root"
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [5000, 5001, 5432],
-	// "portsAttributes": {
-	//		"5001": {
-	//			"protocol": "https"
-	//		}
-	// }
-
-    // Use 'postCreateCommand' to run commands after the container is created.
-    // "postCreateCommand": "dotnet --info",
-
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+  "secrets": {
+    "UpstreamTaskApi__BaseUrl": {
+      "description": "URL to the Upstream Task API",
+      "documentationUrl": "https://hutch.health/relay/config#upstream-task-api"
+    },
+    "UpstreamTaskApi__Username": {
+      "description": "Username for the Upstream Task API",
+      "documentationUrl": "https://hutch.health/relay/config#upstream-task-api"
+    },
+    "UpstreamTaskApi__Password": {
+      "description": "Password for the Upstream Task API",
+      "documentationUrl": "https://hutch.health/relay/config#upstream-task-api"
+    },
+    "UpstreamTaskApi__CollectionId": {
+      "description": "Collection ID for the Upstream Task API",
+      "documentationUrl": "https://hutch.health/relay/config#upstream-task-api"
+    }
+  }
 }

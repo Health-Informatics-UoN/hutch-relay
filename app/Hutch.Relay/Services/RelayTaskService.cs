@@ -61,7 +61,8 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
   }
 
   /// <summary>
-  /// Set a RelayTask as complete.
+  /// Set a RelayTask as complete. Should only be used if retaining state, as if not retained,
+  /// the task (and its subtasks) will be deleted (and don't need their completed date setting).
   /// </summary>
   /// <param name="id">The id of the task to complete.</param>
   /// <returns></returns>
@@ -85,6 +86,22 @@ public class RelayTaskService(ApplicationDbContext db) : IRelayTaskService
       CompletedAt = entity.CompletedAt,
       Collection = entity.Collection
     };
+  }
+
+  /// <summary>
+  /// Delete a <see cref="RelayTask"/> and all its <see cref="RelaySubTask"/>s.
+  /// </summary>
+  /// <param name="id">The id of the task to delete.</param>
+  /// <exception cref="KeyNotFoundException">The RelayTask does not exist.</exception>
+  public async Task Delete(string id)
+  {
+    var entity = await db.RelayTasks
+                   .SingleOrDefaultAsync(t => t.Id == id);
+
+    if(entity is null) return;
+
+    db.RelayTasks.Remove(entity); // TODO: this should cascade delete the subtasks?
+    await db.SaveChangesAsync();
   }
 
   /// <summary>

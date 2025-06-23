@@ -7,21 +7,20 @@ using Xunit;
 
 namespace Hutch.Relay.Tests.Services;
 
-public class RelaySubTaskServiceTests(Fixtures fixtures) : IClassFixture<Fixtures>, IAsyncLifetime
+public class RelaySubTaskServiceTests : IDisposable
 {
-  private readonly ApplicationDbContext _dbContext = fixtures.DbContext;
+  private readonly ApplicationDbContext _dbContext;
 
-  public Task InitializeAsync()
+  public RelaySubTaskServiceTests()
   {
-    return Task.CompletedTask;
+    // Ensure a unique DB per Test
+    _dbContext = FixtureHelpers.NewDbContext($"Test_{Guid.NewGuid()}");
+    _dbContext.Database.EnsureCreated();
   }
 
-  public async Task DisposeAsync()
+  public void Dispose()
   {
-    // Clean up the database after each test
-    _dbContext.RelaySubTasks.RemoveRange(_dbContext.RelaySubTasks);
-    _dbContext.RelayUsers.RemoveRange(_dbContext.RelayUsers);
-    await _dbContext.SaveChangesAsync();
+    _dbContext.Database.EnsureDeleted();
   }
 
   [Fact]

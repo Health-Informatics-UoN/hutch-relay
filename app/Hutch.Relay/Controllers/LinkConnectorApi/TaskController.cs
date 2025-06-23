@@ -51,37 +51,45 @@ public class TaskController(
   [SwaggerResponse(409)]
   public async Task<IActionResult> Result(Guid uuid, string collectionId, [FromBody] JobResult result)
   {
-    var subtask = await relayTaskService.GetSubTask(uuid);
-
-    // Check if the parent Task has already been submitted.
-    if (subtask.RelayTask.CompletedAt is not null)
+    try
     {
-      return Conflict(new JobFileConflictResponse());
+
+      var subtask = await relayTaskService.GetSubTask(uuid);
+
+      // Check if the parent Task has already been submitted.
+      if (subtask.RelayTask.CompletedAt is not null)
+      {
+        return Conflict(new JobFileConflictResponse());
+      }
+
+      // Update the SubTask results
+      await relayTaskService.SetSubTaskResult(uuid, JsonSerializer.Serialize(result));
+
+      // Check if there are incomplete Subtasks that belong to the same Task
+      var incompleteSubTasks = (await relayTaskService.ListSubTasks(subtask.RelayTask.Id, incompleteOnly: true)).ToList();
+
+      //  If all Subtasks on the parent Task received - then submit to TaskApi
+      if (!incompleteSubTasks.Any())
+      {
+        try
+        {
+          await resultsService.CompleteRelayTask(subtask.RelayTask);
+        }
+        catch (RackitApiClientException e)
+        {
+          if (e.UpstreamApiResponse is { StatusCode: HttpStatusCode.Conflict })
+            return Conflict(new JobFileConflictResponse());
+
+          throw;
+        }
+      }
+
+      return Ok("Job saved");
     }
-
-    // Update the SubTask results
-    await relayTaskService.SetSubTaskResult(uuid, JsonSerializer.Serialize(result));
-
-    // Check if there are incomplete Subtasks that belong to the same Task
-    var incompleteSubTasks = (await relayTaskService.ListSubTasks(subtask.RelayTask.Id, incompleteOnly: true)).ToList();
-
-    //  If all Subtasks on the parent Task received - then submit to TaskApi
-    if (!incompleteSubTasks.Any())
+    catch (KeyNotFoundException)
     {
-      try
-      {
-        await resultsService.CompleteRelayTask(subtask.RelayTask);
-      }
-      catch (RackitApiClientException e)
-      {
-        if (e.UpstreamApiResponse is { StatusCode: HttpStatusCode.Conflict })
-          return Conflict(new JobFileConflictResponse());
-
-        throw;
-      }
+      return NotFound();
     }
-
-    return Ok("Job saved");
   }
 
   # region Dummy NextJob

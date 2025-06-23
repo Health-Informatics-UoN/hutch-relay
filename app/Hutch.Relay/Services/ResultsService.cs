@@ -2,6 +2,7 @@ using System.Net;
 using Hutch.Rackit;
 using Hutch.Rackit.TaskApi.Contracts;
 using Hutch.Rackit.TaskApi.Models;
+using Hutch.Relay.Config;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services.Contracts;
@@ -12,7 +13,8 @@ namespace Hutch.Relay.Services;
 
 public class ResultsService(
   ILogger<ResultsService> logger,
-  IOptions<ApiClientOptions> options,
+  IOptions<ApiClientOptions> taskApiOptions,
+  IOptions<DatabaseOptions> databaseOptions,
   ITaskApiClient upstreamTasks,
   IRelayTaskService relayTaskService,
   [FromKeyedServices(nameof(AvailabilityAggregator))]
@@ -23,7 +25,8 @@ public class ResultsService(
   IQueryResultAggregator demographicsDistributionAggregator
 )
 {
-  private readonly ApiClientOptions options = options.Value;
+  private readonly ApiClientOptions _taskApiOptions = taskApiOptions.Value;
+  private readonly DatabaseOptions _databaseOptions = databaseOptions.Value;
 
   /// <summary>
   /// Submit a <see cref="JobResult"/> payload Upstream
@@ -41,7 +44,7 @@ public class ResultsService(
       try
       {
         // Submit results upstream
-        await upstreamTasks.SubmitResultAsync(relayTask.Id, jobResult, options);
+        await upstreamTasks.SubmitResultAsync(relayTask.Id, jobResult, _taskApiOptions);
         logger.LogInformation("Successfully submitted results for {RelayTaskId}", relayTask.Id);
         break;
       }
@@ -77,10 +80,9 @@ public class ResultsService(
   ///       Submitting the final results Upstream
   ///     </item>
   ///     <item>
-  ///       Marking the <see cref="Data.Entities.RelayTask"/> as complete in the Relay datastore.
+  ///       Deleting or completing the <see cref="Data.Entities.RelayTask"/> in the Relay datastore.
   ///     </item>
   ///   </list>
-  /// 1. 
   /// </summary>
   /// <param name="task"><see cref="RelayTaskModel"/> for the task to Complete.</param>
   public async Task CompleteRelayTask(RelayTaskModel task)
@@ -100,7 +102,10 @@ public class ResultsService(
     finally
     {
       // We should try and close out the task regardless of whether an exception occurred
-      await relayTaskService.SetComplete(task.Id);
+      if (_databaseOptions.RetainCompletedTaskState)
+        await relayTaskService.SetComplete(task.Id);
+      else
+        await relayTaskService.Delete(task.Id);
     }
   }
 

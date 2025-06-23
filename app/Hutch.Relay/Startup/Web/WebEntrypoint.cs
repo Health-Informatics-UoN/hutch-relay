@@ -1,6 +1,8 @@
+using Hutch.Relay.Config;
 using Hutch.Relay.Data;
 using Hutch.Relay.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Hutch.Relay.Startup.Web;
 
@@ -17,7 +19,7 @@ public static class WebEntrypoint
     var app = b.Build();
     
     // Make migrations
-    if (app.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
+    if (app.Services.GetRequiredService<IOptions<DatabaseOptions>>().Value.ApplyMigrationsOnStartup)
     {
       using var scope = app.Services.CreateScope();
 

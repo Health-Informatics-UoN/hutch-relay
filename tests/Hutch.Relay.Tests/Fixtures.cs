@@ -3,16 +3,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hutch.Relay.Tests;
 
-public class Fixtures
+public static class FixtureHelpers
 {
-  public readonly ApplicationDbContext DbContext;
-    
-  public Fixtures() 
+  public static ApplicationDbContext NewDbContext(string? dbName = null)
   {
     var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-      .UseInMemoryDatabase(databaseName: "TestDatabase")
+      .UseInMemoryDatabase(databaseName: dbName ?? "TestDatabase")
       .Options;
-        
-    DbContext = new ApplicationDbContext(options);
+
+    return new ApplicationDbContext(options);
   }
 }

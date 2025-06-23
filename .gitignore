@@ -3,8 +3,12 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# temp area e.g. for temporary local dev config / compose stacks / inputs / outputs etc.
+tmp
+
 # dotenv files
-.env
+*.env
+!sample.*.env
 
 # User-specific files
 *.rsuser
