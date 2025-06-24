@@ -26,7 +26,6 @@ public class DemographicsDistributionAggregator(IObfuscator obfuscator) : IQuery
     DemographicsAccumulator accumulator = new(collectionId);
 
     // Always initialise with an empty GENOMICS row as RQuest UI expects it; Results data can supplement it as necessary
-    // TODO: also need to aggregate correctly into the Genomics row under "No" if Genomics are missing?
     accumulator.Alternatives.Add(Demographics.Genomics,
       new(GetBaseGenomicsRecord(collectionId))
       {
