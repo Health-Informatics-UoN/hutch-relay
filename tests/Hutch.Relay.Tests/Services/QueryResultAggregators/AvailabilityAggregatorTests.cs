@@ -18,6 +18,7 @@ public class AvailabilityAggregatorTests
   public void WhenNoSubTasks_ReturnEmptyQueryResult()
   {
     var subTasks = new List<RelaySubTaskModel>();
+    var collectionId = "test-collection";
 
     var expected = new QueryResult
     {
@@ -30,7 +31,7 @@ public class AvailabilityAggregatorTests
 
     var aggregator = new AvailabilityAggregator(obfuscator.Object);
 
-    var actual = aggregator.Process(subTasks);
+    var actual = aggregator.Process(collectionId, subTasks);
 
     Assert.Equivalent(expected, actual);
   }
@@ -39,11 +40,12 @@ public class AvailabilityAggregatorTests
   public void ObfuscatorIsCalledOnce()
   {
     var subTasks = new List<RelaySubTaskModel>();
+    var collectionId = "test-collection";
 
     var obfuscator = new Mock<IObfuscator>();
 
     var aggregator = new AvailabilityAggregator(obfuscator.Object);
-    aggregator.Process(subTasks);
+    aggregator.Process(collectionId, subTasks);
 
     obfuscator.Verify(x => x.Obfuscate(It.IsAny<int>()), Times.Once);
   }
@@ -70,6 +72,8 @@ public class AvailabilityAggregatorTests
       }
     };
 
+    var collectionId = subTasks.First().RelayTask.Collection;
+
     var expected = new QueryResult
     {
       Count = expectedCount,
@@ -83,7 +87,7 @@ public class AvailabilityAggregatorTests
 
     var aggregator = new AvailabilityAggregator(obfuscator.Object);
 
-    var actual = aggregator.Process(subTasks);
+    var actual = aggregator.Process(collectionId, subTasks);
 
     Assert.Equivalent(expected, actual);
   }
@@ -114,6 +118,8 @@ public class AvailabilityAggregatorTests
         })
       .ToList();
 
+    var collectionId = subTasks.First().RelayTask.Collection;
+
     var expected = new QueryResult
     {
       Count = expectedCount,
@@ -127,7 +133,7 @@ public class AvailabilityAggregatorTests
 
     var aggregator = new AvailabilityAggregator(obfuscator.Object);
 
-    var actual = aggregator.Process(subTasks);
+    var actual = aggregator.Process(collectionId, subTasks);
 
     Assert.Equivalent(expected, actual);
   }

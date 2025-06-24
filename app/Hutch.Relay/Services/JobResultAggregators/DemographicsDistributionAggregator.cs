@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text.Json;
 using Hutch.Rackit.TaskApi;
 using Hutch.Rackit.TaskApi.Models;
@@ -9,9 +10,29 @@ namespace Hutch.Relay.Services.JobResultAggregators;
 
 public class DemographicsDistributionAggregator(IObfuscator obfuscator) : IQueryResultAggregator
 {
-  public QueryResult Process(List<RelaySubTaskModel> subTasks)
+  public static DemographicsDistributionRecord GetBaseGenomicsRecord(string collectionId) => new()
   {
-    DemographicsAccumulator accumulator = new(subTasks.FirstOrDefault()?.RelayTask.Collection ?? string.Empty);
+    Code = Demographics.Genomics,
+    Description = "Genomics",
+    Collection = collectionId,
+    Count = 0,
+    Alternatives = "^No|0^",
+    Dataset = "person",
+    Category = "Demographics"
+  };
+
+  public QueryResult Process(string collectionId, List<RelaySubTaskModel> subTasks)
+  {
+    DemographicsAccumulator accumulator = new(collectionId);
+
+    // Always initialise with an empty GENOMICS row as RQuest UI expects it; Results data can supplement it as necessary
+    accumulator.Alternatives.Add(Demographics.Genomics,
+      new(GetBaseGenomicsRecord(collectionId))
+      {
+        Alternatives = {
+          ["No"] = [0]
+        }
+      });
 
     foreach (var subTask in subTasks)
     {
@@ -45,12 +66,8 @@ public class DemographicsDistributionAggregator(IObfuscator obfuscator) : IQuery
 
     var finalData = accumulator.FinaliseAggregation(obfuscator);
 
-    if (!finalData.Any())
-      return new()
-      {
-        Count = 0
-      };
-    
+    // NOTE: Empty data is impossible for Demographics since at a minimum we always populate an empty Genomics row
+
     return new()
     {
       Count = finalData.Count,
@@ -89,9 +106,20 @@ internal static class DemographicsDistributionAggregatorExtensions
     this DemographicsAccumulator accumulator,
     List<DemographicsDistributionRecord> records)
   {
+    // If a `Genomics` record is not provided
+    // We will fabricate one by taking the largest provided record count
+    // (realistically all record totals should match anyway)
+    // and recording that as "No" genomic data
+    var genomicsFound = false;
+    var largestTotal = 0;
+
     foreach (var record in records)
     {
-      if (record.Code == "AGE") continue;
+      if (record.Code == Demographics.Age) continue;
+      if (record.Code == Demographics.Genomics) genomicsFound = true; // We'll use the provided record
+
+      // calculate record total (in case we need it) by summing alternatives
+      var recordTotal = 0;
 
       if (accumulator.Alternatives.TryGetValue(record.Code, out var alternativesAccumulator))
       {
@@ -100,25 +128,52 @@ internal static class DemographicsDistributionAggregatorExtensions
         // Add Alternatives
         var alternatives = record.GetAlternatives();
 
+
         foreach (var (alternative, value) in alternatives)
         {
           if (!alternativesAccumulator.Alternatives.ContainsKey(alternative))
             alternativesAccumulator.Alternatives[alternative] = [];
+
           alternativesAccumulator.Alternatives[alternative].Add(value);
+          recordTotal += value;
         }
       }
       else
       {
         // Create a brand new coded entry, with a base record we can use later to populate final properties
-        accumulator.Alternatives.Add(
-          record.Code,
-          new(record)
-          {
-            Alternatives = record.GetAlternatives()
+        alternativesAccumulator = new(record)
+        {
+          Alternatives = record.GetAlternatives()
               .Select(x => (x.Key, new List<int> { x.Value }))
               .ToDictionary()
-          });
+        };
+
+        accumulator.Alternatives.Add(
+          record.Code, alternativesAccumulator);
+
+        recordTotal = alternativesAccumulator.Alternatives.Values.Sum(x => x.Sum());
       }
+
+      // update largest total in case we need it
+      if (record.Count > recordTotal) recordTotal = record.Count; // use the reported count if it exceeds the alternatives sum?
+      if (recordTotal > largestTotal) largestTotal = recordTotal;
+    }
+
+    if (!genomicsFound)
+    {
+      // Add our calculated count to the GENOMICS "No" count.
+      // (initialising the Genomics record along the way if necessary)
+      const string NO_KEY = "No";
+
+      if (!accumulator.Alternatives.ContainsKey(Demographics.Genomics))
+        accumulator.Alternatives[Demographics.Genomics] = new(DemographicsDistributionAggregator.GetBaseGenomicsRecord(accumulator.CollectionId));
+
+      var alternativesAccumulator = accumulator.Alternatives[Demographics.Genomics];
+
+      if (!alternativesAccumulator.Alternatives.ContainsKey(NO_KEY))
+        alternativesAccumulator.Alternatives[NO_KEY] = [];
+
+      alternativesAccumulator.Alternatives[NO_KEY].Add(largestTotal);
     }
 
     return accumulator;
@@ -134,7 +189,7 @@ internal static class DemographicsDistributionAggregatorExtensions
 
     foreach (var (code, value) in accumulator.Alternatives)
     {
-      // sum and obfuscate our accumulated dat, by alternative key
+      // sum and obfuscate our accumulated data, by alternative key
       var aggregateAlternatives = value.Alternatives.ToDictionary(
         x => x.Key,
         x => obfuscator.Obfuscate(x.Value.Sum()));

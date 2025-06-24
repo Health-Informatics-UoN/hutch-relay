@@ -10,11 +10,11 @@ namespace Hutch.Relay.Services.JobResultAggregators;
 
 public class GenericDistributionAggregator(IObfuscator obfuscator) : IQueryResultAggregator
 {
-  public QueryResult Process(List<RelaySubTaskModel> subTasks)
+  public QueryResult Process(string collectionId, List<RelaySubTaskModel> subTasks)
   {
     // Aggregation State
     (string collectionId, Dictionary<string, GenericDistributionRecord> aggregatedRecords) accumulator =
-      (subTasks.FirstOrDefault()?.RelayTask.Collection ?? string.Empty, new());
+      (collectionId, new());
 
     // Aggregate across all valid subtasks
     foreach (var subTask in subTasks)

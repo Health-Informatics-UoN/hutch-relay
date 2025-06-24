@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using System.Text.Json;
 using Hutch.Rackit.TaskApi;
 using Hutch.Rackit.TaskApi.Models;
@@ -7,7 +6,6 @@ using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.JobResultAggregators;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
@@ -66,7 +64,7 @@ public class DemographicsDistributionAggregatorTests
       new()
       {
         Collection = "sub_collection1",
-        Code = "SEX",
+        Code = Demographics.Sex,
         Description = "Sex",
         Count = 145,
         Alternatives = "^MALE|70^FEMALE|75^",
@@ -76,7 +74,7 @@ public class DemographicsDistributionAggregatorTests
       new()
       {
         Collection = "sub_collection1",
-        Code = "GENOMICS",
+        Code = Demographics.Genomics,
         Description = "Genomics",
         Count = 1005,
         Alternatives = "^No|1005^Imputed whole genome data|0^",
@@ -88,7 +86,7 @@ public class DemographicsDistributionAggregatorTests
       new()
       {
         Collection = "sub_collection2",
-        Code = "SEX",
+        Code = Demographics.Sex,
         Description = "Sex",
         Count = 1435,
         Alternatives = "^MALE|720^FEMALE|715^",
@@ -98,7 +96,7 @@ public class DemographicsDistributionAggregatorTests
       new()
       {
         Collection = "sub_collection2",
-        Code = "GENOMICS",
+        Code = Demographics.Genomics,
         Description = "Genomics",
         Count = 1477,
         Alternatives = "^No|1321^Imputed whole genome data|156^",
@@ -174,6 +172,32 @@ public class DemographicsDistributionAggregatorTests
   #region AccumulateData
 
   [Fact]
+  public void AccumulateData_WhenNoGenomicsRow_CorrectGenomicsAccumulation()
+  {
+    // When a Genomics row isn't in the provided records:
+    //   - Genomics row is added with "No" values from the provided records
+
+    var initialAccumulator = _singleCodeAccumulator;
+
+    List<DemographicsDistributionRecord> inputRecords =
+    [
+      new() { Code = Demographics.Sex, Collection = "sub_collection2", Alternatives = "^MALE|155^FEMALE|135^" }
+    ];
+
+    // Much of our expected state has to be redefined manually due to mutable reference types
+    var expectedGenomicsBaseRecord = DemographicsDistributionAggregator.GetBaseGenomicsRecord(_singleCodeAccumulator.CollectionId);
+
+    Dictionary<string, List<int>> expectedGenomicsAlternatives = new() { ["No"] = [155 + 135] }; // Sum of the SEX record counts provided as the Genomics "No" value
+
+    var actual = initialAccumulator.AccumulateData(inputRecords);
+
+    // Here's what we added for Genomics, even though there's no Genomics input record
+    Assert.Equivalent(
+      new AlternativesAccumulator(expectedGenomicsBaseRecord) { Alternatives = expectedGenomicsAlternatives },
+      actual.Alternatives[Demographics.Genomics]);
+  }
+
+  [Fact]
   public void AccumulateData_WhenFirstRowForCode_CorrectAlternativesAccumulation()
   {
     // When a code isn't already in the accumulated state:
@@ -184,7 +208,7 @@ public class DemographicsDistributionAggregatorTests
 
     List<DemographicsDistributionRecord> inputRecords =
     [
-      new() { Code = "SEX", Collection = "sub_collection2", Alternatives = "^MALE|155^FEMALE|135^" }
+      new() { Code = Demographics.Sex, Collection = "sub_collection2", Alternatives = "^MALE|155^FEMALE|135^" }
     ];
 
     // Much of our expected state has to be redefined manually due to mutable reference types
@@ -206,7 +230,7 @@ public class DemographicsDistributionAggregatorTests
     // Here's what we added
     Assert.Equivalent(
       new AlternativesAccumulator(expectedSexBaseRecord) { Alternatives = expectedSexAlternatives },
-      actual.Alternatives["SEX"]);
+      actual.Alternatives[Demographics.Sex]);
 
     // Here's what should remain unchanged
     Assert.Equivalent(
@@ -267,8 +291,8 @@ public class DemographicsDistributionAggregatorTests
     [
       new() { Code = "EXISTING_CODE", Collection = "sub_collection2", Alternatives = "^BRACKET2|155^BRACKET1|135^" },
       new() { Code = "EXISTING_CODE", Collection = "sub_collection2", Alternatives = "^BRACKET1|27^BRACKET2|32^" },
-      new() { Code = "SEX", Collection = "sub_collection2", Alternatives = "^MALE|155^FEMALE|135^" },
-      new() { Code = "SEX", Collection = "sub_collection2", Alternatives = "^MALE|42^FEMALE|68^OTHER|7^" }
+      new() { Code = Demographics.Sex, Collection = "sub_collection2", Alternatives = "^MALE|155^FEMALE|135^" },
+      new() { Code = Demographics.Sex, Collection = "sub_collection2", Alternatives = "^MALE|42^FEMALE|68^OTHER|7^" }
     ];
 
     // Much of our expected state has to be redefined manually due to mutable reference types
@@ -282,7 +306,7 @@ public class DemographicsDistributionAggregatorTests
     // New Code
     Assert.Equivalent(
       expectedSexAlternatives,
-      actual.Alternatives["SEX"].Alternatives);
+      actual.Alternatives[Demographics.Sex].Alternatives);
 
     // Existing Code
     Assert.Equivalent(
@@ -303,10 +327,10 @@ public class DemographicsDistributionAggregatorTests
     DemographicsAccumulator initialAccumulator = new("test_collection");
 
     DemographicsDistributionRecord ageRecord = new()
-      { Collection = "sub_collection", Code = "AGE", Count = 16, Min = 9, Max = 25, Mean = 16.75, Median = 15.5 };
+    { Collection = "sub_collection", Code = "AGE", Count = 16, Min = 9, Max = 25, Mean = 16.75, Median = 15.5 };
 
     DemographicsDistributionRecord sexRecord = new()
-      { Code = "SEX", Collection = "sub_collection", Alternatives = "^MALE|155^FEMALE|135^" };
+    { Code = Demographics.Sex, Collection = "sub_collection", Alternatives = "^MALE|155^FEMALE|135^" };
 
     List<DemographicsDistributionRecord> inputRecords = ageOnly ? [ageRecord] : [ageRecord, sexRecord];
 
@@ -370,11 +394,11 @@ public class DemographicsDistributionAggregatorTests
       ["CODE1"] = "^BRACKET1|50^BRACKET2|150^",
       ["CODE2"] = "^BRACKET_A|81^BRACKET_B|557^BRACKET_C|32^"
     };
-    
+
     // Pass an obfuscator explicitly with everything turned off
     // so it doesn't mess with our manual summing ;)
     var obfuscator = new Obfuscator(Options.Create(new ObfuscationOptions
-      { RoundingTarget = 0, LowNumberSuppressionThreshold = 0 }));
+    { RoundingTarget = 0, LowNumberSuppressionThreshold = 0 }));
 
     var actual = demographicsAccumulator.FinaliseAggregation(obfuscator);
 
@@ -414,7 +438,7 @@ public class DemographicsDistributionAggregatorTests
     // Pass an obfuscator explicitly with everything turned off
     // so it doesn't mess with our manual summing ;)
     var obfuscator = new Obfuscator(Options.Create(new ObfuscationOptions
-      { RoundingTarget = 0, LowNumberSuppressionThreshold = 0 }));
+    { RoundingTarget = 0, LowNumberSuppressionThreshold = 0 }));
 
     var actual = demographicsAccumulator.FinaliseAggregation(obfuscator);
 
@@ -426,22 +450,40 @@ public class DemographicsDistributionAggregatorTests
   #region Process
 
   [Fact]
-  public void Process_WhenNoSubTasks_ReturnEmptyQueryResult()
+  public void Process_WhenNoSubTasks_ReturnEmptyGenomicsResult()
   {
     var subTasks = new List<RelaySubTaskModel>();
+    var collectionId = "test-collection";
 
     var expected = new QueryResult
     {
-      Count = 0,
-      Files = [],
-      DatasetCount = 0
+      Count = 1,
+      Files = [
+        new ResultFile
+        {
+          FileDescription = "demographics.distribution analysis results",
+          FileName = ResultFileName.DemographicsDistribution,
+        }.WithData([
+          new DemographicsDistributionRecord()
+          {
+            Code = Demographics.Genomics,
+            Description = "Genomics",
+            Collection = collectionId,
+            Count = 0,
+            Alternatives = "^No|0^",
+            Dataset = "person",
+            Category = "Demographics",
+          },
+        ])
+      ],
+      DatasetCount = 1
     };
 
     var obfuscator = new Mock<IObfuscator>();
 
     var aggregator = new DemographicsDistributionAggregator(obfuscator.Object);
 
-    var actual = aggregator.Process(subTasks);
+    var actual = aggregator.Process(collectionId, subTasks);
 
     Assert.Equivalent(expected, actual);
   }
@@ -453,6 +495,7 @@ public class DemographicsDistributionAggregatorTests
     // is the one used internally (i.e. with the correct configuration, not a different (e.g. default) instance)
 
     var subTasks = ProcessSubTasks;
+    var collectionId = subTasks.First().RelayTask.Collection;
 
     // Unique Alternative Keys across all subtasks
     // Note this depends on the test data, manually calulated
@@ -461,7 +504,7 @@ public class DemographicsDistributionAggregatorTests
     var obfuscator = new Mock<IObfuscator>();
 
     var aggregator = new DemographicsDistributionAggregator(obfuscator.Object);
-    aggregator.Process(subTasks);
+    aggregator.Process(collectionId, subTasks);
 
     obfuscator.Verify(x => x.Obfuscate(It.IsAny<int>()), Times.Exactly(expectedTimes));
   }
@@ -470,6 +513,7 @@ public class DemographicsDistributionAggregatorTests
   public void Process_ExpectedFinalResult()
   {
     var subTasks = ProcessSubTasks;
+    var collectionId = subTasks.First().RelayTask.Collection;
 
     var expected = new QueryResult()
     {
@@ -484,21 +528,21 @@ public class DemographicsDistributionAggregatorTests
         }.WithData([
           new DemographicsDistributionRecord()
           {
-            Code = "SEX",
-            Description = "Sex",
-            Collection = subTasks.First().RelayTask.Collection,
-            Count = 1580,
-            Alternatives = "^MALE|790^FEMALE|790^",
+            Code = Demographics.Genomics,
+            Description = "Genomics",
+            Collection = collectionId,
+            Count = 2482,
+            Alternatives = "^No|2326^Imputed whole genome data|156^",
             Dataset = "person",
             Category = "Demographics",
           },
           new DemographicsDistributionRecord()
           {
-            Code = "GENOMICS",
-            Description = "Genomics",
-            Collection = subTasks.First().RelayTask.Collection,
-            Count = 2482,
-            Alternatives = "^No|2326^Imputed whole genome data|156^",
+            Code = Demographics.Sex,
+            Description = "Sex",
+            Collection = collectionId,
+            Count = 1580,
+            Alternatives = "^MALE|790^FEMALE|790^",
             Dataset = "person",
             Category = "Demographics",
           },
@@ -512,7 +556,7 @@ public class DemographicsDistributionAggregatorTests
 
     var aggregator = new DemographicsDistributionAggregator(obfuscator.Object);
 
-    var actual = aggregator.Process(subTasks);
+    var actual = aggregator.Process(collectionId, subTasks);
 
     Assert.Equivalent(expected, actual);
   }

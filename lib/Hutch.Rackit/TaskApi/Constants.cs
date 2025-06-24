@@ -31,3 +31,11 @@ public static class ResultResponseStatus
 {
   public const string Conflict = "CONFLICT";
 }
+
+// This is not exhaustive but represents known keys that we sometimes operate on
+public static class Demographics
+{
+  public const string Age = "AGE";
+  public const string Sex = "SEX";
+  public const string Genomics = "GENOMICS";
+}

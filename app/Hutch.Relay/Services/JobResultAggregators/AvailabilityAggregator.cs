@@ -6,7 +6,7 @@ namespace Hutch.Relay.Services.JobResultAggregators;
 
 public class AvailabilityAggregator(IObfuscator obfuscator) : IQueryResultAggregator
 {
-  public QueryResult Process(List<RelaySubTaskModel> subTasks)
+  public QueryResult Process(string _, List<RelaySubTaskModel> subTasks)
   {
     // TODO: Availability Results *CAN* contain Results Files too
     // If (when) Relay will support this, those files will need to be aggregated

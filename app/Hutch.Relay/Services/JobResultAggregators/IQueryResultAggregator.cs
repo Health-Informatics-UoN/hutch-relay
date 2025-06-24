@@ -6,5 +6,5 @@ namespace Hutch.Relay.Services.JobResultAggregators;
 
 public interface IQueryResultAggregator
 {
-  public QueryResult Process(List<RelaySubTaskModel> subTasks);
+  public QueryResult Process(string collectionId, List<RelaySubTaskModel> subTasks);
 }

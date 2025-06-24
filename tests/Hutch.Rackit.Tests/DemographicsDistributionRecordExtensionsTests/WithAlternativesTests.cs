@@ -1,3 +1,4 @@
+using Hutch.Rackit.TaskApi;
 using Hutch.Rackit.TaskApi.Models;
 
 namespace Hutch.Rackit.Tests.DemographicsDistributionRecordExtensionsTests;
@@ -54,6 +55,30 @@ public class WithAlternativesTests
     ];
   }
 
+  public static IEnumerable<object[]> GetData_GenomicsCode_EncodesAlternativesCorrectly()
+  {
+    yield return
+    [
+      new Dictionary<string, int> { ["No"] = 50, ["Imputed whole genome data"] = 75, ["Imputed partial genome data"] = 104 },
+      "^No|50^Imputed whole genome data|75^Imputed partial genome data|104^" // unexpected keys retained
+    ];
+    yield return
+    [
+      new Dictionary<string, int> { ["Imputed whole genome data"] = 75, ["No"] = 50 },
+      "^No|50^Imputed whole genome data|75^" // Order standardised - known keys first
+    ];
+    yield return
+    [
+      new Dictionary<string, int> { ["Imputed whole genome data"] = 75 },
+      "^No|0^Imputed whole genome data|75^" // missing known keys zeroed
+    ];
+    yield return
+    [
+      new Dictionary<string, int>(),
+      string.Empty
+    ];
+  }
+
   #endregion
 
   [Theory]
@@ -78,7 +103,22 @@ public class WithAlternativesTests
   {
     DemographicsDistributionRecord record = new()
     {
-      Code = "SEX",
+      Code = Demographics.Sex,
+      Collection = "test_collection"
+    };
+
+    record.WithAlternatives(alternatives);
+
+    Assert.Equal(expected, record.Alternatives);
+  }
+
+  [Theory]
+  [MemberData(nameof(GetData_GenomicsCode_EncodesAlternativesCorrectly))]
+  public void GenomicsCode_EncodesAlternativesCorrectly(Dictionary<string, int> alternatives, string expected)
+  {
+    DemographicsDistributionRecord record = new()
+    {
+      Code = Demographics.Genomics,
       Collection = "test_collection"
     };
 
@@ -94,7 +134,7 @@ public class WithAlternativesTests
     
     DemographicsDistributionRecord record = new()
     {
-      Code = "AGE",
+      Code = Demographics.Age,
       Collection = "test_collection"
     };
 

@@ -45,14 +45,14 @@ public record DemographicsDistributionRecord : IResultFileRecord
   public int Count { get; set; }
 
   // Optional additional stats
-  [Name("MIN")] [Index(4)] public int? Min { get; set; }
+  [Name("MIN")][Index(4)] public int? Min { get; set; }
 
   [Index(5)] public double? Q1 { get; set; }
-  [Name("MEDIAN")] [Index(6)] public double? Median { get; set; }
-  [Name("MEAN")] [Index(7)] public double? Mean { get; set; }
+  [Name("MEDIAN")][Index(6)] public double? Median { get; set; }
+  [Name("MEAN")][Index(7)] public double? Mean { get; set; }
 
   [Index(8)] public double? Q3 { get; set; }
-  [Name("MAX")] [Index(9)] public double? Max { get; set; }
+  [Name("MAX")][Index(9)] public double? Max { get; set; }
 
   /// <summary>
   /// <para>
@@ -74,7 +74,7 @@ public record DemographicsDistributionRecord : IResultFileRecord
   // TODO: What is really expected here?
   // May refer to the Table the is relative to, if not a standard ontology term
   // e.g. In Demographics Distribution, `SEX` may appear as a Code against the `person` table.
-  [Name("DATASET")] [Index(11)] public string Dataset { get; set; } = string.Empty;
+  [Name("DATASET")][Index(11)] public string Dataset { get; set; } = string.Empty;
 
   /// <summary>
   /// Raw OMOP Code for the term. If <see cref="Code"/> is prefixed `OMOP:` the values should match.
@@ -105,32 +105,63 @@ public static class DemographicsDistributionRecordExtensions
   /// <summary>
   /// A lookup by <see cref="Code"/> that provides the expected keys and their order for the <see cref="Alternatives"/> property.
   /// </summary>
-  private static readonly Dictionary<string, string> AlternativeKeys = new()
+  private static readonly Dictionary<string, string> _alternativeKeys = new()
   {
-    ["SEX"] = "MALE,FEMALE"
+    [Demographics.Sex] = "MALE,FEMALE",
+    [Demographics.Genomics] = "No,*" // `*` Allows unknown keys to be appended
   };
 
   public static DemographicsDistributionRecord WithAlternatives(
     this DemographicsDistributionRecord record,
     Dictionary<string, int> alternatives)
   {
-    if (alternatives.Count == 0 || record.Code == "AGE") // AGE doesn't use alternatives
+    // Always zero out the base record's alternatives
+    // Correct values will be constructed from the provided `alternatives` dictionary
+    record.Alternatives = string.Empty;
+
+    // early return cases if nothing else to do
+    if (alternatives.Count == 0 || record.Code == Demographics.Age) // AGE doesn't use alternatives
     {
-      record.Alternatives = string.Empty;
+      return record;
     }
-    else if (AlternativeKeys.ContainsKey(record.Code))
+
+    // See if this is a key we know the expected alternatives for
+    string[] knownAlternatives = _alternativeKeys.GetValueOrDefault(record.Code)?.Split(",") ?? [];
+    var allowUnknownAlternatives = knownAlternatives is [];
+
+    if (knownAlternatives.Length > 0)
     {
       // We know the expected keys / order for this Code
-      record.Alternatives = AlternativeKeys[record.Code].Split(",")
+      record.Alternatives = knownAlternatives
         .Aggregate("^", (current, k) =>
-          current + $"{k}|{alternatives.GetValueOrDefault(k)}^");
+          {
+            if (k == "*") // * isn't a real Key, so don't add it, but change the behaviour
+            {
+              allowUnknownAlternatives = true;
+              return current;
+            }
+
+            return current + $"{k}|{alternatives.GetValueOrDefault(k)}^";
+          });
     }
-    else
+
+    // Either the Code is unknown, or a known Code supports unknown alternatives (`*`)
+    if (allowUnknownAlternatives)
     {
-      // We just set the values as they come
+      // We just set the values we don't already have as they come
       record.Alternatives = alternatives
-        .Aggregate("^", (current, item) =>
-          current + $"{item.Key}|{item.Value}^");
+        .Aggregate(
+          string.IsNullOrWhiteSpace(record.Alternatives)
+            ? "^"
+            : record.Alternatives,
+          (current, item) =>
+          {
+            // Skip keys we already got from knownAlternatives
+            if (knownAlternatives.Contains(item.Key))
+              return current;
+
+            return current + $"{item.Key}|{item.Value}^";
+          });
     }
 
     return record;
