@@ -172,6 +172,32 @@ public class DemographicsDistributionAggregatorTests
   #region AccumulateData
 
   [Fact]
+  public void AccumulateData_WhenNoGenomicsRow_CorrectGenomicsAccumulation()
+  {
+    // When a Genomics row isn't in the provided records:
+    //   - Genomics row is added with "No" values from the provided records
+
+    var initialAccumulator = _singleCodeAccumulator;
+
+    List<DemographicsDistributionRecord> inputRecords =
+    [
+      new() { Code = Demographics.Sex, Collection = "sub_collection2", Alternatives = "^MALE|155^FEMALE|135^" }
+    ];
+
+    // Much of our expected state has to be redefined manually due to mutable reference types
+    var expectedGenomicsBaseRecord = DemographicsDistributionAggregator.GetBaseGenomicsRecord(_singleCodeAccumulator.CollectionId);
+
+    Dictionary<string, List<int>> expectedGenomicsAlternatives = new() { ["No"] = [155 + 135] }; // Sum of the SEX record counts provided as the Genomics "No" value
+
+    var actual = initialAccumulator.AccumulateData(inputRecords);
+
+    // Here's what we added for Genomics, even though there's no Genomics input record
+    Assert.Equivalent(
+      new AlternativesAccumulator(expectedGenomicsBaseRecord) { Alternatives = expectedGenomicsAlternatives },
+      actual.Alternatives[Demographics.Genomics]);
+  }
+
+  [Fact]
   public void AccumulateData_WhenFirstRowForCode_CorrectAlternativesAccumulation()
   {
     // When a code isn't already in the accumulated state:
@@ -301,10 +327,10 @@ public class DemographicsDistributionAggregatorTests
     DemographicsAccumulator initialAccumulator = new("test_collection");
 
     DemographicsDistributionRecord ageRecord = new()
-      { Collection = "sub_collection", Code = "AGE", Count = 16, Min = 9, Max = 25, Mean = 16.75, Median = 15.5 };
+    { Collection = "sub_collection", Code = "AGE", Count = 16, Min = 9, Max = 25, Mean = 16.75, Median = 15.5 };
 
     DemographicsDistributionRecord sexRecord = new()
-      { Code = Demographics.Sex, Collection = "sub_collection", Alternatives = "^MALE|155^FEMALE|135^" };
+    { Code = Demographics.Sex, Collection = "sub_collection", Alternatives = "^MALE|155^FEMALE|135^" };
 
     List<DemographicsDistributionRecord> inputRecords = ageOnly ? [ageRecord] : [ageRecord, sexRecord];
 
@@ -368,11 +394,11 @@ public class DemographicsDistributionAggregatorTests
       ["CODE1"] = "^BRACKET1|50^BRACKET2|150^",
       ["CODE2"] = "^BRACKET_A|81^BRACKET_B|557^BRACKET_C|32^"
     };
-    
+
     // Pass an obfuscator explicitly with everything turned off
     // so it doesn't mess with our manual summing ;)
     var obfuscator = new Obfuscator(Options.Create(new ObfuscationOptions
-      { RoundingTarget = 0, LowNumberSuppressionThreshold = 0 }));
+    { RoundingTarget = 0, LowNumberSuppressionThreshold = 0 }));
 
     var actual = demographicsAccumulator.FinaliseAggregation(obfuscator);
 
@@ -412,7 +438,7 @@ public class DemographicsDistributionAggregatorTests
     // Pass an obfuscator explicitly with everything turned off
     // so it doesn't mess with our manual summing ;)
     var obfuscator = new Obfuscator(Options.Create(new ObfuscationOptions
-      { RoundingTarget = 0, LowNumberSuppressionThreshold = 0 }));
+    { RoundingTarget = 0, LowNumberSuppressionThreshold = 0 }));
 
     var actual = demographicsAccumulator.FinaliseAggregation(obfuscator);
 
