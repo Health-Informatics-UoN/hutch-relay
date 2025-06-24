@@ -38,12 +38,12 @@ public class ResultsServiceTests
         x.ListSubTasks(
           It.Is<string>(y => y == relayTask.Id),
           It.Is<bool>(y => y == true)))
-      .Returns(() => Task.FromResult<IEnumerable<RelaySubTaskModel>>(new List<RelaySubTaskModel>()));
+      .Returns(() => Task.FromResult<IEnumerable<RelaySubTaskModel>>([]));
 
     var aggregator = new Mock<IQueryResultAggregator>();
     aggregator
       .Setup(x =>
-        x.Process(It.IsAny<List<RelaySubTaskModel>>()))
+        x.Process(It.Is<string>(x => x == relayTask.Collection), It.IsAny<List<RelaySubTaskModel>>()))
       .Returns(() => new() { Count = 0 });
 
     var resultsService = new ResultsService(

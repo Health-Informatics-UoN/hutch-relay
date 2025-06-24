@@ -7,7 +7,6 @@ using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.JobResultAggregators;
-using Microsoft.VisualBasic;
 using Moq;
 using Xunit;
 
@@ -56,12 +55,12 @@ public class GenericDistributionAggregatorTests
 
   private static List<GenericDistributionRecord> GenerateSubTaskResults(
     string collectionId, int[] counts, int codeOffset = 1)
-    => counts.Select((v, i) => new GenericDistributionRecord
+    => [.. counts.Select((v, i) => new GenericDistributionRecord
     {
       Code = $"CODE{i + codeOffset}",
       Collection = collectionId,
       Count = v,
-    }).ToList();
+    })];
 
   public static readonly RelaySubTaskModel SubTaskNoData = GenerateSubTaskWithResultsData([]);
 
@@ -99,6 +98,7 @@ public class GenericDistributionAggregatorTests
   [Fact]
   public void WhenNoSubTasks_ReturnEmptyQueryResult()
   {
+    var collectionId = "test-collection";
     var subTasks = new List<RelaySubTaskModel>();
 
     var expected = new QueryResult
@@ -112,7 +112,7 @@ public class GenericDistributionAggregatorTests
 
     var aggregator = new GenericDistributionAggregator(obfuscator.Object);
 
-    var actual = aggregator.Process(subTasks);
+    var actual = aggregator.Process(collectionId, subTasks);
 
     Assert.Equivalent(expected, actual);
   }
@@ -122,10 +122,12 @@ public class GenericDistributionAggregatorTests
   public void ObfuscatorIsCalledOncePerAggregatedFileRow(List<RelaySubTaskModel> subTasks, int aggregatedRowCount,
     List<int> _) // expectedAggregates is not used in this test
   {
+    var collectionId = subTasks.FirstOrDefault()?.RelayTask.Collection ?? "test-collection";
+
     var obfuscator = new Mock<IObfuscator>();
 
     var aggregator = new GenericDistributionAggregator(obfuscator.Object);
-    aggregator.Process(subTasks);
+    aggregator.Process(collectionId, subTasks);
 
     obfuscator.Verify(x => x.Obfuscate(It.IsAny<int>()), Times.Exactly(aggregatedRowCount));
   }
@@ -136,13 +138,15 @@ public class GenericDistributionAggregatorTests
     int aggregatedRowCount,
     List<int> expectedAggregates)
   {
+    var collectionId = subTasks.FirstOrDefault()?.RelayTask.Collection ?? "test-collection";
+
     var obfuscator = new Mock<IObfuscator>();
     obfuscator.Setup(x => x.Obfuscate(It.IsAny<int>()))
       .Returns((int value) => value);
 
     var aggregator = new GenericDistributionAggregator(obfuscator.Object);
 
-    var actual = aggregator.Process(subTasks);
+    var actual = aggregator.Process(collectionId, subTasks);
 
     // Check the count fields
     Assert.Equal(aggregatedRowCount, actual.Count);

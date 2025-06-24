@@ -9,9 +9,28 @@ namespace Hutch.Relay.Services.JobResultAggregators;
 
 public class DemographicsDistributionAggregator(IObfuscator obfuscator) : IQueryResultAggregator
 {
-  public QueryResult Process(List<RelaySubTaskModel> subTasks)
+  public QueryResult Process(string collectionId, List<RelaySubTaskModel> subTasks)
   {
-    DemographicsAccumulator accumulator = new(subTasks.FirstOrDefault()?.RelayTask.Collection ?? string.Empty);
+    DemographicsAccumulator accumulator = new(collectionId);
+
+    // Always initialise with an empty GENOMICS row as RQuest UI expects it; Results data can supplement it as necessary
+    // TODO: also need to aggregate correctly into the Genomics row under "No" if Genomics are missing?
+    accumulator.Alternatives.Add(Demographics.Genomics,
+      new(new()
+      {
+        Code = Demographics.Genomics,
+        Description = "Genomics",
+        Collection = collectionId,
+        Count = 0,
+        Alternatives = "^No|0^",
+        Dataset = "person",
+        Category = "Demographics"
+      })
+      {
+        Alternatives = {
+          ["No"] = [0]
+        }
+      });
 
     foreach (var subTask in subTasks)
     {
@@ -45,12 +64,8 @@ public class DemographicsDistributionAggregator(IObfuscator obfuscator) : IQuery
 
     var finalData = accumulator.FinaliseAggregation(obfuscator);
 
-    if (!finalData.Any())
-      return new()
-      {
-        Count = 0
-      };
-    
+    // NOTE: Empty data is impossible for Demographics since at a minimum we always populate an empty Genomics row
+
     return new()
     {
       Count = finalData.Count,
@@ -91,7 +106,7 @@ internal static class DemographicsDistributionAggregatorExtensions
   {
     foreach (var record in records)
     {
-      if (record.Code == "AGE") continue;
+      if (record.Code == Demographics.Age) continue;
 
       if (accumulator.Alternatives.TryGetValue(record.Code, out var alternativesAccumulator))
       {
@@ -134,7 +149,7 @@ internal static class DemographicsDistributionAggregatorExtensions
 
     foreach (var (code, value) in accumulator.Alternatives)
     {
-      // sum and obfuscate our accumulated dat, by alternative key
+      // sum and obfuscate our accumulated data, by alternative key
       var aggregateAlternatives = value.Alternatives.ToDictionary(
         x => x.Key,
         x => obfuscator.Obfuscate(x.Value.Sum()));

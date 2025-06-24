@@ -138,7 +138,7 @@ public class ResultsService(
     {
       Uuid = relayTask.Id,
       CollectionId = relayTask.Collection,
-      Results = aggregator.Process(subTasks)
+      Results = aggregator.Process(relayTask.Collection, subTasks)
     };
   }
 

@@ -115,10 +115,13 @@ public static class DemographicsDistributionRecordExtensions
     this DemographicsDistributionRecord record,
     Dictionary<string, int> alternatives)
   {
-    // early return cases if nothing to do
+    // Always zero out the base record's alternatives
+    // Correct values will be constructed from the provided `alternatives` dictionary
+    record.Alternatives = string.Empty;
+
+    // early return cases if nothing else to do
     if (alternatives.Count == 0 || record.Code == Demographics.Age) // AGE doesn't use alternatives
     {
-      record.Alternatives = string.Empty;
       return record;
     }
 
