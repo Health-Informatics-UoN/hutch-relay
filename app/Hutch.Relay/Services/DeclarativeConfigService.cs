@@ -1,6 +1,7 @@
 using Hutch.Relay.Config;
 using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
+using Hutch.Relay.Services.Contracts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -15,7 +16,7 @@ public class DeclarativeConfigService(
   UserManager<RelayUser> users,
   ApplicationDbContext db,
   ILookupNormalizer normalizer,
-  SubNodeService subnodes) // TODO: fix ISubNodeService usage
+  ISubNodeService subnodes)
 {
   private readonly DownstreamUsersOptions _downstreamUsers = downstreamUsersOptions.Value;
 

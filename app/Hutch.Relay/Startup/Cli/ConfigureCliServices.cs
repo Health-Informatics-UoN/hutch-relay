@@ -3,6 +3,7 @@ using Hutch.Relay.Constants;
 using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
 using Hutch.Relay.Services;
+using Hutch.Relay.Services.Contracts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -45,7 +46,7 @@ public static class ConfigureCliServices
 
     // Application Services
     b.Services
-      .AddTransient<SubNodeService>()
+      .AddTransient<ISubNodeService, SubNodeService>()
       .AddTransient<DbManagementService>();
 
     // Command Runners
