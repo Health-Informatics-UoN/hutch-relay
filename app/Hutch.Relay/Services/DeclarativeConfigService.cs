@@ -10,7 +10,12 @@ namespace Hutch.Relay.Services;
 /// <summary>
 /// Service for reconciling declaratively configured state with the current local datastore
 /// </summary>
-public class DeclarativeConfigService(IOptions<DownstreamUsersOptions> downstreamUsersOptions, UserManager<RelayUser> users, ApplicationDbContext db, ILookupNormalizer normalizer, SubNodeService subnodes)
+public class DeclarativeConfigService(
+  IOptions<DownstreamUsersOptions> downstreamUsersOptions,
+  UserManager<RelayUser> users,
+  ApplicationDbContext db,
+  ILookupNormalizer normalizer,
+  SubNodeService subnodes) // TODO: fix ISubNodeService usage
 {
   private readonly DownstreamUsersOptions _downstreamUsers = downstreamUsersOptions.Value;
 
