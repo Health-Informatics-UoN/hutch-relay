@@ -15,8 +15,9 @@ public interface ISubNodeService
   /// Create a new SubNode associated with the provided user
   /// </summary>
   /// <param name="relayUser">The relay user registering the SubNode</param>
+  /// <param name="specificId">An optional ID to use for the SubNode instead of generating one</param>
   /// <returns>The SubNode created.</returns>
-  Task<SubNodeModel> Create(RelayUser relayUser);
+  Task<SubNodeModel> Create(RelayUser relayUser, Guid? specificId);
 
   /// <summary>
   /// List all registered sub nodes
