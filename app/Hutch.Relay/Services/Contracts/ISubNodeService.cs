@@ -26,6 +26,12 @@ public interface ISubNodeService
   Task<IEnumerable<SubNodeModel>> List();
 
   /// <summary>
+  /// List all registered sub nodes for a given user
+  /// </summary>
+  /// <returns>A list of nodes for the requested user</returns>
+  Task<IEnumerable<SubNodeModel>> List(string username);
+
+  /// <summary>
   /// Delete a SubNode
   /// </summary>
   /// <param name="username">The Owner of the SubNode to be deleted</param>
