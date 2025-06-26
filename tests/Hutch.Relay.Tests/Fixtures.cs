@@ -9,6 +9,8 @@ public static class FixtureHelpers
   {
     var options = new DbContextOptionsBuilder<ApplicationDbContext>()
       .UseInMemoryDatabase(databaseName: dbName ?? "TestDatabase")
+      .EnableDetailedErrors()
+      .EnableSensitiveDataLogging()
       .Options;
 
     return new ApplicationDbContext(options);

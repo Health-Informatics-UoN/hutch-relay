@@ -22,13 +22,15 @@ public class DeclarativeConfigService(
 
   public async Task ReconcileDownstreamUsers()
   {
-    var existingUsers = await db.RelayUsers.AsNoTracking().ToListAsync();
+    var existingUsers = await db.RelayUsers.AsNoTracking()
+      .Include(x => x.SubNodes)
+      .ToListAsync();
 
     // normalise our declared usernames the same way aspnet identity does
     var normalisedDeclaredUsernames = _downstreamUsers.DownstreamUsers.Keys
       .Select(x => normalizer.NormalizeName(x));
 
-    // Start by deleting undeclared users, which will cascade to delete subnodes too
+    // Start by deleting undeclared users, and their subnodes too
     foreach (var existingUser in existingUsers)
     {
 
@@ -36,10 +38,18 @@ public class DeclarativeConfigService(
       // but if they don't have a username we can't username match them anyway
       if (existingUser.NormalizedUserName is null) continue;
 
-
       if (!normalisedDeclaredUsernames.Contains(existingUser.NormalizedUserName))
       {
-        await users.DeleteAsync(existingUser); // TODO: does this work? We didn't fetch the user via UserManager...
+        if (existingUser.IsDeclared) // Only remove users previously declared; keep manually added ones
+        {
+          foreach (var subnode in existingUser.SubNodes)
+          {
+            // Only delete if we're the only user for the subnode
+            if (subnode.RelayUsers.Count == 1)
+              db.SubNodes.Remove(subnode);
+          }
+          await users.DeleteAsync(existingUser);
+        }
       }
     }
 
@@ -51,7 +61,13 @@ public class DeclarativeConfigService(
       if (details.SubNode is not null)
         details.SubNodes.Add(details.SubNode.Value); // Merge single subnode if applicable
 
-      var user = await users.FindByNameAsync(username);
+      // We don't use UserManager's FindByName to get the user
+      // since we want to include SubNodes
+      // We don't work from `existingUsers` since we a) want to make sure we're up to date and b) want to track changes now
+      var user = await db.RelayUsers
+        .Include(x => x.SubNodes)
+        .SingleOrDefaultAsync(x => x.NormalizedUserName == normalizer.NormalizeName(username));
+
       var shouldCreate = user is null;
 
       if (!shouldCreate)
@@ -62,13 +78,14 @@ public class DeclarativeConfigService(
             $"A Downstream User declared in config already exists from being added manually. Please change the config or manually remove the user '{username}'");
 
         // Delete subnodes we don't want anymore
-        foreach (var subnode in user.SubNodes) // will subnodes be populated here?
+        List<Guid> subnodesToDelete = []; // So we don't delete while enumerating
+        foreach (var subnode in user.SubNodes)
           if (!details.SubNodes!.Contains(subnode.Id))
-            await subnodes.Delete(username, subnode.Id.ToString());
+            subnodesToDelete.Add(subnode.Id);
 
-        // Update user details
-        await users.SetUserNameAsync(user, username);
+        foreach (var id in subnodesToDelete) await subnodes.Delete(username, id.ToString());
 
+        // Update password if it has been changed
         if (!await users.CheckPasswordAsync(user, details.Password))
         {
           // "Invalid" password means we should reset it
@@ -104,10 +121,22 @@ public class DeclarativeConfigService(
       // Create subnodes against the user if they aren't already there
       foreach (var id in details.SubNodes)
       {
-        if (user!.SubNodes.Select(x => x.Id).Contains(id)) continue;
+        try
+        {
 
-        await subnodes.Create(user!, id);
+          if (user!.SubNodes.Select(x => x.Id).Contains(id)) continue;
+
+          await subnodes.Create(user!, id); // TODO: bulk create instead of using the service method?
+        }
+        catch (Exception e) when (e is InvalidOperationException || e is ArgumentException)
+        {
+          throw new InvalidOperationException(
+            $"The specified SubNode for this user could not be added, probably due to clashing with an existing Subnode Id: {id}", e);
+        }
       }
+
+      // capture any outstanding updates
+      await db.SaveChangesAsync();
     }
   }
 }
