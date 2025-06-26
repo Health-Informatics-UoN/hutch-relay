@@ -56,6 +56,7 @@ public static class ConfigureWebServices
 
     // App Initialisation Services
     builder.Services
+      .Configure<DownstreamUsersOptions>(builder.Configuration.GetSection("DownstreamUsers"))
       .AddTransient<WebInitialisationService>()
       .AddTransient<DeclarativeConfigService>()
       .AddTransient<DbManagementService>();

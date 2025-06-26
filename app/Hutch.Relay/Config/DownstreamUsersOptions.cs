@@ -8,8 +8,5 @@ public class DownstreamUser
   public List<Guid>? SubNodes { get; set; }
 }
 
-public class DownstreamUsersOptions
-{
-  // key is username
-  public Dictionary<string, DownstreamUser> DownstreamUsers { get; set; } = [];
-}
+// keys are usernames
+public class DownstreamUsersOptions : Dictionary<string, DownstreamUser> { }

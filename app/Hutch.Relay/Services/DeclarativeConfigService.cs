@@ -27,7 +27,7 @@ public class DeclarativeConfigService(
       .ToListAsync();
 
     // normalise our declared usernames the same way aspnet identity does
-    var normalisedDeclaredUsernames = _downstreamUsers.DownstreamUsers.Keys
+    var normalisedDeclaredUsernames = _downstreamUsers.Keys
       .Select(x => normalizer.NormalizeName(x));
 
     // Start by deleting undeclared users, and their subnodes too
@@ -54,7 +54,7 @@ public class DeclarativeConfigService(
     }
 
     // Then foreach declared user, add them if they don't exist, or update them (including subnodes) if they do
-    foreach (var (username, details) in _downstreamUsers.DownstreamUsers)
+    foreach (var (username, details) in _downstreamUsers)
     {
       // Prepare the configured subnodes collection
       details.SubNodes ??= [];

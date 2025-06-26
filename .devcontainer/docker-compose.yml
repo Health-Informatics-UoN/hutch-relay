@@ -19,6 +19,14 @@ services:
     - path: dev.env
       required: false
     
+    environment:
+      Database__ApplyMigrationsOnStartup: true # usually desirable for dev, takes care of migrations without recreating the dev container
+      
+      # specify declarative test user details. These can then be relied upon for testing downstream clients <3
+      DownstreamUsers__test__Password: testPassword
+      DownstreamUsers__test__SubNode: d7ea6f2a-ce2e-41d6-913a-a1ad2b6b88a9
+
+    
     # Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
     # user: root
 

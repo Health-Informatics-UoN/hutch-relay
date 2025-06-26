@@ -3,7 +3,6 @@ using Hutch.Relay.Data.Entities;
 using Hutch.Relay.Extensions;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services.Contracts;
-using Microsoft.EntityFrameworkCore;
 
 namespace Hutch.Relay.Services;
 

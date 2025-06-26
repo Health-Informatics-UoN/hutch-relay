@@ -203,10 +203,7 @@ public class ReconcileDownstreamUsersTests : IDisposable
 
     var downstreamUsersConfig = new DownstreamUsersOptions()
     {
-      DownstreamUsers =
-      {
-        [inputUsername] = new() { Password = inputPassword }
-      }
+      [inputUsername] = new() { Password = inputPassword }
     };
 
     var service = new DeclarativeConfigService(
@@ -239,12 +236,10 @@ public class ReconcileDownstreamUsersTests : IDisposable
 
     var downstreamUsersConfig = new DownstreamUsersOptions()
     {
-      DownstreamUsers =
+      [inputUsername] = new()
       {
-        [inputUsername] = new() {
-          Password = inputPassword,
-          SubNode = inputSubnodeId
-        }
+        Password = inputPassword,
+        SubNode = inputSubnodeId
       }
     };
 
@@ -276,12 +271,10 @@ public class ReconcileDownstreamUsersTests : IDisposable
 
     var downstreamUsersConfig = new DownstreamUsersOptions()
     {
-      DownstreamUsers =
+      [inputUsername] = new()
       {
-        [inputUsername] = new() {
-          Password = inputPassword,
-          SubNodes = [inputSubnodeId]
-        }
+        Password = inputPassword,
+        SubNodes = [inputSubnodeId]
       }
     };
 
@@ -322,11 +315,9 @@ public class ReconcileDownstreamUsersTests : IDisposable
 
     var downstreamUsersConfig = new DownstreamUsersOptions()
     {
-      DownstreamUsers =
+      [existingUsername] = new()
       {
-        [existingUsername] = new() {
-          Password = newPassword
-        }
+        Password = newPassword
       }
     };
 
@@ -368,12 +359,10 @@ public class ReconcileDownstreamUsersTests : IDisposable
 
     var downstreamUsersConfig = new DownstreamUsersOptions()
     {
-      DownstreamUsers =
+      [existingUsername] = new()
       {
-        [existingUsername] = new() {
-          Password = existingPassword,
-          SubNodes = [existingSubnodeId]
-        }
+        Password = existingPassword,
+        SubNodes = [existingSubnodeId]
       }
     };
 
@@ -421,16 +410,15 @@ public class ReconcileDownstreamUsersTests : IDisposable
 
     var downstreamUsersConfig = new DownstreamUsersOptions()
     {
-      DownstreamUsers =
+      ["declarative-user1"] = new()
       {
-        ["declarative-user1"] = new() {
-          Password = "",
-          SubNodes = [clashingSubnodeId]
-        },
-        ["declarative-user2"] = new() {
-          Password = "",
-          SubNodes = [clashingSubnodeId]
-        }
+        Password = "",
+        SubNodes = [clashingSubnodeId]
+      },
+      ["declarative-user2"] = new()
+      {
+        Password = "",
+        SubNodes = [clashingSubnodeId]
       }
     };
 
@@ -451,13 +439,11 @@ public class ReconcileDownstreamUsersTests : IDisposable
 
     var downstreamUsersConfig = new DownstreamUsersOptions()
     {
-      DownstreamUsers =
+      ["declarative-user1"] = new()
       {
-        ["declarative-user1"] = new() {
-          Password = "",
-          SubNodes = [_imperativeClashGuid]
-        },
-      }
+        Password = "",
+        SubNodes = [_imperativeClashGuid]
+      },
     };
 
     var service = new DeclarativeConfigService(
@@ -477,12 +463,10 @@ public class ReconcileDownstreamUsersTests : IDisposable
 
     var downstreamUsersConfig = new DownstreamUsersOptions()
     {
-      DownstreamUsers =
+      [_imperativeClashUsername] = new()
       {
-        [_imperativeClashUsername] = new() {
-          Password = "",
-        },
-      }
+        Password = "",
+      },
     };
 
     var service = new DeclarativeConfigService(
