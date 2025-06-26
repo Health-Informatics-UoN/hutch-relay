@@ -1,7 +1,5 @@
 using System.CommandLine;
 using Hutch.Relay.Commands.Helpers;
-using Hutch.Relay.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace Hutch.Relay.Commands;
 

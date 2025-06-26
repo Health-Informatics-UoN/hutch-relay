@@ -23,9 +23,11 @@ public class SubNodeService(ApplicationDbContext db) : ISubNodeService
   /// </summary>
   /// <param name="relayUser">The relay user registering the SubNode</param>
   /// <returns>The SubNode created.</returns>
-  public async Task<SubNodeModel> Create(RelayUser relayUser)
+  public async Task<SubNodeModel> Create(RelayUser relayUser, Guid? specificId = null)
   {
     var entity = new SubNode();
+    if(specificId is not null) entity.Id = specificId.Value;
+    
     entity.RelayUsers.Add(relayUser);
     db.SubNodes.Add(entity);
     await db.SaveChangesAsync();

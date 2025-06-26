@@ -54,11 +54,17 @@ public static class ConfigureWebServices
       .Configure<RelayTaskQueueOptions>(builder.Configuration.GetSection("RelayTaskQueue"))
       .AddTransient<IRelayTaskQueue, RabbitRelayTaskQueue>(); // TODO: Azure / Other native queues
 
+    // App Initialisation Services
+    builder.Services
+      .Configure<DownstreamUsersOptions>(builder.Configuration.GetSection("DownstreamUsers"))
+      .AddTransient<WebInitialisationService>()
+      .AddTransient<DeclarativeConfigService>()
+      .AddTransient<DbManagementService>();
+
     // Other App Services
     builder.Services
       .AddTransient<IRelayTaskService, RelayTaskService>()
-      .AddTransient<ISubNodeService, SubNodeService>()
-      .AddTransient<DbManagementService>();
+      .AddTransient<ISubNodeService, SubNodeService>();
 
     // Obfuscation
     builder.Services

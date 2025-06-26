@@ -1,11 +1,5 @@
 using System.CommandLine;
 using Hutch.Relay.Commands.Helpers;
-using Hutch.Relay.Constants;
-using Hutch.Relay.Data;
-using Hutch.Relay.Data.Entities;
-using Hutch.Relay.Services;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace Hutch.Relay.Commands;
 

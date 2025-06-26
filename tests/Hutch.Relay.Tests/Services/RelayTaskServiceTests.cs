@@ -10,7 +10,6 @@ namespace Hutch.Relay.Tests.Services;
 
 public class RelayTaskServiceTests : IDisposable
 {
-  // Specifying name ensures a separate DB to other test classes
   private readonly ApplicationDbContext _dbContext;
 
   public RelayTaskServiceTests()

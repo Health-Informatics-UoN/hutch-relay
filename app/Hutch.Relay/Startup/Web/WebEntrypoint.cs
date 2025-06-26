@@ -17,16 +17,9 @@ public static class WebEntrypoint
 
     // Build the app
     var app = b.Build();
-    
-    // Make migrations
-    if (app.Services.GetRequiredService<IOptions<DatabaseOptions>>().Value.ApplyMigrationsOnStartup)
-    {
-      using var scope = app.Services.CreateScope();
 
-      var dbManager = scope.ServiceProvider.GetRequiredService<DbManagementService>();
-
-      await dbManager.UpdateDatabase();
-    }
+    // Perform additional initialisation before we run the Web App
+    await app.Initialise();
 
     // Configure the HTTP Request Pipeline
     app.UseWebPipeline();

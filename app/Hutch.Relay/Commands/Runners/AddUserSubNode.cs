@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Identity;
 using Hutch.Relay.Data.Entities;
-using Hutch.Relay.Services;
+using Hutch.Relay.Services.Contracts;
+using Microsoft.AspNetCore.Identity;
 using Spectre.Console;
 
 namespace Hutch.Relay.Commands.Runners;
@@ -9,7 +9,7 @@ public class AddUserSubNode(
   [FromKeyedServices("stdout")] IAnsiConsole stdout,
   [FromKeyedServices("stderr")] IAnsiConsole stderr,
   UserManager<RelayUser> users,
-  SubNodeService subNodes)
+  ISubNodeService subNodes)
 {
   public async Task Run(string username, bool autoConfirm = false)
   {
