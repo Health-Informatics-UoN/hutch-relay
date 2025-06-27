@@ -92,6 +92,41 @@ public class TaskApiClient(
   }
 
   /// <summary>
+  /// Repeatedly calls <see cref="FetchNextJobAsync"/> and returns jobs when found.
+  /// </summary>
+  /// <param name="options">The options specified to override the defaults</param>
+  /// <param name="cancellationToken">A token used to cancel the polling loop</param>
+  /// <returns>The next job of the requested type, when available.</returns>
+  public async IAsyncEnumerable<(Type type, TaskApiBaseResponse job)> PollUnifiedJobQueue(
+    ApiClientOptions? options = null,
+    [EnumeratorCancellation] CancellationToken cancellationToken = default)
+  {
+    var pollingFrequency = options?.PollingFrequency ?? Options.PollingFrequency;
+
+    while (true)
+    {
+      if (cancellationToken.IsCancellationRequested) break;
+
+      var result = await FetchNextJobAsync(options);
+
+      if (result is not null) yield return result.Value;
+
+      // negative frequency runs only once, regardless whether job is found
+      if (pollingFrequency < 0) break;
+
+      try
+      {
+        if (pollingFrequency > 0) // 0 frequency runs without delay
+          await Task.Delay(pollingFrequency, cancellationToken); // all other values cause a delay in ms
+      }
+      catch (TaskCanceledException)
+      {
+        break;
+      }
+    }
+  }
+
+  /// <summary>
   /// Calls <see cref="FetchNextJobAsync"/>, optionally with the options specified in the provided object.
   /// 
   /// Any missing options will fall back to the service's default configured options.
@@ -122,8 +157,8 @@ public class TaskApiClient(
   /// 
   /// Any missing options will fall back to the service's default configured options.
   /// </summary>
-  /// <typeparam name="T">The type of job (and response model to be returned)</typeparam>
   /// <param name="options">The options specified to override the defaults</param>
+  /// <param name="queueType">Optional Task API Queue Type (e.g. "a", "b"). If omitted, will fetch jobs of all types from a "Unified" queue.</param>
   /// <returns>A model of the requested job type if one was found; <c>null</c> if not.</returns>
   /// <exception cref="ArgumentException">A required option is missing because it wasn't provided and is not present in the service defaults</exception>
   public async Task<(Type type, TaskApiBaseResponse job)?> FetchNextJobAsync(ApiClientOptions? options = null, string? queueType = null)
@@ -150,12 +185,13 @@ public class TaskApiClient(
   /// 
   /// Queue Type can be specified using the RQuest Job Type codes ("a", "b" etc.) or omitted to use a "unified" queue.
   /// </summary>
-  /// <param name="baseUrl"></param>
-  /// <param name="collectionId"></param>
-  /// <param name="username"></param>
-  /// <param name="password"></param>
-  /// <param name="queueType"></param>
-  /// <returns></returns>
+  /// <param name="baseUrl">Base URL of the API instance to connect to.</param>
+  /// <param name="collectionId">Collection ID to fetch query for.</param>
+  /// <param name="username">Username to use when connecting to the API.</param>
+  /// <param name="password">Password to use when connecting to the API.</param>
+  /// <param name="queueType">Optional Task API Queue Type (e.g. "a", "b"). If omitted, will fetch jobs of all types from a "Unified" queue.</param>
+  /// <returns>A model of the requested query type if one was found; <c>null</c> if not.</returns>
+  /// <exception cref="RackitApiClientException">An unknown type was requested, or an otherwise unexpected error occurred while interacting with the API.</exception>
   public async Task<(Type type, TaskApiBaseResponse job)?> FetchNextJobAsync(string baseUrl, string collectionId, string username, string password, string? queueType = null)
   {
     var requestUrl = Url.Combine(
