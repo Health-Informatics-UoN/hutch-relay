@@ -17,6 +17,16 @@ public interface ITaskApiClient
     where T : TaskApiBaseResponse, new();
 
   /// <summary>
+  /// Repeatedly calls <see cref="FetchNextJobAsync"/> and returns jobs when found.
+  /// </summary>
+  /// <param name="options">The options specified to override the defaults</param>
+  /// <param name="cancellationToken">A token used to cancel the polling loop</param>
+  /// <returns>The next job of the requested type, when available.</returns>
+  public IAsyncEnumerable<(Type type, TaskApiBaseResponse job)> PollUnifiedJobQueue(
+    ApiClientOptions? options = null,
+    CancellationToken cancellationToken = default);
+
+  /// <summary>
   /// Calls <see cref="FetchNextJobAsync"/>, optionally with the options specified in the provided object.
   /// 
   /// Any missing options will fall back to the service's default configured options.
