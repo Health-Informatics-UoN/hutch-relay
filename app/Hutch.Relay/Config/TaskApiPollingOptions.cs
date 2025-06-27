@@ -20,4 +20,13 @@ public class TaskApiPollingOptions : ApiClientOptions
   /// The delay in seconds to wait before resuming polling after an error occurs.
   /// </summary>
   public int ErrorDelay { get; set; } = 5;
+
+  /// <summary>
+  /// <para>Specify which Job Type queues Relay should poll against in the Upstream Task API.</para>
+  /// <para>Can be an empty string, a `*`, or a list of comma separated Task API Job Type codes.</para>
+  /// <para>An empty string will cause Relay to poll single "unified" queue for jobs of any type, e.g. when connecting to Upstream Relays</para>
+  /// <para>A comma separated list will cause Relay to poll separate queues for each supported type listed, in parallel, e.g. when connecting to upstream RQuest</para>
+  /// <para>Defaults to <c>*</c> polling all supported types from separate queues (standard RQuest behaviour)</para>
+  /// </summary>
+  public string QueueTypes { get; set; } = "*";
 }
