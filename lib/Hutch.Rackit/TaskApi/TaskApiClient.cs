@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks.Dataflow;
 using Flurl;
 using Hutch.Rackit.TaskApi.Contracts;
 using Hutch.Rackit.TaskApi.Models;
@@ -117,32 +118,52 @@ public class TaskApiClient(
   }
 
   /// <summary>
-  /// Fetch the next query, if any, of the requested type.
+  /// Calls <see cref="FetchNextJobAsync"/>, optionally with the options specified in the provided object.
+  /// 
+  /// Any missing options will fall back to the service's default configured options.
   /// </summary>
   /// <typeparam name="T">The type of job (and response model to be returned)</typeparam>
-  /// <param name="baseUrl">Base URL of the API instance to connect to.</param>
-  /// <param name="collectionId">Collection ID to fetch query for.</param>
-  /// <param name="username">Username to use when connecting to the API.</param>
-  /// <param name="password">Password to use when connecting to the API.</param>
-  /// <returns>A model of the requested query type if one was found; <c>null</c> if not.</returns>
-  /// <exception cref="RackitApiClientException">An unknown type was requested, or an otherwise unexpected error occurred while interacting with the API.</exception>
-  public async Task<T?> FetchNextJobAsync<T>(string baseUrl, string collectionId, string username, string password)
-    where T : TaskApiBaseResponse, new()
+  /// <param name="options">The options specified to override the defaults</param>
+  /// <returns>A model of the requested job type if one was found; <c>null</c> if not.</returns>
+  /// <exception cref="ArgumentException">A required option is missing because it wasn't provided and is not present in the service defaults</exception>
+  public async Task<(Type type, TaskApiBaseResponse job)?> FetchNextJobAsync(ApiClientOptions? options = null, string? queueType = null)
   {
-    var typeSuffix = new T() switch
-    {
-      AvailabilityJob => JobTypeSuffixes.Availability,
-      CollectionAnalysisJob => JobTypeSuffixes.CollectionAnalysis,
-      _ => throw new RackitApiClientException($"Unexpected Task API Response type requested: {typeof(T)}.")
-    };
+    static string exceptionMessage(string propertyName)
+      => $"The property '{propertyName}' was not specified, and no default is available to fall back to.";
 
+    var rawBaseUrl =
+      options?.BaseUrl ?? Options.BaseUrl ?? throw new ArgumentException(exceptionMessage(nameof(options.BaseUrl)));
+
+    return await FetchNextJobAsync(
+      GetBaseUrlWithRoutePrefix(rawBaseUrl),
+      options?.CollectionId ?? Options.CollectionId ??
+      throw new ArgumentException(exceptionMessage(nameof(options.CollectionId))),
+      options?.Username ?? Options.Username ?? throw new ArgumentException(exceptionMessage(nameof(options.Username))),
+      options?.Password ?? Options.Password ?? throw new ArgumentException(exceptionMessage(nameof(options.Password))),
+      queueType
+    );
+  }
+
+
+  /// <summary>
+  /// Fetch the next query of any type from a given queue type.
+  /// 
+  /// Queue Type can be specified using the RQuest Job Type codes ("a", "b" etc.) or omitted to use a "unified" queue.
+  /// </summary>
+  /// <param name="baseUrl"></param>
+  /// <param name="collectionId"></param>
+  /// <param name="username"></param>
+  /// <param name="password"></param>
+  /// <param name="queueType"></param>
+  /// <returns></returns>
+  public async Task<(Type type, TaskApiBaseResponse job)?> FetchNextJobAsync(string baseUrl, string collectionId, string username, string password, string? queueType = null)
+  {
     var requestUrl = Url.Combine(
       GetBaseUrlWithRoutePrefix(baseUrl),
       TaskApiEndpoints.Base,
       TaskApiEndpoints.FetchNextJob,
-      collectionId + typeSuffix);
+      collectionId + queueType ?? "");
 
-    // TODO: reusable request helper?
     using var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
     request.Headers.Authorization = new AuthenticationHeaderValue(
@@ -155,7 +176,17 @@ public class TaskApiClient(
     {
       if (result.StatusCode == HttpStatusCode.NoContent)
       {
-        logger.LogDebug("No Jobs of type {TypeName} waiting for {CollectionId}", typeof(T).Name, collectionId);
+        var jobTypeForQueue = queueType switch
+        {
+          "a" => nameof(AvailabilityJob),
+          "b" => nameof(CollectionAnalysisJob),
+          _ => null
+        };
+
+        if (jobTypeForQueue is null)
+          logger.LogDebug("No Jobs waiting for {CollectionId}", collectionId);
+        else
+          logger.LogDebug("No Jobs of type {JobType} waiting for {CollectionId}", jobTypeForQueue, collectionId);
         return null;
       }
 
@@ -163,8 +194,25 @@ public class TaskApiClient(
       {
         // Debug Log the raw payload before any parsing into RACKit models occurs
         logger.LogDebug("Job received: {Payload}", await result.Content.ReadAsStringAsync());
-        
-        return await result.Content.ReadFromJsonAsync<T>();
+
+        var body = await result.Content.ReadFromJsonAsync<JsonDocument>()
+          ?? throw new JsonException();
+
+        // Determine type // This will get more complicated when we support more job types
+        Type jobType = body.RootElement.TryGetProperty("analysis", out var _)
+          ? typeof(CollectionAnalysisJob)
+          : typeof(AvailabilityJob);
+
+        TaskApiBaseResponse? job = jobType.Name switch
+        {
+          nameof(CollectionAnalysisJob) => body.Deserialize<CollectionAnalysisJob>(),
+          nameof(AvailabilityJob) => body.Deserialize<AvailabilityJob>(),
+          _ => null
+        };
+
+        if (job is null) throw new JsonException();
+
+        return (jobType, job);
       }
       catch (JsonException e)
       {
@@ -183,6 +231,35 @@ public class TaskApiClient(
       logger.LogDebug("Failure Response Body:\n{Body}", body);
       throw new RackitApiClientException($"Fetch Next Job Endpoint Request failed: {result.StatusCode}");
     }
+  }
+
+  /// <summary>
+  /// Fetch the next query, if any, of the requested type.
+  /// </summary>
+  /// <typeparam name="T">The type of job (and response model to be returned)</typeparam>
+  /// <param name="baseUrl">Base URL of the API instance to connect to.</param>
+  /// <param name="collectionId">Collection ID to fetch query for.</param>
+  /// <param name="username">Username to use when connecting to the API.</param>
+  /// <param name="password">Password to use when connecting to the API.</param>
+  /// <returns>A model of the requested query type if one was found; <c>null</c> if not.</returns>
+  /// <exception cref="RackitApiClientException">An unknown type was requested, or an otherwise unexpected error occurred while interacting with the API.</exception>
+  public async Task<T?> FetchNextJobAsync<T>(string baseUrl, string collectionId, string username, string password)
+    where T : TaskApiBaseResponse, new()
+  {
+    var queueType = new T() switch
+    {
+      AvailabilityJob => JobTypeSuffixes.Availability,
+      CollectionAnalysisJob => JobTypeSuffixes.CollectionAnalysis,
+      _ => throw new RackitApiClientException($"Unexpected Task API Response type requested: {typeof(T)}.")
+    };
+
+    var result = await FetchNextJobAsync(baseUrl, collectionId, username, password, queueType);
+    if (result is null) return null;
+
+    var (type, job) = result.Value;
+    if (type != typeof(T)) throw new RackitApiClientException($"Got unexpected task of type {type} when fetching type {typeof(T)}");
+
+    return (T)Convert.ChangeType(job, typeof(T));
   }
 
   private static StringContent AsHttpJsonString<T>(T value)
