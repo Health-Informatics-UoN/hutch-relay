@@ -87,7 +87,7 @@ public class DemographicsDistributionAggregator(IObfuscator obfuscator) : IQuery
 
 internal record AlternativesAccumulator(DemographicsDistributionRecord BaseRecord)
 {
-  public Dictionary<string, List<int>> Alternatives { get; init; } = [];
+  public Dictionary<string, List<int>> Alternatives { get; init; } = new(StringComparer.InvariantCultureIgnoreCase);
 }
 
 internal record DemographicsAccumulator(string CollectionId)
@@ -145,7 +145,7 @@ internal static class DemographicsDistributionAggregatorExtensions
         {
           Alternatives = record.GetAlternatives()
               .Select(x => (x.Key, new List<int> { x.Value }))
-              .ToDictionary()
+              .ToDictionary(StringComparer.InvariantCultureIgnoreCase)
         };
 
         accumulator.Alternatives.Add(
@@ -190,9 +190,10 @@ internal static class DemographicsDistributionAggregatorExtensions
     foreach (var (code, value) in accumulator.Alternatives)
     {
       // sum and obfuscate our accumulated data, by alternative key
+      // Alternatives keys should be treated case-insensitive!
       var aggregateAlternatives = value.Alternatives.ToDictionary(
         x => x.Key,
-        x => obfuscator.Obfuscate(x.Value.Sum()));
+        x => obfuscator.Obfuscate(x.Value.Sum()), StringComparer.InvariantCultureIgnoreCase);
 
       // sum the total across all obfuscated alternatives
       var aggregateCount = aggregateAlternatives.Values.Sum();
