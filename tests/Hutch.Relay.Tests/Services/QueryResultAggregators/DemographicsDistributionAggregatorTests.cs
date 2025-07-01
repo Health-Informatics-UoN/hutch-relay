@@ -67,7 +67,7 @@ public class DemographicsDistributionAggregatorTests
         Code = Demographics.Sex,
         Description = "Sex",
         Count = 145,
-        Alternatives = "^MALE|70^FEMALE|75^",
+        Alternatives = "^Male|70^Female|75^",
         Dataset = "person",
         Category = "Demographics"
       },
@@ -291,15 +291,15 @@ public class DemographicsDistributionAggregatorTests
     [
       new() { Code = "EXISTING_CODE", Collection = "sub_collection2", Alternatives = "^BRACKET2|155^BRACKET1|135^" },
       new() { Code = "EXISTING_CODE", Collection = "sub_collection2", Alternatives = "^BRACKET1|27^BRACKET2|32^" },
-      new() { Code = Demographics.Sex, Collection = "sub_collection2", Alternatives = "^MALE|155^FEMALE|135^" },
-      new() { Code = Demographics.Sex, Collection = "sub_collection2", Alternatives = "^MALE|42^FEMALE|68^OTHER|7^" }
+      new() { Code = Demographics.Sex, Collection = "sub_collection2", Alternatives = "^Male|155^Female|135^" },
+      new() { Code = Demographics.Sex, Collection = "sub_collection2", Alternatives = "^Male|42^Female|68^Other|7^" }
     ];
 
     // Much of our expected state has to be redefined manually due to mutable reference types
     Dictionary<string, List<int>> expectedExistingAlternatives =
       new() { ["BRACKET1"] = [50, 135, 27], ["BRACKET2"] = [70, 155, 32] };
     Dictionary<string, List<int>> expectedSexAlternatives =
-      new() { ["MALE"] = [155, 42], ["FEMALE"] = [135, 68], ["OTHER"] = [7] };
+      new() { ["Male"] = [155, 42], ["Female"] = [135, 68], ["Other"] = [7] };
 
     var actual = initialAccumulator.AccumulateData(inputRecords);
 
@@ -330,12 +330,12 @@ public class DemographicsDistributionAggregatorTests
     { Collection = "sub_collection", Code = "AGE", Count = 16, Min = 9, Max = 25, Mean = 16.75, Median = 15.5 };
 
     DemographicsDistributionRecord sexRecord = new()
-    { Code = Demographics.Sex, Collection = "sub_collection", Alternatives = "^MALE|155^FEMALE|135^" };
+    { Code = Demographics.Sex, Collection = "sub_collection", Alternatives = "^Male|155^Female|135^" };
 
     List<DemographicsDistributionRecord> inputRecords = ageOnly ? [ageRecord] : [ageRecord, sexRecord];
 
     Dictionary<string, List<int>> expectedSexAlternatives =
-      new() { ["MALE"] = [155], ["FEMALE"] = [135] };
+      new() { ["Male"] = [155], ["Female"] = [135] };
 
     var actual = initialAccumulator.AccumulateData(inputRecords);
 
@@ -542,7 +542,7 @@ public class DemographicsDistributionAggregatorTests
             Description = "Sex",
             Collection = collectionId,
             Count = 1580,
-            Alternatives = "^MALE|790^FEMALE|790^",
+            Alternatives = "^Male|790^Female|790^",
             Dataset = "person",
             Category = "Demographics",
           },

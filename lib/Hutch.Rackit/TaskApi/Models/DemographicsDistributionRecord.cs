@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Globalization;
 using System.Text;
 using CsvHelper.Configuration.Attributes;
@@ -107,10 +108,15 @@ public static class DemographicsDistributionRecordExtensions
   /// </summary>
   private static readonly Dictionary<string, string> _alternativeKeys = new()
   {
-    [Demographics.Sex] = "MALE,FEMALE",
+    [Demographics.Sex] = "Male,Female",
     [Demographics.Genomics] = "No,*" // `*` Allows unknown keys to be appended
   };
 
+  /// <summary>
+  /// </summary>
+  /// <param name="record"></param>
+  /// <param name="alternatives">Values for the alternatives to includes. The dictionary passed MUST use case-insensitive keys</param>
+  /// <returns></returns>
   public static DemographicsDistributionRecord WithAlternatives(
     this DemographicsDistributionRecord record,
     Dictionary<string, int> alternatives)
@@ -119,6 +125,11 @@ public static class DemographicsDistributionRecordExtensions
     // Correct values will be constructed from the provided `alternatives` dictionary
     record.Alternatives = string.Empty;
 
+    if (alternatives.Count == 0) return record;
+
+    if (!alternatives.Comparer.Equals("A", "a")) // I wish you could check how the comparer is actually configured...
+      throw new ArgumentException("Expected a Dictionary with a case-insensitive key comparer", nameof(alternatives));
+      
     // early return cases if nothing else to do
     if (alternatives.Count == 0 || record.Code == Demographics.Age) // AGE doesn't use alternatives
     {
@@ -157,7 +168,7 @@ public static class DemographicsDistributionRecordExtensions
           (current, item) =>
           {
             // Skip keys we already got from knownAlternatives
-            if (knownAlternatives.Contains(item.Key))
+            if (knownAlternatives.Contains(item.Key, StringComparer.InvariantCultureIgnoreCase))
               return current;
 
             return current + $"{item.Key}|{item.Value}^";
@@ -171,7 +182,7 @@ public static class DemographicsDistributionRecordExtensions
   {
     if (string.IsNullOrWhiteSpace(record.Alternatives)) return [];
 
-    Dictionary<string, int> alternatives = new();
+    Dictionary<string, int> alternatives = new(StringComparer.InvariantCultureIgnoreCase);
 
     foreach (var kv in record.Alternatives.Substring(1, record.Alternatives.Length - 2).Split("^"))
     {
