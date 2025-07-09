@@ -13,7 +13,7 @@ namespace Hutch.Relay.Services;
 
 public class ResultsService(
   ILogger<ResultsService> logger,
-  IOptions<ApiClientOptions> taskApiOptions,
+  IOptions<TaskApiPollingOptions> taskApiOptions,
   IOptions<DatabaseOptions> databaseOptions,
   ITaskApiClient upstreamTasks,
   IRelayTaskService relayTaskService,
@@ -25,7 +25,7 @@ public class ResultsService(
   IQueryResultAggregator demographicsDistributionAggregator
 )
 {
-  private readonly ApiClientOptions _taskApiOptions = taskApiOptions.Value;
+  private readonly TaskApiPollingOptions _taskApiOptions = taskApiOptions.Value;
   private readonly DatabaseOptions _databaseOptions = databaseOptions.Value;
 
   /// <summary>
@@ -91,13 +91,16 @@ public class ResultsService(
     {
       var finalResult = await PrepareFinalJobResult(task);
 
-      // Only submit results if Prepare succeeded
-      await SubmitResults(task, finalResult);
+      // TODO: cache Code Distribution results if Beacon is Enabled
+
+      // Submit Results to Upstream Task API if it's Enabled
+      if (_taskApiOptions.Enable)
+        await SubmitResults(task, finalResult);
     }
     catch (ArgumentOutOfRangeException e)
     {
       // Catch and log, but otherwise no particular handling for Unsupported Task Types
-      logger.LogError(e.Message);
+      logger.LogError("{Message}", e.Message);
     }
     finally
     {
@@ -158,11 +161,11 @@ public class ResultsService(
           => TimeSpan.FromHours(1.8), // Default Task API configurations wait 2 hours between sending and processing distribution
         _ => TimeSpan.FromMinutes(4) // Default Task API configurations expect Availability results within 5 mins
       };
-      
+
       var timeInterval = DateTimeOffset.UtcNow.Subtract(task.CreatedAt);
       logger.LogDebug("Incomplete Task:{Task} has been running for {TimeInterval}...", task.Id,
         timeInterval.ToString());
-      
+
       if (timeInterval > expiryThreshold)
       {
         logger.LogInformation("Task:{Task} has reached the expiry threshold of {ExpiryThreshold}. Completing...",

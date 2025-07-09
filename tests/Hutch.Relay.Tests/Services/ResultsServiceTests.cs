@@ -48,7 +48,7 @@ public class ResultsServiceTests
 
     var resultsService = new ResultsService(
       null!,
-      Options.Create<ApiClientOptions>(new()),
+      Options.Create<TaskApiPollingOptions>(new()),
       Options.Create<DatabaseOptions>(new()),
       null!,
       tasks.Object,
