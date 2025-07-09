@@ -12,7 +12,8 @@
         "EditorConfig.EditorConfig",
         "ms-azuretools.vscode-docker",
         "adrianwilczynski.user-secrets",
-        "patcx.vscode-nuget-gallery"
+        "patcx.vscode-nuget-gallery",
+        "esbenp.prettier-vscode"
       ]
     }
   },
