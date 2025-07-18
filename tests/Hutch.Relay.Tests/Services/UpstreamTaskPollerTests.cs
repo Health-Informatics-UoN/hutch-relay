@@ -20,6 +20,37 @@ public class UpstreamTaskPollerTests()
   private readonly ILogger<UpstreamTaskPoller> _logger =
     LoggerFactory.Create(b => b.AddDebug()).CreateLogger<UpstreamTaskPoller>();
 
+  [Theory]
+  [InlineData(true)]
+  [InlineData(false)]
+  public async Task PollAllQueues_WhenUpstreamTaskApiDisabled_NoPolling(bool isUpstreamTaskApiEnabled)
+  {
+    // We "prove" this by spying on the queue check
+    // and seeing that we don't even get that far if disabled
+
+    // Arrange
+    var options = Options.Create<TaskApiPollingOptions>(new() { Enable = isUpstreamTaskApiEnabled });
+
+    var queues = new Mock<IRelayTaskQueue>();
+    queues.Setup(x =>
+      x.IsReady(It.IsAny<string>())).Returns(Task.FromResult(false));
+
+    var poller = new UpstreamTaskPoller(_logger, options, null!, null!, queues.Object, null!);
+
+    try
+    {
+      await poller.PollAllQueues(new());
+    }
+    catch { /* Just swallowing the intentional exception if we're enabled but missing queue config */ }
+    finally
+    {
+      // Assert
+      queues.Verify(x =>
+        x.IsReady(It.IsAny<string>()),
+        isUpstreamTaskApiEnabled ? Times.Once : Times.Never);
+    }
+  }
+
   [Fact]
   public async Task PollAllQueues_WithInvalidQueueConfig_ThrowsInvalidOperation()
   {

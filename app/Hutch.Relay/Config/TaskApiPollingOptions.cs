@@ -6,6 +6,16 @@ public class TaskApiPollingOptions : ApiClientOptions
 {
   /// <summary>
   /// <para>
+  /// Whether to enable the functionality of polling an Upstream Task API (and submitting results to it)
+  /// </para>
+  /// <para>
+  /// Enabled by default to match v1.0.0 behaviour
+  /// </para>
+  /// </summary>
+  public bool Enable { get; set; } = true;
+
+  /// <summary>
+  /// <para>
   /// Whether to resume polling after a non-critical error occurs, swallowing (but logging) the exception.
   /// May be desirable in some environments.
   /// </para>

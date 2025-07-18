@@ -22,12 +22,18 @@ public class UpstreamTaskPoller(
   // Simultaneously poll against all configured queues
   public async Task PollAllQueues(CancellationToken stoppingToken)
   {
-    var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+    if (!options.Value.Enable)
+    {
+      logger.LogDebug("Upstream Task API functionality is disabled; Task polling will not be started.");
+      return; // nothing to do!
+    }
 
     // Test Queue Backend availability
     if (!await queues.IsReady())
       throw new InvalidOperationException(
         "The RelayTask Queue Backend is not ready; please check the logs and your configuration.");
+
+    var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
 
     if (string.IsNullOrWhiteSpace(options.Value.QueueTypes))
     {

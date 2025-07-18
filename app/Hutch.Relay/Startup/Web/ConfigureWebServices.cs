@@ -78,9 +78,12 @@ public static class ConfigureWebServices
       .AddKeyedTransient<IQueryResultAggregator, DemographicsDistributionAggregator>(nameof(DemographicsDistributionAggregator));
 
     // Hosted Services
-    builder.Services
-      .AddHostedService<BackgroundUpstreamTaskPoller>()
-      .AddScoped<ScopedTaskHandler>();
+    var isUpstreamTaskApiEnabled = builder.Configuration.GetSection("UpstreamTaskApi").GetValue<bool>("Enable");
+    if (isUpstreamTaskApiEnabled)
+      builder.Services
+        .AddHostedService<BackgroundUpstreamTaskPoller>()
+        .AddScoped<ScopedTaskHandler>();
+
     builder.Services.AddHostedService<TaskCompletionHostedService>();
 
     // Monitoring
