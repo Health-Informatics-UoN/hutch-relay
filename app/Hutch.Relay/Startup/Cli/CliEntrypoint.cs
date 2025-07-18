@@ -30,6 +30,8 @@ public static class CliEntrypoint
         .Write(new FigletText("Hutch Relay")
           .LeftJustified()
           .Color(Color.Blue));
+    
+      // TODO: write out version
 
       await next(context);
     });

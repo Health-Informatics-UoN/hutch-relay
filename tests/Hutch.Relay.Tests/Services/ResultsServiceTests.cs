@@ -20,7 +20,7 @@ public class ResultsServiceTests
   [Theory]
   [InlineData(true)]
   [InlineData(false)]
-  public async Task CompleteRelayTask_SubmitsResults_WhenUpstreamTaskApiIsEnabled(bool upstreamTaskApiIsEnabled)
+  public async Task CompleteRelayTask_SubmitsResults_WhenUpstreamTaskApiIsEnabled(bool isUpstreamTaskApiEnabled)
   {
     var relayTask = new RelayTaskModel()
     {
@@ -51,7 +51,7 @@ public class ResultsServiceTests
 
     TaskApiPollingOptions taskApiOptions = new()
     {
-      Enable = upstreamTaskApiIsEnabled
+      Enable = isUpstreamTaskApiEnabled
     };
 
     var resultsService = new ResultsService(
@@ -71,7 +71,7 @@ public class ResultsServiceTests
     // Assert
     taskApi.Verify(x =>
       x.SubmitResultAsync(It.IsAny<string>(), It.IsAny<JobResult>(), It.IsAny<ApiClientOptions>()),
-      upstreamTaskApiIsEnabled ? Times.Once : Times.Never);
+      isUpstreamTaskApiEnabled ? Times.Once : Times.Never);
   }
 
   [Fact]
