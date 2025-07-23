@@ -1,38 +1,18 @@
-using System.CommandLine.Builder;
-using Spectre.Console;
+using System.CommandLine;
 
 namespace Hutch.Relay.Startup.Cli;
 
 public static class CliEntrypoint
 {
-  public static Task ConfigureHost(HostApplicationBuilder b)
+  public static async Task<int> Run(ParseResult parseResult)
   {
-    // Mainly this method is an opportunity to hook in DI Service Registration
-    b.ConfigureServices();
+    // TODO: Configure Generic Host for CLI
 
-    // It also provides an opportunity to modify anything else about the generic host
-    // used to run Command Runner services, if desirable.
+    // TODO: ConfigureServices
 
-    // Any initialisation that should run at the point of configuring the host?
-    // More likely this would be done globally in Program.cs
-    // but this is an opportunity to run stuff before any Command (except Root Bypass)
+    // TODO: Any CLI specific (but not command specific) Initialisation?
 
-    return Task.CompletedTask;
+    // Invoke the appropriate action based on the parse result // TODO: How to use Host?
+    return await parseResult.InvokeAsync();
   }
-
-  // Custom (App specific) CLI Middleware
-
-  public static CommandLineBuilder UseCliLogo(this CommandLineBuilder cli) =>
-    cli.AddMiddleware(async (context, next) =>
-    {
-      AnsiConsole
-        .Create(new() { Out = new AnsiConsoleOutput(Console.Error) })
-        .Write(new FigletText("Hutch Relay")
-          .LeftJustified()
-          .Color(Color.Blue));
-    
-      // TODO: write out version
-
-      await next(context);
-    });
 }

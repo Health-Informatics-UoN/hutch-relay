@@ -8,7 +8,7 @@ namespace Hutch.Relay.Startup.Web;
 
 public static class WebEntrypoint
 {
-  public static async Task Run(string[] args)
+  public static async Task<int> Run(string[] args)
   {
     var b = WebApplication.CreateBuilder(args);
 
@@ -26,5 +26,7 @@ public static class WebEntrypoint
 
     // Run the app!
     await app.RunAsync();
+
+    return 0;
   }
 }

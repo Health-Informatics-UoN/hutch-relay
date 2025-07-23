@@ -1,37 +1,44 @@
 using System.CommandLine;
 using Hutch.Relay.Commands;
+using UoN.VersionInformation;
 
 namespace Hutch.Relay.Startup.Cli;
 
 public class CliRootCommand : RootCommand
 {
   public static readonly Option<string?> OptEnvironment =
-    new(["--environment", "-e"],
-      "Override the application host's Environment Name.");
+    new("--environment", "--environment", "-e")
+    {
+      Description = "Override the application host's Environment Name.",
+      Recursive = true
+    };
 
   public static readonly Option<string?> OptConnectionString =
-    new(["--connection-string"],
-      "Override the local datastore connection string.");
+    new("--connection-string", "--connection-string")
+    {
+      Description = "Override the local datastore connection string.",
+      Recursive = true
+    };
 
   public CliRootCommand() : base("Hutch Relay")
   {
-    AddGlobalOption(OptEnvironment);
-    AddGlobalOption(OptConnectionString);
+    Options.Add(OptEnvironment);
+    Options.Add(OptConnectionString);
 
-    // Add Commands here
-    AddCommand(new("users", "Relay User actions")
-    {
-      new ListUsers("list"),
-      new AddUser("add"),
-      new ResetUserPassword("reset-password"),
-      new AddUserSubNode("add-subnode"),
-      new ListUserSubNodes("list-subnodes"),
-      new RemoveUserSubNodes("remove-subnodes")
-    });
+    // // Add Subcommands here
+    // Subcommands.Add(new("users", "Relay User actions")
+    // {
+    //   new ListUsers("list"),
+    //   new AddUser("add"),
+    //   new ResetUserPassword("reset-password"),
+    //   new AddUserSubNode("add-subnode"),
+    //   new ListUserSubNodes("list-subnodes"),
+    //   new RemoveUserSubNodes("remove-subnodes")
+    // });
 
-    AddCommand(new("database", "Local Datastore Management actions")
-    {
-      new DatabaseUpdate("update")
-    });
+    // Subcommands.Add(new("database", "Local Datastore Management actions")
+    // {
+    //   new DatabaseUpdate("update")
+    // });
   }
 }
