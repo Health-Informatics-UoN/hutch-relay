@@ -3,6 +3,7 @@ using Hutch.Rackit.TaskApi;
 using Hutch.Rackit.TaskApi.Contracts;
 using Hutch.Relay.Auth.Basic;
 using Hutch.Relay.Config;
+using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
@@ -76,6 +77,11 @@ public static class ConfigureWebServices
       .AddKeyedTransient<IQueryResultAggregator, AvailabilityAggregator>(nameof(AvailabilityAggregator))
       .AddKeyedTransient<IQueryResultAggregator, GenericDistributionAggregator>(nameof(GenericDistributionAggregator))
       .AddKeyedTransient<IQueryResultAggregator, DemographicsDistributionAggregator>(nameof(DemographicsDistributionAggregator));
+
+    // Beacon
+    builder.Services
+      .Configure<BaseBeaconOptions>(builder.Configuration.GetSection("Beacon"))
+      .Configure<RelayBeaconOptions>(builder.Configuration.GetSection("Beacon"));
 
     // Hosted Services
     var isUpstreamTaskApiEnabled = builder.Configuration.GetSection("UpstreamTaskApi").GetValue<bool>("Enable");
