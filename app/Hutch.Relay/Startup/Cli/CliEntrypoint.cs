@@ -1,18 +1,31 @@
 using System.CommandLine;
+using System.CommandLine.Invocation;
+using Hutch.Relay.Commands;
+using Hutch.Relay.Startup.Cli.Core;
+using Hutch.Relay.Startup.Cli.Core.Builder;
 
 namespace Hutch.Relay.Startup.Cli;
 
 public static class CliEntrypoint
 {
-  public static async Task<int> Run(ParseResult parseResult)
+
+  public static async Task<int> Run(string[] args, ParseResult parseResult)
   {
-    // TODO: Configure Generic Host for CLI
+    var b = CliApplication.CreateBuilder(args, parseResult);
 
-    // TODO: ConfigureServices
+    // Configure DI Services
+    b.ConfigureServices(parseResult);
 
-    // TODO: Any CLI specific (but not command specific) Initialisation?
+    // Build the app
+    var host = b.Build();
 
-    // Invoke the appropriate action based on the parse result // TODO: How to use Host?
+    // Perform additional initialisation before we run the CLI
+    // await host.Initialise();
+
+    // Configure the CLI Root Command to allow using the configured Host
+    host.UseHostedRootCommand(parseResult);
+
+    // Invoke the parsed CLI command
     return await parseResult.InvokeAsync();
   }
 }

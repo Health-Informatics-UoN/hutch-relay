@@ -1,8 +1,4 @@
-using Hutch.Relay.Config;
-using Hutch.Relay.Data;
-using Hutch.Relay.Services;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
+using System.CommandLine;
 
 namespace Hutch.Relay.Startup.Web;
 

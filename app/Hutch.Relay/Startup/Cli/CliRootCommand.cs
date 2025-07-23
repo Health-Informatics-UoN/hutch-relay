@@ -1,10 +1,10 @@
 using System.CommandLine;
 using Hutch.Relay.Commands;
-using UoN.VersionInformation;
+using Hutch.Relay.Startup.Cli.Core;
 
 namespace Hutch.Relay.Startup.Cli;
 
-public class CliRootCommand : RootCommand
+public class CliRootCommand : HostedRootCommand
 {
   public static readonly Option<string?> OptEnvironment =
     new("--environment", "--environment", "-e")
@@ -36,9 +36,12 @@ public class CliRootCommand : RootCommand
     //   new RemoveUserSubNodes("remove-subnodes")
     // });
 
-    // Subcommands.Add(new("database", "Local Datastore Management actions")
-    // {
-    //   new DatabaseUpdate("update")
-    // });
+    Subcommands.Add(new("database", "Local Datastore Management actions")
+    {
+      new Command("update", "Update the database to the latest migration in this build.")
+      {
+        Action = new HostedAsynchronousCommandLineAction<CliRootCommand, CommandLineActions.DatabaseUpdate>()
+      }
+    });
   }
 }
