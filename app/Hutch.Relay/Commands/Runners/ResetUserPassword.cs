@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
-using Hutch.Relay.Commands.Helpers;
 using Hutch.Relay.Data.Entities;
 using Spectre.Console;
+using Hutch.Relay.Helpers;
 
 namespace Hutch.Relay.Commands.Runners;
 

@@ -3,9 +3,8 @@ using System.CommandLine.Invocation;
 
 namespace Hutch.Relay.Startup.Cli.Core;
 
-public class HostedSynchronousCommandLineAction<TRootCommand, TAction>() : SynchronousCommandLineAction
+public class HostedSynchronousCommandLineAction<TAction>() : SynchronousCommandLineAction
   where TAction : SynchronousCommandLineAction
-  where TRootCommand : RootCommand, IHostedRootCommand
 {
 
   public override int Invoke(ParseResult parseResult)
@@ -15,7 +14,7 @@ public class HostedSynchronousCommandLineAction<TRootCommand, TAction>() : Synch
 
     using var scope = (cliHost?.Services.CreateScope())
       ?? throw new InvalidOperationException(
-        "CLI Host is not set. Please set the CLI Host before invoking the action.");
+        "CLI Host is not set. Please ensure your RootCommand implements IHostedRootCommand and the CLI Host is set correctly.");
 
     var action = scope.ServiceProvider.GetRequiredService<TAction>();
 

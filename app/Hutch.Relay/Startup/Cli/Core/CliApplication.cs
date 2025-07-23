@@ -1,6 +1,7 @@
 using System.CommandLine;
+using System.CommandLine.Invocation;
 
-namespace Hutch.Relay.Startup.Cli.Core.Builder;
+namespace Hutch.Relay.Startup.Cli.Core;
 
 public static class CliApplication
 {
@@ -66,5 +67,27 @@ public static class CliApplication
 
     // Return the host for further use if needed
     return host;
+  }
+
+  /// <summary>
+  /// Creates a Hosted Asynchronous Command Line Action for the specified <typeparamref name="TAction"/>.
+  /// </summary>
+  /// <typeparam name="TAction"></typeparam>
+  /// <returns></returns>
+  public static HostedAsynchronousCommandLineAction<TAction> AsyncAction<TAction>()
+    where TAction : AsynchronousCommandLineAction
+  {
+    return new HostedAsynchronousCommandLineAction<TAction>();
+  }
+
+  /// <summary>
+  /// Creates a Hosted Synchronous Command Line Action for the specified <typeparamref name="TAction"/>.
+  /// </summary>
+  /// <typeparam name="TAction"></typeparam>
+  /// <returns></returns>
+  public static HostedSynchronousCommandLineAction<TAction> Action<TAction>()
+    where TAction : SynchronousCommandLineAction
+  {
+    return new HostedSynchronousCommandLineAction<TAction>();
   }
 }

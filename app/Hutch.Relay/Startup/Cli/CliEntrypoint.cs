@@ -1,8 +1,5 @@
 using System.CommandLine;
-using System.CommandLine.Invocation;
-using Hutch.Relay.Commands;
 using Hutch.Relay.Startup.Cli.Core;
-using Hutch.Relay.Startup.Cli.Core.Builder;
 
 namespace Hutch.Relay.Startup.Cli;
 
@@ -23,6 +20,7 @@ public static class CliEntrypoint
     // await host.Initialise();
 
     // Configure the CLI Root Command to allow using the configured Host
+    // Necessary for Hosted CommandLine Actions to access the CLI Host and its services.
     host.UseHostedRootCommand(parseResult);
 
     // Invoke the parsed CLI command

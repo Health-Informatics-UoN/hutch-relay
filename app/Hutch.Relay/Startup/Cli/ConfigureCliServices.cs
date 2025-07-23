@@ -1,5 +1,5 @@
 using System.CommandLine;
-using Hutch.Relay.CommandLineActions;
+using Hutch.Relay.Commands;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
@@ -52,7 +52,7 @@ public static class ConfigureCliServices
 
     // Command Line Actions
     b.Services
-      .AddTransient<DatabaseUpdate>();
+      .AddTransient<DatabaseUpdateAction>();
 
     return b;
   }

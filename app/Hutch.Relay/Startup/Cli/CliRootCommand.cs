@@ -26,22 +26,19 @@ public class CliRootCommand : HostedRootCommand
     Options.Add(OptConnectionString);
 
     // // Add Subcommands here
-    // Subcommands.Add(new("users", "Relay User actions")
-    // {
-    //   new ListUsers("list"),
-    //   new AddUser("add"),
-    //   new ResetUserPassword("reset-password"),
-    //   new AddUserSubNode("add-subnode"),
-    //   new ListUserSubNodes("list-subnodes"),
-    //   new RemoveUserSubNodes("remove-subnodes")
-    // });
+    Subcommands.Add(new("users", "Relay User actions")
+    {
+      // new ListUsers("list"),
+      new AddUser("add"),
+      // new ResetUserPassword("reset-password"),
+      // new AddUserSubNode("add-subnode"),
+      // new ListUserSubNodes("list-subnodes"),
+      // new RemoveUserSubNodes("remove-subnodes")
+    });
 
     Subcommands.Add(new("database", "Local Datastore Management actions")
     {
-      new Command("update", "Update the database to the latest migration in this build.")
-      {
-        Action = new HostedAsynchronousCommandLineAction<CliRootCommand, CommandLineActions.DatabaseUpdate>()
-      }
+      new DatabaseUpdate("update")
     });
   }
 }
