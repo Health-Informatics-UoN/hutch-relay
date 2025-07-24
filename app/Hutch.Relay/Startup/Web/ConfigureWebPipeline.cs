@@ -19,6 +19,9 @@ public static class ConfigureWebPipeline
     app.UseHttpsRedirection();
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    app.MapUonVersionInformation();
+
     app.UseAuthentication();
     app.UseAuthorization();
     
