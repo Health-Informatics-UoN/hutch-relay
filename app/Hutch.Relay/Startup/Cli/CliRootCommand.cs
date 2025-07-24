@@ -28,7 +28,7 @@ public class CliRootCommand : HostedRootCommand
     // // Add Subcommands here
     Subcommands.Add(new("users", "Relay User actions")
     {
-      // new ListUsers("list"),
+      new ListUsers("list"),
       new AddUser("add"),
       new ResetUserPassword("reset-password"),
       // new AddUserSubNode("add-subnode"),
