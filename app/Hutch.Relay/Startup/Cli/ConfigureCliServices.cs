@@ -55,6 +55,7 @@ public static class ConfigureCliServices
       .AddTransient<DatabaseUpdateAction>()
       .AddTransient<ListUsersAction>()
       .AddTransient<AddUserAction>()
+      .AddTransient<AddUserSubNodeAction>()
       .AddTransient<ResetUserPasswordAction>();
 
     return b;
