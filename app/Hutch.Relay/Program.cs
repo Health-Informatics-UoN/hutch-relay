@@ -1,8 +1,8 @@
 using System.CommandLine;
 using Hutch.Relay.Startup.Web;
 using Hutch.Relay.Startup.Cli;
-using Hutch.Relay.Startup.EfCoreMigrations;
 using Serilog;
+using Hutch.Relay.Commands;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -10,26 +10,51 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-  // Enable EF Core tooling to get a DbContext configuration
-  EfCoreMigrations.BootstrapDbContext(args);
-
   // Display the Logo and version information
   CliLogo.Display();
 
-  // Parse the command line based on config and our CLI Root Command definition
-  var cli = new CommandLineConfiguration(new CliRootCommand());
-  var parseResult = cli.Parse(args);
-
-  // Choose entrypoint based on the command parsed
-  return parseResult switch
+  RootCommand root = new("Hutch Relay")
   {
-    ParseResult { CommandResult.Command: RootCommand, Action: null } // Root Command with no action (e.g. option actions like --help, --version)
-      => await WebEntrypoint.Run(args), // Run Web Entrypoint
+    TreatUnmatchedTokensAsErrors = false,
 
-    _ => await CliEntrypoint.Run(args, parseResult)
+    Options = {
+       new Option<string?>("--environment", "--environment", "-e")
+      {
+        Description = "Override the application host's Environment Name.",
+        Recursive = true
+      },
+      new Option<string?>("--connection-string", "--connection-string")
+      {
+        Description = "Override the local datastore connection string.",
+        Recursive = true
+      },
+    },
+
+    Subcommands = {
+      new("users", "Relay User actions")
+      {
+        new ListUsers("list"),
+        new AddUser("add"),
+        new ResetUserPassword("reset-password"),
+        new AddUserSubNode("add-subnode"),
+        new ListUserSubNodes("list-subnodes"),
+        new RemoveUserSubNodes("remove-subnodes")
+      },
+
+      new("database", "Local Datastore Management actions")
+      {
+        new DatabaseUpdate("update")
+      }
+    }
   };
+
+  root.SetAction((_, ct) => WebEntrypoint.Run(args, ct));
+
+  var parseResult = root.Parse(args);
+
+  return await parseResult.InvokeAsync();
 }
-catch (Exception ex)
+catch (Exception ex) when (ex.GetType().Name is not "HostAbortedException") // EF Core tooling exception can be ignored
 {
   Log.Fatal(ex, "An unhandled exception occurred during bootstrapping");
   return 1;
