@@ -23,12 +23,12 @@ public static class ConfigureCliServices
 
     // Console output services
     b.Services
-      .AddKeyedSingleton<IAnsiConsole>("stdout",
+      .AddKeyedSingleton("stdout",
         (_, __) => AnsiConsole.Create(new()
         {
           Out = new AnsiConsoleOutput(parseResult.Configuration.Output)
         }))
-      .AddKeyedSingleton<IAnsiConsole>("stderr",
+      .AddKeyedSingleton("stderr",
         (_, __) => AnsiConsole.Create(new()
         {
           Out = new AnsiConsoleOutput(parseResult.Configuration.Error)

@@ -17,8 +17,8 @@ internal class AddUser : HostedAsyncCommand<AddUserAction>
       Description = "The new user name."
     };
 
-  public AddUser(string name)
-    : base(name, "Add a new User.")
+  public AddUser(string name, HostFactory hostFactory)
+    : base(name, hostFactory, "Add a new User.")
   {
     Arguments.Add(Username);
   }

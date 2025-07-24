@@ -93,12 +93,14 @@ CLI Core offers several building blocks for this that are documented in detail h
 
 The simplest version is:
 
-1. Change your `RootCommand` to derive from `HostedRootCommand`.
 1. Define `Action`s as classes derived from `SynchronousCommandLineAction` or `AsynchronousCommandLineAction` as appropriate.
     - this is instead of the inline `SetAction(parseResult => ...)` style which works for simple command actions only.
 1. Change `Command`s to derive from `HostedCommand<T>` or `HostedAsyncCommand<T>` as appropriate, where `T` is the type of the `Action` your `Command` should have.
 1. Register your `Action` classes as services in the Host.
-1. Ensure the host configures the `HostedRootCommand`
+1. Provide a `HostFactory` to the `HostedCommand`s where they are initialised.
+    - This is a func that will defer building the host until the `Action` is Invoked.
+    - It's up to you if you share one across all (or most) `HostedCommand`s, or they can easily specify their own
+    - `CliApplication.CreateFactory` is a helper that allows you to extend it with app-specific needs, and override the App environment based on a custom global option
 
 Here's what all that might look like:
 

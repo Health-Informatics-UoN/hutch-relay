@@ -3,6 +3,8 @@ using Hutch.Relay.Startup.Web;
 using Serilog;
 using Hutch.Relay.Commands;
 using Hutch.Relay.Startup;
+using Hutch.Relay.Startup.Cli.Core;
+using Hutch.Relay.Startup.Cli;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -13,10 +15,15 @@ try
   // Display the Logo and version information
   StartupLogo.Display();
 
+  // Define a shared CliHost Factory that we'll use for most Hosted Commands
+  var hostFactory = CliApplication.CreateFactory(args,
+    CliHostFactory.Build,
+    x => x.GetValue<string>("--environment"));
+
   // Define the CLI as a command heirarchy
   RootCommand root = new("Hutch Relay")
   {
-    TreatUnmatchedTokensAsErrors = false,
+    TreatUnmatchedTokensAsErrors = false, 
 
     Options = {
        new Option<string?>("--environment", "--environment", "-e")
@@ -34,17 +41,17 @@ try
     Subcommands = {
       new("users", "Relay User actions")
       {
-        new ListUsers("list"),
-        new AddUser("add"),
-        new ResetUserPassword("reset-password"),
-        new AddUserSubNode("add-subnode"),
-        new ListUserSubNodes("list-subnodes"),
-        new RemoveUserSubNodes("remove-subnodes")
+        new ListUsers("list", hostFactory),
+        new AddUser("add", hostFactory),
+        new ResetUserPassword("reset-password", hostFactory),
+        new AddUserSubNode("add-subnode", hostFactory),
+        new ListUserSubNodes("list-subnodes", hostFactory),
+        new RemoveUserSubNodes("remove-subnodes", hostFactory)
       },
 
       new("database", "Local Datastore Management actions")
       {
-        new DatabaseUpdate("update")
+        new DatabaseUpdate("update", hostFactory)
       }
     }
   };
@@ -52,12 +59,7 @@ try
   // Default action to run the Web App
   root.SetAction((_, ct) => WebEntrypoint.Run(args, ct));
 
-  // Parse the command line args
-  var parseResult = root.Parse(args);
-
-  // Invoke actions based on the parse result
-  return await parseResult.InvokeAsync();
-  
+  return await root.Parse(args).InvokeAsync();
 }
 catch (Exception ex) when (ex.GetType().Name is not "HostAbortedException") // EF Core tooling exception can be ignored
 {

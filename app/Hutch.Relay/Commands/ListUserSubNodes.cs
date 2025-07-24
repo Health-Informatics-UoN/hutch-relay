@@ -16,8 +16,8 @@ internal class ListUserSubNodes : HostedAsyncCommand<ListUserSubNodesAction>
       Description = "The User to list Sub Nodes for."
     };
 
-  public ListUserSubNodes(string name)
-    : base(name, "List all Sub Nodes for a User.")
+  public ListUserSubNodes(string name, HostFactory hostFactory)
+    : base(name, hostFactory, "List all Sub Nodes for a User.")
   {
     Arguments.Add(Username);
   }

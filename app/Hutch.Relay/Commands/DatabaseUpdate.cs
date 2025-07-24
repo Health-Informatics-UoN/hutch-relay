@@ -6,9 +6,10 @@ using Spectre.Console;
 
 namespace Hutch.Relay.Commands;
 
-internal class DatabaseUpdate(string name)
+internal class DatabaseUpdate(string name, HostFactory hostFactory)
   : HostedAsyncCommand<DatabaseUpdateAction>(
     name,
+    hostFactory,
     "Update the database to the latest migration in this build.")
 { }
 

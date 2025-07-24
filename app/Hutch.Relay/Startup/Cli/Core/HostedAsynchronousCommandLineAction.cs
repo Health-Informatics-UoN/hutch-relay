@@ -4,18 +4,16 @@ using System.CommandLine.Invocation;
 namespace Hutch.Relay.Startup.Cli.Core;
 
 
-public class HostedAsynchronousCommandLineAction<TAction>() : AsynchronousCommandLineAction
+public class HostedAsynchronousCommandLineAction<TAction>(HostFactory hostFactory) : AsynchronousCommandLineAction
   where TAction : AsynchronousCommandLineAction
 {
 
   public override async Task<int> InvokeAsync(ParseResult parseResult, CancellationToken cancellationToken = default)
   {
-    // retrieve the CLI Host from the Root Command
-    var cliHost = ((IHostedRootCommand)parseResult.RootCommandResult.Command).CliHost;
+    // Build a CLI Host
+    var host = hostFactory.Invoke(parseResult);
 
-    using var scope = (cliHost?.Services.CreateScope())
-      ?? throw new InvalidOperationException(
-        "CLI Host is not set. Please ensure your RootCommand implements IHostedRootCommand and the CLI Host is set correctly.");
+    using var scope = host.Services.CreateScope();
 
     var action = scope.ServiceProvider.GetRequiredService<TAction>();
 

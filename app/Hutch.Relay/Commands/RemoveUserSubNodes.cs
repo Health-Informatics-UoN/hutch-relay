@@ -41,8 +41,8 @@ internal class RemoveUserSubNodes : HostedAsyncCommand<RemoveUserSubNodesAction>
       Description = "Remove all this user's Sub Nodes."
     };
 
-  public RemoveUserSubNodes(string name)
-    : base(name, "Remove one or more Sub Nodes belonging to a User.")
+  public RemoveUserSubNodes(string name, HostFactory hostFactory)
+    : base(name, hostFactory, "Remove one or more Sub Nodes belonging to a User.")
   {
     Arguments.Add(Username);
     Arguments.Add(SubNodes);

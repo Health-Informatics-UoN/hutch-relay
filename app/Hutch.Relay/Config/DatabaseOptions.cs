@@ -17,7 +17,7 @@ public class DatabaseOptions
   public bool ApplyMigrationsOnStartup { get; set; }
 
   /// <summary>
-  /// Retain <see cref="Relay.Data.Entities.RelayTask"/> and <see cref="Relay.Data.Entities.RelaySubTask"/> records after they have been completed.
+  /// Retain <see cref="Data.Entities.RelayTask"/> and <see cref="Data.Entities.RelaySubTask"/> records after they have been completed.
   /// </summary>
   public bool RetainCompletedTaskState { get; set; }
 }

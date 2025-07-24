@@ -16,8 +16,8 @@ internal class ResetUserPassword : HostedAsyncCommand<ResetUserPasswordAction>
       Description = "The user to create a new password for."
     };
 
-  public ResetUserPassword(string name)
-    : base(name, "Reset a User's password.")
+  public ResetUserPassword(string name, HostFactory hostFactory)
+    : base(name, hostFactory, "Reset a User's password.")
   {
     Arguments.Add(Username);
   }

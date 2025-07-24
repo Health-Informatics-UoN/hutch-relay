@@ -8,7 +8,7 @@ namespace Hutch.Relay.Services;
 ///     <listheader>An Obfuscator interface that implements Relay's obfuscation routines:</listheader>
 ///     <item>The individual obfuscation methods as static math functions</item>
 ///     <item>
-///       A single public <see cref="Obfuscate(int,Hutch.Relay.Config.ObfuscationOptions)"/> entrypoint for consumers to use.
+///       A single public <see cref="Obfuscate(int,ObfuscationOptions)"/> entrypoint for consumers to use.
 ///       Implementing this on the interface ensures it does not differ between implementations
 ///     </item>
 ///     <item>
