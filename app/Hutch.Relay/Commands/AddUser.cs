@@ -34,7 +34,7 @@ internal class AddUserAction(
 
   public override async Task<int> InvokeAsync(ParseResult parseResult, CancellationToken cancellationToken = default)
   {
-    var username = parseResult.GetValue(AddUser.Username);
+    var username = parseResult.GetRequiredValue(AddUser.Username);
 
     if (string.IsNullOrWhiteSpace(username))
     {

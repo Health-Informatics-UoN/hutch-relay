@@ -52,7 +52,9 @@ public static class ConfigureCliServices
 
     // Command Line Actions
     b.Services
-      .AddTransient<DatabaseUpdateAction>();
+      .AddTransient<DatabaseUpdateAction>()
+      .AddTransient<AddUserAction>()
+      .AddTransient<ResetUserPasswordAction>();
 
     return b;
   }

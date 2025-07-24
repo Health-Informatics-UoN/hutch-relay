@@ -30,7 +30,7 @@ public class CliRootCommand : HostedRootCommand
     {
       // new ListUsers("list"),
       new AddUser("add"),
-      // new ResetUserPassword("reset-password"),
+      new ResetUserPassword("reset-password"),
       // new AddUserSubNode("add-subnode"),
       // new ListUserSubNodes("list-subnodes"),
       // new RemoveUserSubNodes("remove-subnodes")
