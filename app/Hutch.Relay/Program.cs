@@ -1,8 +1,8 @@
 using System.CommandLine;
 using Hutch.Relay.Startup.Web;
-using Hutch.Relay.Startup.Cli;
 using Serilog;
 using Hutch.Relay.Commands;
+using Hutch.Relay.Startup;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -11,8 +11,9 @@ Log.Logger = new LoggerConfiguration()
 try
 {
   // Display the Logo and version information
-  CliLogo.Display();
+  StartupLogo.Display();
 
+  // Define the CLI as a command heirarchy
   RootCommand root = new("Hutch Relay")
   {
     TreatUnmatchedTokensAsErrors = false,
@@ -48,11 +49,15 @@ try
     }
   };
 
+  // Default action to run the Web App
   root.SetAction((_, ct) => WebEntrypoint.Run(args, ct));
 
+  // Parse the command line args
   var parseResult = root.Parse(args);
 
+  // Invoke actions based on the parse result
   return await parseResult.InvokeAsync();
+  
 }
 catch (Exception ex) when (ex.GetType().Name is not "HostAbortedException") // EF Core tooling exception can be ignored
 {

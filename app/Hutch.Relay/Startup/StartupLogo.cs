@@ -1,9 +1,9 @@
 using Spectre.Console;
 using UoN.VersionInformation;
 
-namespace Hutch.Relay.Startup.Cli;
+namespace Hutch.Relay.Startup;
 
-public static class CliLogo
+public static class StartupLogo
 {
   public static void Display(IAnsiConsole? console = null)
   {
