@@ -56,6 +56,7 @@ public static class ConfigureCliServices
       .AddTransient<ListUsersAction>()
       .AddTransient<AddUserAction>()
       .AddTransient<AddUserSubNodeAction>()
+      .AddTransient<RemoveUserSubNodesAction>()
       .AddTransient<ListUserSubNodesAction>()
       .AddTransient<ResetUserPasswordAction>();
 

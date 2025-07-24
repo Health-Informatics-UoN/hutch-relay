@@ -33,7 +33,7 @@ public class CliRootCommand : HostedRootCommand
       new ResetUserPassword("reset-password"),
       new AddUserSubNode("add-subnode"),
       new ListUserSubNodes("list-subnodes"),
-      // new RemoveUserSubNodes("remove-subnodes")
+      new RemoveUserSubNodes("remove-subnodes")
     });
 
     Subcommands.Add(new("database", "Local Datastore Management actions")
