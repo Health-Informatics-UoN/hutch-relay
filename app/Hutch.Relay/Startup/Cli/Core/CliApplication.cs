@@ -35,7 +35,7 @@ public static class CliApplication
 
 
     //-- Introduce extra configuration
-
+    // TODO: make app-specific configuration extensible
 
     // Override connection string with the global cli option
     var connectionString = parseResult.CommandResult.GetValue(CliRootCommand.OptConnectionString);

@@ -6,14 +6,11 @@ using Spectre.Console;
 
 namespace Hutch.Relay.Commands;
 
-internal class DatabaseUpdate : Command
-{
-  public DatabaseUpdate(string name) : base(name,
+internal class DatabaseUpdate(string name)
+  : HostedAsyncCommand<DatabaseUpdateAction>(
+    name,
     "Update the database to the latest migration in this build.")
-  {
-    Action = CliApplication.AsyncAction<DatabaseUpdateAction>();
-  }
-}
+{ }
 
 internal class DatabaseUpdateAction(
   DbManagementService dbManager,

@@ -9,7 +9,7 @@ using Spectre.Console;
 
 namespace Hutch.Relay.Commands;
 
-internal class AddUser : Command
+internal class AddUser : HostedAsyncCommand<AddUserAction>
 {
   public static readonly Argument<string> Username =
     new("username")
@@ -21,8 +21,6 @@ internal class AddUser : Command
     : base(name, "Add a new User.")
   {
     Arguments.Add(Username);
-
-    Action = CliApplication.AsyncAction<AddUserAction>();
   }
 }
 
