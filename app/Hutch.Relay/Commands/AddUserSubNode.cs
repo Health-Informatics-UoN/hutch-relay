@@ -8,7 +8,7 @@ using Spectre.Console;
 
 namespace Hutch.Relay.Commands;
 
-internal class AddUserSubNode : HostedAsyncCommand<AddUserSubNodeAction>
+internal class AddUserSubNode : DeferredAsyncCommand<AddUserSubNodeAction>
 {
   public static readonly Argument<string> Username =
     new("username")
@@ -22,8 +22,8 @@ internal class AddUserSubNode : HostedAsyncCommand<AddUserSubNodeAction>
       Description = "Automatically say yes to the final confirmation check."
     };
 
-  public AddUserSubNode(string name, HostFactory hostFactory)
-    : base(name, hostFactory, "Add a new Sub Node for a User.")
+  public AddUserSubNode(string name)
+    : base(name, "Add a new Sub Node for a User.")
   {
     Arguments.Add(Username);
 

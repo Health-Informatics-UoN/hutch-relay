@@ -1,10 +1,8 @@
-using System.CommandLine;
-using Hutch.Relay.Startup.Web;
 using Serilog;
-using Hutch.Relay.Commands;
 using Hutch.Relay.Startup;
 using Hutch.Relay.Startup.Cli.Core;
 using Hutch.Relay.Startup.Cli;
+using Hutch.Relay.Startup.Web;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -21,8 +19,10 @@ try
   // Set default CLI action to run the Web App
   root.SetAction((_, ct) => WebEntrypoint.Run(args, ct));
 
-  // Run the app
-  return await root.Parse(args).InvokeAsync();
+  // Run the app, with instructions on how to create a CLI Host if necessary
+  return await CliApplication.InvokeAsync(args, root,
+    CliHostFactory.Create,
+    CliRootCommand.Environment);
 }
 catch (Exception ex) when (ex.GetType().Name is not "HostAbortedException") // EF Core tooling exception can be ignored
 {

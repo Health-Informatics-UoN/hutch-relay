@@ -8,7 +8,7 @@ using Spectre.Console;
 
 namespace Hutch.Relay.Commands;
 
-internal class ResetUserPassword : HostedAsyncCommand<ResetUserPasswordAction>
+internal class ResetUserPassword : DeferredAsyncCommand<ResetUserPasswordAction>
 {
   public static readonly Argument<string> Username =
     new("username")
@@ -16,8 +16,8 @@ internal class ResetUserPassword : HostedAsyncCommand<ResetUserPasswordAction>
       Description = "The user to create a new password for."
     };
 
-  public ResetUserPassword(string name, HostFactory hostFactory)
-    : base(name, hostFactory, "Reset a User's password.")
+  public ResetUserPassword(string name)
+    : base(name, "Reset a User's password.")
   {
     Arguments.Add(Username);
   }

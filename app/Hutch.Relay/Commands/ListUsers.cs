@@ -8,10 +8,9 @@ using Spectre.Console;
 
 namespace Hutch.Relay.Commands;
 
-internal class ListUsers(string name, HostFactory hostFactory)
-  : HostedAsyncCommand<ListUsersAction>(
+internal class ListUsers(string name)
+  : DeferredAsyncCommand<ListUsersAction>(
     name,
-    hostFactory,
     "List users.")
 { }
 
