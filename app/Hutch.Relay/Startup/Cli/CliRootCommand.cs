@@ -5,33 +5,41 @@ namespace Hutch.Relay.Startup.Cli;
 
 public class CliRootCommand : RootCommand
 {
-  public static readonly Option<string?> OptEnvironment =
-    new(["--environment", "-e"],
-      "Override the application host's Environment Name.");
+  public static Option<string?> Environment { get; } =
+    new("--environment", "--environment", "-e")
+    {
+      Description = "Override the application host's Environment Name.",
+      Recursive = true
+    };
 
-  public static readonly Option<string?> OptConnectionString =
-    new(["--connection-string"],
-      "Override the local datastore connection string.");
+  public static Option<string?> ConnectionString { get; } =
+    new("--connection-string", "--connection-string")
+    {
+      Description = "Override the local datastore connection string.",
+      Recursive = true
+    };
 
-  public CliRootCommand() : base("Hutch Relay")
+  public CliRootCommand(string[] args) : base("Hutch Relay")
   {
-    AddGlobalOption(OptEnvironment);
-    AddGlobalOption(OptConnectionString);
+    TreatUnmatchedTokensAsErrors = false;
 
-    // Add Commands here
-    AddCommand(new("users", "Relay User actions")
-    {
-      new ListUsers("list"),
-      new AddUser("add"),
-      new ResetUserPassword("reset-password"),
-      new AddUserSubNode("add-subnode"),
-      new ListUserSubNodes("list-subnodes"),
-      new RemoveUserSubNodes("remove-subnodes")
-    });
+    Options.Add(Environment);
+    Options.Add(ConnectionString);
 
-    AddCommand(new("database", "Local Datastore Management actions")
-    {
-      new DatabaseUpdate("update")
-    });
+    Subcommands.Add(new("users", "Relay User actions")
+      {
+        new ListUsers("list"),
+        new AddUser("add"),
+        new ResetUserPassword("reset-password"),
+        new AddUserSubNode("add-subnode"),
+        new ListUserSubNodes("list-subnodes"),
+        new RemoveUserSubNodes("remove-subnodes")
+      });
+
+    Subcommands.Add(new("database", "Local Datastore Management actions")
+      {
+        new DatabaseUpdate("update")
+      });
   }
 }
+

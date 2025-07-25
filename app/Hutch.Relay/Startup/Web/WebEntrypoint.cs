@@ -1,14 +1,10 @@
-using Hutch.Relay.Config;
-using Hutch.Relay.Data;
-using Hutch.Relay.Services;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
+using System.CommandLine;
 
 namespace Hutch.Relay.Startup.Web;
 
 public static class WebEntrypoint
 {
-  public static async Task Run(string[] args)
+  public static async Task Run(string[] args, CancellationToken cancellationToken)
   {
     var b = WebApplication.CreateBuilder(args);
 
@@ -19,12 +15,12 @@ public static class WebEntrypoint
     var app = b.Build();
 
     // Perform additional initialisation before we run the Web App
-    await app.Initialise();
+    await app.Initialise(); // TODO: Cancellation Token
 
     // Configure the HTTP Request Pipeline
     app.UseWebPipeline();
 
     // Run the app!
-    await app.RunAsync();
+    await app.RunAsync(cancellationToken);
   }
 }

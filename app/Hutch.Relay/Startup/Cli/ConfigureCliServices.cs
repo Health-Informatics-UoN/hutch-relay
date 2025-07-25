@@ -1,4 +1,5 @@
-using Hutch.Relay.Commands.Runners;
+using System.CommandLine;
+using Hutch.Relay.Commands;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
@@ -13,7 +14,7 @@ namespace Hutch.Relay.Startup.Cli;
 
 public static class ConfigureCliServices
 {
-  public static HostApplicationBuilder ConfigureServices(this HostApplicationBuilder b)
+  public static HostApplicationBuilder ConfigureServices(this HostApplicationBuilder b, ParseResult parseResult)
   {
     b.Services.AddSerilog((services, lc) => lc
       .ReadFrom.Configuration(b.Configuration)
@@ -22,15 +23,15 @@ public static class ConfigureCliServices
 
     // Console output services
     b.Services
-      .AddKeyedSingleton<IAnsiConsole>("stdout",
+      .AddKeyedSingleton("stdout",
         (_, __) => AnsiConsole.Create(new()
         {
-          Out = new AnsiConsoleOutput(Console.Out)
+          Out = new AnsiConsoleOutput(parseResult.Configuration.Output)
         }))
-      .AddKeyedSingleton<IAnsiConsole>("stderr",
+      .AddKeyedSingleton("stderr",
         (_, __) => AnsiConsole.Create(new()
         {
-          Out = new AnsiConsoleOutput(Console.Error)
+          Out = new AnsiConsoleOutput(parseResult.Configuration.Error)
         }));
 
     // DB Context
@@ -49,15 +50,15 @@ public static class ConfigureCliServices
       .AddTransient<ISubNodeService, SubNodeService>()
       .AddTransient<DbManagementService>();
 
-    // Command Runners
+    // Command Line Actions
     b.Services
-      .AddTransient<AddUserSubNode>()
-      .AddTransient<AddUser>()
-      .AddTransient<ListUsers>()
-      .AddTransient<ListUserSubNodes>()
-      .AddTransient<RemoveUserSubNodes>()
-      .AddTransient<ResetUserPassword>()
-      .AddTransient<DatabaseUpdate>();
+      .AddTransient<DatabaseUpdateAction>()
+      .AddTransient<ListUsersAction>()
+      .AddTransient<AddUserAction>()
+      .AddTransient<AddUserSubNodeAction>()
+      .AddTransient<RemoveUserSubNodesAction>()
+      .AddTransient<ListUserSubNodesAction>()
+      .AddTransient<ResetUserPasswordAction>();
 
     return b;
   }

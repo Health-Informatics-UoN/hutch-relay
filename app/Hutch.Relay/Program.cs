@@ -1,10 +1,8 @@
-using System.CommandLine.Builder;
-using System.CommandLine.Parsing;
-using Hutch.Relay.Commands.Helpers;
-using Hutch.Relay.Startup.Web;
-using Hutch.Relay.Startup.Cli;
-using Hutch.Relay.Startup.EfCoreMigrations;
 using Serilog;
+using Hutch.Relay.Startup;
+using Hutch.Relay.Startup.Cli.Core;
+using Hutch.Relay.Startup.Cli;
+using Hutch.Relay.Startup.Web;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -12,20 +10,21 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-  // Enable EF Core tooling to get a DbContext configuration
-  EfCoreMigrations.BootstrapDbContext(args);
+  // Display the Logo and version information
+  StartupLogo.Display();
 
-  await new CommandLineBuilder(new CliRootCommand())
-    .UseDefaults()
-    .UseCliLogo()
-    .UseRootCommandBypass(args, WebEntrypoint.Run)
-    .UseCliHost(args, CliEntrypoint.ConfigureHost)
-    .Build()
-    .InvokeAsync(args);
+  // Define the CLI as a command heirarchy
+  var root = new CliRootCommand(args);
 
-  return 0;
+  // Set default CLI action to run the Web App
+  root.SetAction((_, ct) => WebEntrypoint.Run(args, ct));
+
+  // Run the app, with instructions on how to create a CLI Host if necessary
+  return await CliApplication.InvokeAsync(args, root,
+    CliHostFactory.Create,
+    CliRootCommand.Environment);
 }
-catch (Exception ex)
+catch (Exception ex) when (ex.GetType().Name is not "HostAbortedException") // EF Core tooling exception can be ignored
 {
   Log.Fatal(ex, "An unhandled exception occurred during bootstrapping");
   return 1;

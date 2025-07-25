@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Hutch.Relay.Commands.Helpers;
+namespace Hutch.Relay.Helpers;
 
 public static class GeneratePassword
 {
