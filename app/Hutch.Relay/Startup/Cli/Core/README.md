@@ -3,9 +3,9 @@
 Herein are some classes and suggested usage for:
 
 - Using `System.CommandLine` 2.x (beta5+) with the .NET Generic Host model
-    - In particular supporting the use of Generic Host for Configuration and Dependency Injection.
-- Having the entrypoint to a `System.CommandLine` app look and feel roughly like ASP.NET or Generic Host apps.
-- Having a CLI in an ASP.NET Core App by using multiple entrypoints
+  - In particular supporting the use of Generic Host for Configuration and Dependency Injection.
+- Only building the Generic Host when invoking actions that need it
+- Supporting a Web App with a CLI by running an ASP.NET Core entrypoint as a CLI command (typically the default)
 
 This document also serves to supplement the `System.CommandLine` documentation with patterns that seem sensible.
 
@@ -17,13 +17,13 @@ For most details, read the documentation. Here however is a TL;DR for app develo
 
 - Define a command hierarchy, starting with a `RootCommand`, which may (probably will) have SubCommands derived from `Command`.
 - All Commands can have Names (mandatory), Aliases, Descriptions, Arguments, Options etc, largely POSIX styled
-    - `Option`s can be global (technically recursive - applied to the `Command` they're defined on, and all Subcommands thereafter)
+  - `Option`s can be global (technically recursive - applied to the `Command` they're defined on, and all Subcommands thereafter)
 - From these definitions, `System.CommandLine` can parse your app's arguments and resolve a matching `Command`, provide built-in help, etc...
 - To use in an app:
-    - first run a parsing step against your defined `RootCommand` and its heirarchy
-    - then do what you want with the `ParseResult`
-        - typically invoking the resolved `Action`
-        - but it's valid to make other decisions based on the result of parsing.
+  - first run a parsing step against your defined `RootCommand` and its heirarchy
+  - then do what you want with the `ParseResult`
+    - typically invoking the resolved `Action`
+    - but it's valid to make other decisions based on the result of parsing.
 - An `Action` is effectively the "Do Something" code that occurs when you invoke a parsing match.
 - An `Action` usually belongs to a `Command`, but may belong to an `Option` (e.g. `--help`)
 - `Action`s may be Synchronous or Asynchronous, but a CLI app (from the `RootCommand` down) [should not mix and match](https://learn.microsoft.com/en-us/dotnet/standard/commandline/how-to-parse-and-invoke#asynchronous-actions)
@@ -32,56 +32,63 @@ That's `System.CommandLine` by itself in a nutshell. The docs provide examples a
 
 ## Usage with Generic Host
 
-In larger apps, it's useful to be able to to load configuration in an expected way (such as the way other .NET Application Host apps such as ASP.NET Core do).
+Why do we like Generic Host, even in a basic CLI?
 
-It may also be useful to configure available services by registering them in a DI Container (such as the .NET Application Host model provides out-the-box) and then resolving CLI Actions via Dependency Injection.
+Primarily:
 
-Basically it also makes CLI Apps built in this way behave more like ASP.NET Core and be more usable with tutorials around the web for logging, resolving services etc.
+- Dependency Injection (that works the same way as ASP.NET Core, which we're used to)
+- Configuration loading (that works the same way as ASP.NET Core, which we're used to)
 
-To achieve this we need:
+DI is the big one (and is amplified further when adding a CLI to a Web App) as it facilitates easy reuse of existing services without having to manually fulfill dependencies like `ILogger` or Entity Framework `DbContext`s.
 
-1. Bootstrap a Generic Host, optionally allowing host configuration to depend on `RootCommand` and the CLI `ParseResult`
+It allows your CLI app's bootstrapping to work roughly like most ASP.NET Core tutorials.
+
+### How?
+
+To achieve this we need to:
+
+1. Bootstrap a Generic Host
+   - optionally allowing host configuration to depend on `RootCommand` and the CLI `ParseResult`
 1. Allow Service registration (`ConfigureServices` style)
 1. Have a mechanism for resolving an `Action` at Invoke time from the DI container, instead of constructed by `new()` directly in the `Command`
 
-The classes provided here facilitate the above, typically with some very lightweight derived classes from `System.CommandLine`.
+However, those steps don't necessarily happen in that order, and it can get a bit "chicken and egg".
 
 ### Bootstrap a Generic Host
 
-We provide the `CliApplication` static class which offers Generic Host builder helpers tailored slightly for CLI use.
+There are so many ways to slice this problem, and `System.CommandLine` provides no opinionated solution today.
 
-`// TODO: support better host configuration overrides such as environment`
+You could:
 
-You can bootstrap a Generic Host either getting the builder back, or immediately running a Configure Services action and returning the built host directly.
+- Build a Host manually inside every Action you write
+  - How do you easily share the configuration if desirable (or conditionally not)?
+- Build a single Host for all dependent CLI actions up front
+- Reuse the same host as other parts of your application (e.g. if you are using WebApplicationBuilder)
+  - Should every CLI command register MVC Controllers and Views?
+- Dynamically build a CLI-specific Host only when invoking commands that need it.
+  - Including sharing the host between multiple actions when that occurs (but giving them independent scopes)
+  - Still supporting action-specific Host bootstrapping
+  - Still supporting actions that don't use Hosts at all
 
-This should look and feel very close to `WebApplication` in ASP.NET Core:
+The CLI Core code allows all of the above, (though it doesn't really help solve anything for the first one).
 
-```csharp
-// Create a CLI Host Builder and do stuff with it before building
-var b = CliApplication.CreateBuilder(args, parseResult);
+Mainly it aims at the last one, but if you wanted to take a different approach, it might still help.
 
-// Configure DI Services
-b.Services.AddTransient<MyService>();
-// ...
+Whatever you do, it's worth considering you _usually_ want to bootstrap the Host _after_ you parse the CLI, either because Host configuration depends on CLI arguments, or because whether or not you do it depends on the Parse Result.
 
-// Do other stuff
+It's also worth considering that bootstrapping a .NET Host usually requires `args`, but these are hard to make available later than `Program.cs`.
 
-// Build the app
-var host = b.Build();
-```
+For this reason, `CliApplication` provides methods focused on using a Factory to create the Host at a later time, accepting customisation methods from the application code to define how the Host is built (after some defaults).
 
-```csharp
-// Create a CLI Host App in one go
-var host = CliApplication.Create(args, parseResult);
-
-// Optionally with DI Services
-var host = CliApplication.Create(args, parseResult,
-  builder => builder.Services.AddTransient<MyService>());
-```
+You'll see them in practice later.
 
 ### DI Service Registration
 
-This is done in the normal way. As seen above `CliApplication` allows it in a similar fashion to ASP.NET Core's `WebApplication` directly on `HostApplicationBuilder.Services`.
+Once you have a Host Builder, this can be done as normal.
+
+If you ahve chosen to build the Host yourself, go ahead and do this as you normally would!
+
+If you are using `CliApplication` either to help create the Host, or to Invoke the `ParseResult`, then you can provide a delegate implementation to customise Host creation, including performing service registration as you normally would.
 
 You can also define an extension method on `HostApplicationBuilder` e.g. `ConfigureServices()` that takes and returns the builder when it's done (i.e. using the builder pattern), so you can separate your service configuration from polluting the entrypoint.
 
@@ -89,48 +96,63 @@ This is our recommended style in ASP.NET Core apps too.
 
 ### Resolve Actions from the Host
 
-CLI Core offers several building blocks for this that are documented in detail here for flexibility, however they are composed into derived classes which should make for the simplest usage in most cases.
+This is the hard bit, especially if you are opting for the most complex last approach in bootstrapping the Host.
 
-The simplest version is:
+`CliApplication` achieves this via a combination of two methods.
+
+First, it uses the Factory pattern to let you specify HOW to build a Host, and then defers that Host creation until Host dependent `Action`s need Invoking.
+
+Host dependent `Action`s are identified with an interface `IDeferredCommandLineAction`.
+
+Secondly, it allows `Command`s to defer their `Action` instantiation by using a `DeferredAction<T>` type, which allows specifying the CLR Type of the `Action` you would like to Invoke when the time comes.
+
+Finally, to bring it all together, it registers event handlers that execute when a `DeferredAction` is invoked.
+
+This is all done via custom `Invoke` methods on `CliApplication`, that wrap the `System.CommandLine`'s `ParseResult` `Invoke` methods.
+
+### `CliApplication.Invoke` Usage
+
+Here's a summary of the simplest usage approach (what you would do to get the behaviour described above)
 
 1. Define `Action`s as classes derived from `SynchronousCommandLineAction` or `AsynchronousCommandLineAction` as appropriate.
-    - this is instead of the inline `SetAction(parseResult => ...)` style which works for simple command actions only.
-1. Change `Command`s to derive from `HostedCommand<T>` or `HostedAsyncCommand<T>` as appropriate, where `T` is the type of the `Action` your `Command` should have.
-1. Register your `Action` classes as services in the Host.
-1. Provide a `HostFactory` to the `HostedCommand`s where they are initialised.
-    - This is a func that will defer building the host until the `Action` is Invoked.
-    - It's up to you if you share one across all (or most) `HostedCommand`s, or they can easily specify their own
-    - `CliApplication.CreateFactory` is a helper that allows you to extend it with app-specific needs, and override the App environment based on a custom global option
+   - this is instead of the inline `SetAction(parseResult => ...)` style which works for simple command actions only.
+1. Change `Command`s to derive from `DeferredCommand<T>` or `DeferredAsyncCommand<T>` as appropriate, where `T` is the type of the `Action` your `Command` should have.
+1. Register your `Action` classes as services wherever you define Host building (e.g. in a factory method)
+1. Define a `RootCommand` as normal; optionally as a derived class
+1. Use `CliApplication.Invoke()` or `CliApplication.InvokeAsync()` as appropriate.
+   - Overloads of these will do the parsing and host building for you <3
 
 Here's what all that might look like:
 
 ```csharp
 // CLI Entrypoint
-var cli = new CommandLineConfiguration(new CliRootCommand());
-var parseResult = cli.Parse(args);
+var root = new CliRootCommand(args);
 
-var host = CliApplication.Create(args, parseResult,
-  builder => builder.Services
-    .AddTransient<SomeDependency>()
-    .AddTransient<MyCommandAction>());
+// Run the app, with instructions on how to create a CLI Host if necessary
+return await CliApplication.InvokeAsync(args, root,
 
-host.UseHostedRootCommand(parseResult);
+  // We've defined a custom static Host Factory method
+  CliHostFactory.Create,
 
-return parseResult.Invoke();
+  // We can also override the Host's environment when it's built based on a custom cli option
+  parseResult => parseResult.GetValue<string>("--environment"));
 
 // RootCommand
-public class CliRootCommand : HostedRootCommand
+public class CliRootCommand : RootCommand
 {
   public CliRootCommand() : base("My App")
   {
+    // Here's the option referenced above
+    Options.Add(new Option<string?>("--environment", "--environment") { Recursive = true });
+
     Subcommands.Add(new MyCommand("command"));
   }
 }
 
 // SubCommand
-public class MyCommand(string name) : HostedCommand<MyCommandAction>(name, "description")
+public class MyCommand(string name) : DeferredCommand<MyCommandAction>(name, "description")
 {
-  // Action is set automatically by HostedCommand<T>, and will resolve MyCommandAction via DI from the Host
+  // Action is set automatically by DeferredCommand<T>, and will resolve MyCommandAction via DI from the Host when Invocation occurs
 }
 
 // SubCommand's Action
@@ -144,71 +166,70 @@ If that works for you, use it.
 
 If you want to get into the weeds of how it works, read on.
 
-- `HostedRootCommand` simply derives from `RootCommand` and implements `IHostedRootCommand`, which just guarantees a property for `CliHost` on the RootCommand, so that we can get at the generic host during invocation (after parsing).
-    - ✅ You can implement `IHostedRootCommand` yourself on a custom `RootCommand` and it will all still work
-- `HostedCommand<T>` (and its async version `HostedAsyncCommand<T>`) simply derives from `Command` but automatically sets the `Action` to a special wrapper action which will retrieve the Host from the `IHostedRootCommand`, and then resolve the `Action` specified by `T` from the host (and therefore all its dependencies). Then it invokes the `Action` `T`.
-    - The wrapper functions are `HostedSynchronousCommandLineAction<T>` and `HostedAsynchronousCommandLineAction<T>` respectively, and you can use them directly yourself as on any `Command` or `Option` provided the `RootCommand` they belong to implements `IHostedRootCommand`.
-    - `CliApplication` provides slightly shorter helpers for wrapping an `Action` type in the above:
-        - `CliApplication.Action<T>()`
-        - `CliApplication.AsyncAction<T>()`
-- `CliApplication` provides an `IHost` extension that sets the `CliHost` property on the `RootCommand` of a `ParseResult`
-    - Obviously the `RootCommand` must implement `IHostedRootCommand`
-    - calling `host.UseHostedRootCommand(parseResult)` is essential to allowing the wrapper actions to get the host and resolve their actions.
+- `DeferredCommand<T>` (and its async version `DeferredAsyncCommand<T>`) simply derives from `Command` but automatically sets the `Action` to a special wrapper action which will ask `CliApplication` to raise an event indicating the `DeferredAction` has been invoked.
+  - The wrapper functions are `DeferredSynchronousCommandLineAction<T>` and `DeferredAsynchronousCommandLineAction<T>` respectively, and you can use them directly yourself as on any `Command` or `Option`.
+- `CliApplication.Invoke` registers handlers for its own events that are triggered when a `DeferredAction` is invoked.
+  - The handlers are responsible for building the Host (using the supplied custom factory method) if it has not already been built, and then resolving the `Action` specified by `T` from the host (and therefore all its dependencies). Then it invokes the `Action` `T`.
+  - In future allowing custom handlers to be set may be considered. Currently if you wanted this you'd essentially have to implement your own custom `Invoke` functions. `CliApplication`'s could serve as a reference.
 
-## CLI Entrypoint example
+## CLI Entrypoint examples
 
 With all of the above, you can combine Generic Host and `System.CommandLine` to produce apps that feel more like modern .NET Web or Console apps.
 
-Here's an example `Program.cs` using all of our techniques above:
+### Single Generic Host
+
+Here's an example `Program.cs` where we've decided to always create a single shared Generic Host up front as normal, and then use `CliApplication` to allow us to invoke `Command`s with Dependency Injection.
+
+If you're prepared to build the host yourself, and have it always built, this is the simplest scenario.
 
 ```csharp
-// Parse the command line based on config and our CLI Root Command definition
-var cli = new CommandLineConfiguration(new CliRootCommand());
-var parseResult = cli.Parse(args);
+// Program.cs
 
-var b = CliApplication.CreateBuilder(args, parseResult);
+// Inline RootCommand definition; can be done in a class
+RootCommand root = new("My CLI App") {
+  SubCommands = {
+    new DeferredCommand<MyAction>("command")
+  }
+};
 
-// Configure DI Services
-b.ConfigureServices(parseResult);
+// Parse the CLI args against RootCommand
+var parseResult = root.Parse(args);
 
-// Any other builder configuration
+// Build the Host
+var builder = HostApplicationBuilder.Create();
 
-// Build the app
-var host = b.Build();
+// Register Deferred Action Targets so they can get their dependencies
+builder.Services.AddTransient<MyAction>();
 
-// Perform additional initialisation before we run the CLI
-await host.Initialise();
+var host = builder.Build();
 
-// Configure the CLI Root Command to allow using the configured Host
-// Necessary for Hosted CommandLine Actions to access the CLI Host and its services.
-host.UseHostedRootCommand(parseResult);
-
-// Invoke the parsed CLI command
-return await parseResult.InvokeAsync();
+// Invoke using CliApplication so that DeferredActions work correctly
+// In this scenario CliApplication does not do parsing or bootstrap the host as we provide it directly
+CliApplication.Invoke(parseResult, host);
 ```
 
-That shouldn't look far off an ASP.NET Core app's `Program.cs`, albeit we've rolled DI registration into a `ConfigureServices` extension method. `Initialise` is similarly an extension method.
+Some parts should look similar to a Generic Host or even ASP.NET Core app - particularly creating and using the HostBuilder.
 
 ### Multi entrypoint example
 
 What if you had an ASP.NET Core app that you wanted to add CLI commands to? So if no commands (i.e. just the root command) were specified, the webapp ran, with all options passed along, but if a defined Subcommand was matched, that would run instead?
 
+In this scenario it's desirable to only create the Generic Host when one or more DeferredActions will be invoked; other commands might not need a host at all, or in the case of the Web App, it will build a WebApplication Host instead, with different configuration!
+
 Here's an example:
 
 ```csharp
-// Program.cs
-// Parse the command line based on config and our CLI Root Command definition
-var cli = new CommandLineConfiguration(new CliRootCommand());
-var parseResult = cli.Parse(args);
+var root = new CliRootCommand(args);
 
-// Choose entrypoint based on the command parsed
-return parseResult switch
-{
-  ParseResult { CommandResult.Command: RootCommand, Action: null } // Root Command with no action (e.g. option actions like --help, --version)
-    => await WebEntrypoint.Run(args), // Run Web Entrypoint
+// Set default CLI action to run the Web App
+// If CliRootCommand is a class, you could do this bit in the class (taking `args` in the constructor)
+// But having the default action appear in `Program.cs` may be clearer.
+root.SetAction((_, ct) => WebEntrypoint.Run(args, ct));
 
-  _ => await CliEntrypoint.Run(args, parseResult)
-};
+// Run the app, with instructions on how to create a CLI Host if necessary
+return await CliApplication.InvokeAsync(args, root,
+  CliHostFactory.Create, // Static Factory method for creating a host
+  CliRootCommand.Environment); // Static `Option<string?>` on CliRootCommand can be referenced directly
 
 // WebEntrypoint
 public static class WebEntrypoint
@@ -236,14 +257,12 @@ public static class WebEntrypoint
   }
 }
 
-// CliEntrypoint
-public static class CliEntrypoint
+// CliHostFactory
+public static class CliHostFactory
 {
 
-  public static async Task<int> Run(string[] args, ParseResult parseResult)
+  public static IHost Create(HostApplicationBuilder b, ParseResult parseResult)
   {
-    var b = CliApplication.CreateBuilder(args, parseResult);
-
     // Configure DI Services
     b.ConfigureServices(parseResult);
 
@@ -251,20 +270,18 @@ public static class CliEntrypoint
     var host = b.Build();
 
     // Perform additional initialisation before we run the CLI
-    await host.Initialise();
-
-    // Configure the CLI Root Command to allow using the configured Host
-    // Necessary for Hosted CommandLine Actions to access the CLI Host and its services.
-    host.UseHostedRootCommand(parseResult);
+    host.Initialise();
 
     // Invoke the parsed CLI command
-    return await parseResult.InvokeAsync();
+    return b.Build();
   }
 }
 ```
 
 See how the `WebEntrypoint` looks mostly like `Program.cs` from an ASP.NET Core app (albeit with some opinionated changes like `ConfigureServices`)?
 
-Also see how both entrypoints follow a very similar structure?
+Also see how `WebEntrypoint` and `CliHostFactory` follow a very similar structure?
+
+They are both really just configuring a Host - though in the `WebEntrypoint` you run it and in `CliHostFactory` you simply return it.
 
 Thanks for coming to my TED Talk.
