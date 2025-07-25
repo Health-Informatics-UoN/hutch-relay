@@ -131,8 +131,14 @@ var root = new CliRootCommand(args);
 // Run the app, with instructions on how to create a CLI Host if necessary
 return await CliApplication.InvokeAsync(args, root,
 
-  // We've defined a custom static Host Factory method
-  CliHostFactory.Create,
+  // We've defined a custom Host Factory method
+  (builder, parseResult) => {
+    builder.Services
+      .AddTransient<SomeDependency>()
+      .AddTransient<MyCommandAction>(); // Register Actions you want to be resolvable
+    
+    return builder.Build();
+  },
 
   // We can also override the Host's environment when it's built based on a custom cli option
   parseResult => parseResult.GetValue<string>("--environment"));
