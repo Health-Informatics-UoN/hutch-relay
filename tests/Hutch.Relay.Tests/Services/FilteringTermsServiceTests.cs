@@ -1,6 +1,7 @@
 using Hutch.Rackit.TaskApi;
 using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Config.Beacon;
+using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
@@ -72,8 +73,8 @@ public class FilteringTermsServiceTests
     {
       Analysis = AnalysisType.Distribution,
       Code = DistributionCode.Generic,
-      Collection = "", // TODO: Beacon Collection constant
-      Owner = "" // TODO: Should this be an internal user for subnode purposes? A constant Beacon user?
+      Collection = RelayBeaconTaskDetails.Collection,
+      Owner = RelayBeaconTaskDetails.Owner
     };
 
     var subNodes = new Mock<ISubNodeService>();
@@ -98,6 +99,7 @@ public class FilteringTermsServiceTests
     downstreamTasks.Verify(
       x => x.Enqueue(
         It.Is<CollectionAnalysisJob>(x =>
+          x.Uuid.StartsWith(RelayBeaconTaskDetails.IdPrefix) &&
           x.Analysis == expectedTask.Analysis &&
           x.Code == expectedTask.Code &&
           x.Collection == expectedTask.Collection &&
