@@ -9,6 +9,7 @@ namespace Hutch.Relay.Services;
 /// leveraging lower level services for datastore and queue interactions
 /// </summary>
 public class DownstreamTaskService(
+  ILogger<DownstreamTaskService> logger,
   IRelayTaskQueue queues,
   IRelayTaskService relayTasks) : IDownstreamTaskService
 {
@@ -25,6 +26,13 @@ public class DownstreamTaskService(
   public async Task Enqueue<T>(T task, List<SubNodeModel> targets)
     where T : TaskApiBaseResponse
   {
+    // Make sure there are some targets; leave if not
+    if (targets.Count == 0)
+    {
+      logger.LogWarning("No Subnodes are configured; not enqueueing Task.");
+      return;
+    }
+
     var relayTask = await relayTasks.Create(new()
     {
       Id = task.Uuid,

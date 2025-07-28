@@ -3,6 +3,7 @@ using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -55,6 +56,8 @@ public class DownstreamTaskServiceTests
         return Task.FromResult(relaySubTask);
       });
 
+    var logger = Mock.Of<ILogger<DownstreamTaskService>>();
+
     var queues = new Mock<IRelayTaskQueue>();
     var queue = new List<AvailabilityJob>();
     queues.Setup(x =>
@@ -65,7 +68,7 @@ public class DownstreamTaskServiceTests
       return Task.CompletedTask;
     });
 
-    var service = new DownstreamTaskService(queues.Object, tasks.Object);
+    var service = new DownstreamTaskService(logger, queues.Object, tasks.Object);
 
     // Act
     await service.Enqueue(availabilityTask, subnodes);
@@ -82,4 +85,6 @@ public class DownstreamTaskServiceTests
       Assert.Contains(availabilityTask, queue);
     });
   }
+
+  // TODO: Test for no subnodes early return
 }
