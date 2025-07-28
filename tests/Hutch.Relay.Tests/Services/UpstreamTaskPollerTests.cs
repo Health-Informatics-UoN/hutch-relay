@@ -68,29 +68,13 @@ public class UpstreamTaskPollerTests()
   }
 
   [Fact]
-  public async Task PollAllQueues_WithAvailabilityTask_CreatesStateAndQueues()
+  public async Task PollAllQueues_WithAvailabilityTask_EnqueuesDownstream()
   {
     var testPollingDuration = TimeSpan.FromSeconds(20);
 
     // Arrange
     var availabilityTask = new AvailabilityJob();
-    var relayTask = new RelayTaskModel()
-    {
-      Id = Guid.NewGuid().ToString(),
-      Type = TaskTypes.TaskApi_Availability,
-      Collection = "test",
-    };
-    var relaySubTask = new RelaySubTaskModel()
-    {
-      Id = Guid.NewGuid(),
-      Owner = new()
-      {
-        Id = Guid.NewGuid(),
-        Owner = "user"
-      },
-      RelayTask = relayTask
-    };
-
+    
     var upstream = new Mock<ITaskApiClient>();
     var cts = new CancellationTokenSource();
     upstream.Setup(x =>
@@ -103,43 +87,25 @@ public class UpstreamTaskPollerTests()
     var options = Options.Create<TaskApiPollingOptions>(new());
 
     var subNodes = new Mock<ISubNodeService>();
-    subNodes.Setup(x => x.List()).Returns(Task.FromResult<IEnumerable<SubNodeModel>>([relaySubTask.Owner]));
-
-    var tasks = new Mock<IRelayTaskService>();
-    var taskDb = new List<RelayTaskModel>();
-    tasks.Setup(x =>
-        x.Create(It.IsAny<RelayTaskModel>()))
-      .Returns(() =>
+    var subnodes = new List<SubNodeModel>([new()
       {
-        taskDb.Add(relayTask);
-        return Task.FromResult(relayTask);
-      });
-
-    var subtaskDb = new List<RelaySubTaskModel>();
-    tasks.Setup(x =>
-        x.CreateSubTask(relayTask.Id, relaySubTask.Owner.Id))
-      .Returns(() =>
-      {
-        subtaskDb.Add(relaySubTask);
-        return Task.FromResult(relaySubTask);
-      });
+        Id = Guid.NewGuid(),
+        Owner = "user"
+      }]);
+    subNodes.Setup(x => x.List()).Returns(Task.FromResult(subnodes.AsEnumerable()));
 
     var queues = new Mock<IRelayTaskQueue>();
-    var queue = new List<AvailabilityJob>();
     queues.Setup(x =>
       x.IsReady(It.IsAny<string>())).Returns(Task.FromResult(true));
-    queues.Setup(x => x.Send(relaySubTask.Owner.Id.ToString(), availabilityTask)).Returns(() =>
-    {
-      queue.Add(availabilityTask);
-      return Task.CompletedTask;
-    });
+
+    var downstreamTasks = new Mock<IDownstreamTaskService>();
+    downstreamTasks.Setup(x => x.Enqueue(It.IsAny<AvailabilityJob>(), It.IsAny<List<SubNodeModel>>()));
 
     // Setup a scope factory that mostly just resolves dependencies with our setup mocks
     var serviceScopeFactory = new ServiceCollection()
       .AddScoped<ScopedTaskHandler>()
       .AddScoped<ILogger<ScopedTaskHandler>>(x => LoggerFactory.Create(b => b.AddDebug()).CreateLogger<ScopedTaskHandler>())
-      .AddScoped<IRelayTaskService>(x => tasks.Object)
-      .AddScoped<IRelayTaskQueue>(x => queues.Object)
+      .AddScoped<IDownstreamTaskService>(x => downstreamTasks.Object)
       .AddScoped<ISubNodeService>(x => subNodes.Object)
      .BuildServiceProvider()
      .GetRequiredService<IServiceScopeFactory>();
@@ -169,16 +135,7 @@ public class UpstreamTaskPollerTests()
     }
 
     // Assert
-    Assert.Multiple(() =>
-    {
-      Assert.Single(taskDb);
-      Assert.Single(subtaskDb);
-      Assert.Single(queue);
-
-      Assert.Contains(relayTask, taskDb);
-      Assert.Contains(relaySubTask, subtaskDb);
-      Assert.Contains(availabilityTask, queue);
-    });
+    downstreamTasks.Verify(x => x.Enqueue(It.IsAny<AvailabilityJob>(), It.IsAny<List<SubNodeModel>>()), Times.Once);
 
     return;
 
