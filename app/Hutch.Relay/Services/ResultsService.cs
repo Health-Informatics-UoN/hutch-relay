@@ -93,8 +93,8 @@ public class ResultsService(
 
       // TODO: cache Code Distribution results if Beacon is Enabled
 
-      // Submit Results to Upstream Task API if it's Enabled
-      if (_taskApiOptions.Enable)
+      // Submit Results to Upstream Task API if it's Enabled and if this task is intended for the upstream collection
+      if (_taskApiOptions.Enable && task.Collection == _taskApiOptions.CollectionId)
         await SubmitResults(task, finalResult);
     }
     catch (ArgumentOutOfRangeException e)
