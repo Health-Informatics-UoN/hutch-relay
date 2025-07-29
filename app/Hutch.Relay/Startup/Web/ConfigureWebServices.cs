@@ -64,6 +64,7 @@ public static class ConfigureWebServices
 
     // Other App Services
     builder.Services
+      .AddTransient<IDownstreamTaskService, DownstreamTaskService>()
       .AddTransient<IRelayTaskService, RelayTaskService>()
       .AddTransient<ISubNodeService, SubNodeService>();
 
@@ -79,9 +80,12 @@ public static class ConfigureWebServices
       .AddKeyedTransient<IQueryResultAggregator, DemographicsDistributionAggregator>(nameof(DemographicsDistributionAggregator));
 
     // Beacon
+    var isBeaconEnabled = builder.Configuration.GetSection("Beacon").GetValue<bool>("Enable");
     builder.Services
       .Configure<BaseBeaconOptions>(builder.Configuration.GetSection("Beacon"))
       .Configure<RelayBeaconOptions>(builder.Configuration.GetSection("Beacon"));
+    if (isBeaconEnabled)
+      builder.Services.AddTransient<FilteringTermsService>();
 
     // Hosted Services
     var isUpstreamTaskApiEnabled = builder.Configuration.GetSection("UpstreamTaskApi").GetValue<bool>("Enable");
