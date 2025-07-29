@@ -1,4 +1,3 @@
-using Castle.Core.Logging;
 using Hutch.Rackit;
 using Hutch.Rackit.TaskApi.Contracts;
 using Hutch.Rackit.TaskApi.Models;
@@ -18,14 +17,19 @@ namespace Hutch.Relay.Tests.Services;
 public class ResultsServiceTests
 {
   [Theory]
-  [InlineData(true)]
-  [InlineData(false)]
-  public async Task CompleteRelayTask_SubmitsResults_WhenUpstreamTaskApiIsEnabled(bool isUpstreamTaskApiEnabled)
+  [InlineData(true, true)]
+  [InlineData(false, true)]
+  [InlineData(true, false)]
+  [InlineData(false, false)]
+  public async Task CompleteRelayTask_SubmitsResults_WhenUpstreamTaskApiIsEnabledAndCollectionMatches(bool isUpstreamTaskApiEnabled, bool matchCollections)
   {
+    var taskCollection = Guid.NewGuid().ToString();
+    var configuredCollection = matchCollections ? taskCollection : Guid.NewGuid().ToString();
+
     var relayTask = new RelayTaskModel()
     {
       Id = Guid.NewGuid().ToString(),
-      Collection = Guid.NewGuid().ToString(),
+      Collection = taskCollection,
       Type = TaskTypes.TaskApi_Availability,
     };
 
@@ -39,7 +43,7 @@ public class ResultsServiceTests
     var aggregator = new Mock<IQueryResultAggregator>();
     aggregator
       .Setup(x =>
-        x.Process(It.Is<string>(x => x == relayTask.Collection), It.IsAny<List<RelaySubTaskModel>>()))
+        x.Process(It.Is<string>(x => x == taskCollection), It.IsAny<List<RelaySubTaskModel>>()))
       .Returns(() => new() { Count = 0 });
 
     var logger = Mock.Of<ILogger<ResultsService>>();
@@ -51,7 +55,8 @@ public class ResultsServiceTests
 
     TaskApiPollingOptions taskApiOptions = new()
     {
-      Enable = isUpstreamTaskApiEnabled
+      Enable = isUpstreamTaskApiEnabled,
+      CollectionId = configuredCollection
     };
 
     var resultsService = new ResultsService(
@@ -71,7 +76,7 @@ public class ResultsServiceTests
     // Assert
     taskApi.Verify(x =>
       x.SubmitResultAsync(It.IsAny<string>(), It.IsAny<JobResult>(), It.IsAny<ApiClientOptions>()),
-      isUpstreamTaskApiEnabled ? Times.Once : Times.Never);
+      isUpstreamTaskApiEnabled && matchCollections ? Times.Once : Times.Never);
   }
 
   [Fact]
