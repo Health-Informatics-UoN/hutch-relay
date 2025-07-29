@@ -14,8 +14,6 @@ public class DownstreamTaskServiceTests
   [Fact]
   public async Task Enqueue_WithAvailabilityTask_CreatesStateAndQueues()
   {
-    var testPollingDuration = TimeSpan.FromSeconds(20);
-
     // Arrange
     var availabilityTask = new AvailabilityJob();
     var relayTask = new RelayTaskModel()
@@ -87,4 +85,25 @@ public class DownstreamTaskServiceTests
   }
 
   // TODO: Test for no subnodes early return
+  [Fact]
+  public async Task Enqueue_WhenNoSubnodes_DoesNotEnqueue()
+  {
+    List<SubNodeModel> subnodes = [];
+
+    var logger = Mock.Of<ILogger<DownstreamTaskService>>();
+
+    var tasks = new Mock<IRelayTaskService>();
+
+    var queues = new Mock<IRelayTaskQueue>();
+
+    var service = new DownstreamTaskService(logger, queues.Object, tasks.Object);
+
+    // Act
+    await service.Enqueue(new AvailabilityJob(), subnodes);
+
+    // Assert
+    tasks.Verify(x => x.Create(It.IsAny<RelayTaskModel>()), Times.Never);
+    tasks.Verify(x => x.Create(It.IsAny<RelayTaskModel>()), Times.Never);
+    queues.Verify(x => x.Send(It.IsAny<string>(), It.IsAny<AvailabilityJob>()), Times.Never);
+  }
 }
