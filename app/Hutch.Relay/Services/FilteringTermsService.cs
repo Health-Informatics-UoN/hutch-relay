@@ -15,7 +15,8 @@ public class FilteringTermsService(
   IOptions<RelayBeaconOptions> beaconOptions,
   ISubNodeService subNodes,
   IDownstreamTaskService downstreamTasks,
-  ApplicationDbContext db) : IFilteringTermsService
+  ApplicationDbContext db,
+  IRelayTaskService relayTasks) : IFilteringTermsService
 {
   public async Task<List<FilteringTerm>> List()
   {
@@ -36,11 +37,24 @@ public class FilteringTermsService(
     return terms;
   }
 
+  public async Task<bool> IsFilteringTermsRequestInProgress()
+  {
+    var inProgress = await relayTasks.ListIncomplete();
+    return inProgress.Any(x => x.Type == TaskTypes.TaskApi_CodeDistribution);
+  }
+
   public async Task RequestUpdatedTerms()
   {
     if (!beaconOptions.Value.Enable)
     {
       logger.LogWarning("GA4GH Beacon Functionality is disabled; not requesting updated Filtering Terms.");
+      return;
+    }
+
+    if (await IsFilteringTermsRequestInProgress())
+    {
+      logger.LogInformation(
+        "Downstream Generic Code Distribution Tasks are already in progress; not requesting updated Filtering Terms.");
       return;
     }
 
