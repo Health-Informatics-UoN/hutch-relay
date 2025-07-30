@@ -17,15 +17,23 @@ public class FilteringTermsService(
   IDownstreamTaskService downstreamTasks,
   ApplicationDbContext db) : IFilteringTermsService
 {
-  public Task<List<FilteringTerm>> List()
+  public async Task<List<FilteringTerm>> List()
   {
     if (!beaconOptions.Value.Enable)
     {
       logger.LogWarning("GA4GH Beacon Functionality is disabled; returning empty Filtering Terms list");
-      return Task.FromResult<List<FilteringTerm>>([]);
+      return [];
     }
 
-    return Task.FromResult<List<FilteringTerm>>([]);
+    var terms = await db.FilteringTerms.AsNoTracking()
+      .Select(term => new FilteringTerm()
+      {
+        Id = term.Term,
+        Label = term.Description
+      })
+      .ToListAsync();
+
+    return terms;
   }
 
   public async Task RequestUpdatedTerms()

@@ -1,6 +1,7 @@
 using System.Data.Common;
 using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Data;
+using Hutch.Relay.Models.Beacon;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
 using Microsoft.Extensions.Logging;
@@ -14,7 +15,7 @@ public class ListTests : IDisposable
 {
   private readonly DbConnection? _connection = null;
 
-  private static readonly IOptions<RelayBeaconOptions> DefaultOptions = Options.Create<RelayBeaconOptions>(new()
+  private static readonly IOptions<RelayBeaconOptions> _defaultOptions = Options.Create<RelayBeaconOptions>(new()
   {
     Enable = true
   });
@@ -67,12 +68,10 @@ public class ListTests : IDisposable
   [Fact]
   public async Task List_WhenBeaconDisabled_ReturnsEmpty()
   {
-    var logger = new Mock<ILogger<FilteringTermsService>>();
-
     RelayBeaconOptions beaconOptions = new() { Enable = false };
 
     var service = new FilteringTermsService(
-      logger.Object,
+      Mock.Of<ILogger<FilteringTermsService>>(),
       Options.Create(beaconOptions),
       Mock.Of<ISubNodeService>(),
       Mock.Of<IDownstreamTaskService>(),
@@ -82,5 +81,49 @@ public class ListTests : IDisposable
     var actual = await service.List();
 
     Assert.Empty(actual);
+  }
+
+  [Fact]
+  public async Task List_WhenCachedTerms_ReturnsBeaconFilteringTermsResponse()
+  {
+    List<Data.Entities.FilteringTerm> cachedTerms = [
+      new() {
+        Term = "OMOP:123",
+        SourceCategory = "Condition",
+        Description = "An OMOP Condition",
+      },
+      new() {
+        Term = "OMOP:456",
+        SourceCategory = "Gender",
+        Description = "Male",
+        VarCat = "person"
+      }
+    ];
+
+    _dbContext.AddRange(cachedTerms);
+    await _dbContext.SaveChangesAsync();
+
+    List<FilteringTerm> expected = [
+      new() {
+        Id = "OMOP:123",
+        Label = "An OMOP Condition"
+      },
+      new() {
+        Id = "OMOP:456",
+        Label = "Male"
+      }
+    ];
+
+    var service = new FilteringTermsService(
+      Mock.Of<ILogger<FilteringTermsService>>(),
+      _defaultOptions,
+      Mock.Of<ISubNodeService>(),
+      Mock.Of<IDownstreamTaskService>(),
+      _dbContext
+    );
+
+    var actual = await service.List();
+
+    Assert.Equivalent(expected, actual);
   }
 }
