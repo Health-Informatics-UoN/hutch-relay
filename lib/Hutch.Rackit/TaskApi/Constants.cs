@@ -39,3 +39,28 @@ public static class Demographics
   public const string Sex = "SEX";
   public const string Genomics = "GENOMICS";
 }
+
+// This may not be exhaustive, but represents known code categories and their mappings to the `varcat` field if applicable
+// This may be quite OMOP specific today...
+public static class CodeCategory
+{
+  // Known categories
+
+  // OMOP
+  public const string Condition = "Condition";
+  public const string Observation = "Observation";
+  public const string Measurement = "Measurement";
+  public const string Gender = "Gender";
+  public const string Ethnicity = "Ethnicity";
+  public const string Race = "Race";
+
+
+  // VarCat mapping
+  private const string _personVarCat = "person";
+  public static Dictionary<string, string> VarCatMap { get; } = new()
+  {
+    [Gender] = _personVarCat,
+    [Ethnicity] = _personVarCat,
+    [Race] = _personVarCat
+  };
+}

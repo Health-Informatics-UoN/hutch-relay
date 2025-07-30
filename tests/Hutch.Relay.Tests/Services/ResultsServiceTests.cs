@@ -2,6 +2,7 @@ using Hutch.Rackit;
 using Hutch.Rackit.TaskApi.Contracts;
 using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Config;
+using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services;
@@ -59,12 +60,16 @@ public class ResultsServiceTests
       CollectionId = configuredCollection
     };
 
+    var filteringTerms = Mock.Of<IFilteringTermsService>();
+
     var resultsService = new ResultsService(
       logger,
       Options.Create(taskApiOptions),
+      Options.Create<RelayBeaconOptions>(new()),
       Options.Create<DatabaseOptions>(new()),
       taskApi.Object,
       tasks.Object,
+      filteringTerms,
       aggregator.Object,
       aggregator.Object,
       aggregator.Object
@@ -111,12 +116,16 @@ public class ResultsServiceTests
         x.Process(It.Is<string>(x => x == relayTask.Collection), It.IsAny<List<RelaySubTaskModel>>()))
       .Returns(() => new() { Count = 0 });
 
+    var filteringTerms = Mock.Of<IFilteringTermsService>();
+
     var resultsService = new ResultsService(
       null!,
       Options.Create<TaskApiPollingOptions>(new()),
+      Options.Create<RelayBeaconOptions>(new()),
       Options.Create<DatabaseOptions>(new()),
       null!,
       tasks.Object,
+      filteringTerms,
       aggregator.Object,
       aggregator.Object,
       aggregator.Object
@@ -130,5 +139,70 @@ public class ResultsServiceTests
     Assert.Equal(expected.Message, actual.Message);
     Assert.Equal(expected.ProtocolVersion, actual.ProtocolVersion);
     Assert.Equal(expected.Status, actual.Status);
+  }
+
+  [Theory]
+  [InlineData(true, TaskTypes.TaskApi_CodeDistribution)]
+  [InlineData(false, TaskTypes.TaskApi_CodeDistribution)]
+  [InlineData(true, TaskTypes.TaskApi_Availability)]
+  [InlineData(false, TaskTypes.TaskApi_Availability)]
+  [InlineData(true, TaskTypes.TaskApi_DemographicsDistribution)]
+  [InlineData(false, TaskTypes.TaskApi_DemographicsDistribution)]
+
+  public async Task CompleteRelayTask_WhenBeaconEnabledAndCodeDistributionResult_CachesFilteringTerms(bool isBeaconEnabled, string taskType)
+  {
+    var relayTask = new RelayTaskModel()
+    {
+      Id = Guid.NewGuid().ToString(),
+      Collection = Guid.NewGuid().ToString(),
+      Type = taskType,
+    };
+
+    var tasks = new Mock<IRelayTaskService>();
+    tasks.Setup(x =>
+        x.ListSubTasks(
+          It.Is<string>(y => y == relayTask.Id),
+          It.Is<bool>(y => y == true)))
+      .Returns(() => Task.FromResult<IEnumerable<RelaySubTaskModel>>([]));
+
+    var aggregator = new Mock<IQueryResultAggregator>();
+    aggregator
+      .Setup(x =>
+        x.Process(It.IsAny<string>(), It.IsAny<List<RelaySubTaskModel>>()))
+      .Returns(() => new() { Count = 0 });
+
+    var logger = Mock.Of<ILogger<ResultsService>>();
+
+    var filteringTerms = new Mock<IFilteringTermsService>();
+    filteringTerms
+      .Setup(x =>
+        x.CacheUpdatedTerms(It.IsAny<JobResult>()))
+      .Verifiable(isBeaconEnabled && taskType == TaskTypes.TaskApi_CodeDistribution ? Times.Once : Times.Never);
+
+    RelayBeaconOptions beaconOptions = new()
+    {
+      Enable = isBeaconEnabled
+    };
+
+    var taskApi = Mock.Of<ITaskApiClient>();
+
+    var resultsService = new ResultsService(
+      logger,
+      Options.Create<TaskApiPollingOptions>(new()),
+      Options.Create(beaconOptions),
+      Options.Create<DatabaseOptions>(new()),
+      taskApi,
+      tasks.Object,
+      filteringTerms.Object,
+      aggregator.Object,
+      aggregator.Object,
+      aggregator.Object
+    );
+
+    // Act
+    await resultsService.CompleteRelayTask(relayTask);
+
+    // Assert
+    filteringTerms.VerifyAll();
   }
 }

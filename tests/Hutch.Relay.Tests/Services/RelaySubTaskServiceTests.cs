@@ -1,3 +1,4 @@
+using System.Data.Common;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
@@ -9,18 +10,20 @@ namespace Hutch.Relay.Tests.Services;
 
 public class RelaySubTaskServiceTests : IDisposable
 {
+  private readonly DbConnection? _connection = null;
   private readonly ApplicationDbContext _dbContext;
 
   public RelaySubTaskServiceTests()
   {
     // Ensure a unique DB per Test
-    _dbContext = FixtureHelpers.NewDbContext($"Test_{Guid.NewGuid()}");
+    _dbContext = FixtureHelpers.NewDbContext(ref _connection);
     _dbContext.Database.EnsureCreated();
   }
 
   public void Dispose()
   {
     _dbContext.Database.EnsureDeleted();
+    _connection?.Dispose();
   }
 
   [Fact]

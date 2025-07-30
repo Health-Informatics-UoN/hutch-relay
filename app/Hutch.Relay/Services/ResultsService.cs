@@ -3,6 +3,7 @@ using Hutch.Rackit;
 using Hutch.Rackit.TaskApi.Contracts;
 using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Config;
+using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services.Contracts;
@@ -14,9 +15,11 @@ namespace Hutch.Relay.Services;
 public class ResultsService(
   ILogger<ResultsService> logger,
   IOptions<TaskApiPollingOptions> taskApiOptions,
+  IOptions<RelayBeaconOptions> beaconOptions,
   IOptions<DatabaseOptions> databaseOptions,
   ITaskApiClient upstreamTasks,
   IRelayTaskService relayTaskService,
+  IFilteringTermsService filteringTermsService,
   [FromKeyedServices(nameof(AvailabilityAggregator))]
   IQueryResultAggregator availabilityAggregator,
   [FromKeyedServices(nameof(GenericDistributionAggregator))]
@@ -26,6 +29,7 @@ public class ResultsService(
 )
 {
   private readonly TaskApiPollingOptions _taskApiOptions = taskApiOptions.Value;
+  private readonly RelayBeaconOptions _beaconOptions = beaconOptions.Value;
   private readonly DatabaseOptions _databaseOptions = databaseOptions.Value;
 
   /// <summary>
@@ -91,7 +95,9 @@ public class ResultsService(
     {
       var finalResult = await PrepareFinalJobResult(task);
 
-      // TODO: cache Code Distribution results if Beacon is Enabled
+      // cache Code Distribution results if Beacon is Enabled and is Code Distribution task
+      if (_beaconOptions.Enable && task.Type == TaskTypes.TaskApi_CodeDistribution)
+        await filteringTermsService.CacheUpdatedTerms(finalResult);
 
       // Submit Results to Upstream Task API if it's Enabled and if this task is intended for the upstream collection
       if (_taskApiOptions.Enable && task.Collection == _taskApiOptions.CollectionId)

@@ -9,11 +9,17 @@ namespace Hutch.Relay.Data;
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
   : IdentityDbContext<IdentityUser>(options)
 {
+  // Users and nodes
   public DbSet<RelayUser> RelayUsers { get; set; }
   public DbSet<SubNode> SubNodes { get; set; }
+
+  // Transient Task state
   public DbSet<RelayTask> RelayTasks { get; set; }
   public DbSet<RelaySubTask> RelaySubTasks { get; set; }
 
+  // Persistent Beacon state
+  public DbSet<FilteringTerm> FilteringTerms { get; set; }
+  
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
     base.OnModelCreating(modelBuilder);

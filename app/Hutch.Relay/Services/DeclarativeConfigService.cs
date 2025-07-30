@@ -128,7 +128,7 @@ public class DeclarativeConfigService(
 
           await subnodes.Create(user!, id); // TODO: bulk create instead of using the service method?
         }
-        catch (Exception e) when (e is InvalidOperationException || e is ArgumentException)
+        catch (Exception e) when (e is InvalidOperationException || e is ArgumentException || e is DbUpdateException)
         {
           throw new InvalidOperationException(
             $"The specified SubNode for this user could not be added, probably due to clashing with an existing Subnode Id: {id}", e);

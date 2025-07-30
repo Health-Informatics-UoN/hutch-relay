@@ -1,3 +1,4 @@
+using System.Data.Common;
 using Hutch.Relay.Config;
 using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
@@ -14,6 +15,7 @@ namespace Hutch.Relay.Tests.Services.DeclarativeConfigServiceTests;
 
 public class ReconcileDownstreamUsersTests : IDisposable
 {
+  private readonly DbConnection? _connection = null;
   private readonly ApplicationDbContext _dbContext;
   private readonly UpperInvariantLookupNormalizer _normalizer = new();
 
@@ -23,7 +25,7 @@ public class ReconcileDownstreamUsersTests : IDisposable
   public ReconcileDownstreamUsersTests()
   {
     // Ensure a unique DB per Test
-    _dbContext = FixtureHelpers.NewDbContext($"Test_{Guid.NewGuid()}");
+    _dbContext = FixtureHelpers.NewDbContext(ref _connection);
     _dbContext.Database.EnsureCreated();
 
     // Always add some existing imperative config for these tests
@@ -136,6 +138,7 @@ public class ReconcileDownstreamUsersTests : IDisposable
   public void Dispose()
   {
     _dbContext.Database.EnsureDeleted();
+    _connection?.Dispose();
   }
 
   [Fact] // Empty declarative config preserves imperative config
