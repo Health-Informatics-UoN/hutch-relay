@@ -85,7 +85,7 @@ public static class ConfigureWebServices
       .Configure<BaseBeaconOptions>(builder.Configuration.GetSection("Beacon"))
       .Configure<RelayBeaconOptions>(builder.Configuration.GetSection("Beacon"));
     if (isBeaconEnabled)
-      builder.Services.AddTransient<FilteringTermsService>();
+      builder.Services.AddTransient<IFilteringTermsService, FilteringTermsService>();
 
     // Hosted Services
     var isUpstreamTaskApiEnabled = builder.Configuration.GetSection("UpstreamTaskApi").GetValue<bool>("Enable");

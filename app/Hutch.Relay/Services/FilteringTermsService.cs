@@ -15,7 +15,7 @@ public class FilteringTermsService(
   IOptions<RelayBeaconOptions> beaconOptions,
   ISubNodeService subNodes,
   IDownstreamTaskService downstreamTasks,
-  ApplicationDbContext db)
+  ApplicationDbContext db) : IFilteringTermsService
 {
   public async Task RequestUpdatedTerms()
   {
