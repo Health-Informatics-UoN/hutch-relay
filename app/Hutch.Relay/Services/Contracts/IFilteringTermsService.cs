@@ -1,4 +1,5 @@
 using Hutch.Rackit.TaskApi.Models;
+using Hutch.Relay.Models.Beacon;
 
 namespace Hutch.Relay.Services.Contracts;
 
@@ -6,4 +7,8 @@ public interface IFilteringTermsService
 {
   Task CacheUpdatedTerms(JobResult finalResult);
   Task RequestUpdatedTerms(bool force = false);
+
+  Task<bool> IsFilteringTermsRequestInProgress();
+
+  Task<List<FilteringTerm>> List();
 }
