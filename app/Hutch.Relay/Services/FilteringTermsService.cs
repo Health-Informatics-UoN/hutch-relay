@@ -3,7 +3,7 @@ using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Data;
-using Hutch.Relay.Data.Entities;
+using Hutch.Relay.Models.Beacon;
 using Hutch.Relay.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -17,6 +17,17 @@ public class FilteringTermsService(
   IDownstreamTaskService downstreamTasks,
   ApplicationDbContext db) : IFilteringTermsService
 {
+  public Task<List<FilteringTerm>> List()
+  {
+    if (!beaconOptions.Value.Enable)
+    {
+      logger.LogWarning("GA4GH Beacon Functionality is disabled; returning empty Filtering Terms list");
+      return Task.FromResult<List<FilteringTerm>>([]);
+    }
+
+    return Task.FromResult<List<FilteringTerm>>([]);
+  }
+
   public async Task RequestUpdatedTerms()
   {
     if (!beaconOptions.Value.Enable)
@@ -82,12 +93,12 @@ public class FilteringTermsService(
     await transaction.CommitAsync();
   }
 
-  internal static List<FilteringTerm> Map(List<GenericDistributionRecord> records)
+  internal static List<Data.Entities.FilteringTerm> Map(List<GenericDistributionRecord> records)
   {
     return [.. records.Select(Map)];
   }
 
-  internal static FilteringTerm Map(GenericDistributionRecord record)
+  internal static Data.Entities.FilteringTerm Map(GenericDistributionRecord record)
   {
     return new()
     {
