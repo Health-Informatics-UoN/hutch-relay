@@ -49,8 +49,8 @@ public class ListTests : IDisposable
       Options.Create(beaconOptions),
       Mock.Of<ISubNodeService>(),
       Mock.Of<IDownstreamTaskService>(),
-      _dbContext
-    );
+      _dbContext,
+      Mock.Of<IRelayTaskService>());
 
     await service.List();
 
@@ -75,7 +75,8 @@ public class ListTests : IDisposable
       Options.Create(beaconOptions),
       Mock.Of<ISubNodeService>(),
       Mock.Of<IDownstreamTaskService>(),
-      _dbContext
+      _dbContext,
+      Mock.Of<IRelayTaskService>()
     );
 
     var actual = await service.List();
@@ -119,8 +120,8 @@ public class ListTests : IDisposable
       _defaultOptions,
       Mock.Of<ISubNodeService>(),
       Mock.Of<IDownstreamTaskService>(),
-      _dbContext
-    );
+      _dbContext,
+      Mock.Of<IRelayTaskService>());
 
     var actual = await service.List();
 

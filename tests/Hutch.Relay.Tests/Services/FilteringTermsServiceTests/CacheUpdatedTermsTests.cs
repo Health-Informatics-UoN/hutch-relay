@@ -66,7 +66,8 @@ public class CacheUpdatedTermsTests : IDisposable
       Options.Create(beaconOptions),
       Mock.Of<ISubNodeService>(),
       Mock.Of<IDownstreamTaskService>(),
-      _dbContext);
+      _dbContext,
+      Mock.Of<IRelayTaskService>());
 
     // Act
     await filteringTermsService.CacheUpdatedTerms(results);
@@ -108,7 +109,8 @@ public class CacheUpdatedTermsTests : IDisposable
       _defaultOptions,
       Mock.Of<ISubNodeService>(),
       Mock.Of<IDownstreamTaskService>(),
-      _dbContext);
+      _dbContext,
+      Mock.Of<IRelayTaskService>());
 
     // Act
     await filteringTermsService.CacheUpdatedTerms(results);
@@ -150,7 +152,8 @@ public class CacheUpdatedTermsTests : IDisposable
       _defaultOptions,
       Mock.Of<ISubNodeService>(),
       Mock.Of<IDownstreamTaskService>(),
-      _dbContext);
+      _dbContext,
+      Mock.Of<IRelayTaskService>());
 
     // Act
     await filteringTermsService.CacheUpdatedTerms(results);
@@ -246,7 +249,8 @@ public class CacheUpdatedTermsTests : IDisposable
       _defaultOptions,
       Mock.Of<ISubNodeService>(),
       Mock.Of<IDownstreamTaskService>(),
-      _dbContext);
+      _dbContext,
+      Mock.Of<IRelayTaskService>());
 
     // Act
     await filteringTermsService.CacheUpdatedTerms(results);

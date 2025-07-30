@@ -60,7 +60,11 @@ public class RequestUpdatedTermsTests : IDisposable
       Options.Create<RelayBeaconOptions>(new()
       {
         Enable = isBeaconEnabled
-      }), subNodes.Object, downstreamTasks.Object, _dbContext);
+      }),
+      subNodes.Object,
+      downstreamTasks.Object,
+      _dbContext,
+      Mock.Of<IRelayTaskService>());
 
     await filteringTermsService.RequestUpdatedTerms();
 
@@ -84,8 +88,6 @@ public class RequestUpdatedTermsTests : IDisposable
   [Fact]
   public async Task RequestUpdatedTerms_EnqueuesDownstream_BeaconCodeDistributionTask()
   {
-    var testPollingDuration = TimeSpan.FromSeconds(20);
-
     // Arrange
     var expectedTask = new CollectionAnalysisJob()
     {
@@ -104,10 +106,15 @@ public class RequestUpdatedTermsTests : IDisposable
     subNodes.Setup(x => x.List()).Returns(Task.FromResult(subnodes.AsEnumerable()));
 
     var logger = Mock.Of<ILogger<FilteringTermsService>>();
-
     var downstreamTasks = new Mock<IDownstreamTaskService>();
 
-    var service = new FilteringTermsService(logger, _defaultOptions, subNodes.Object, downstreamTasks.Object, _dbContext);
+    var service = new FilteringTermsService(
+      logger,
+      _defaultOptions,
+      subNodes.Object,
+      downstreamTasks.Object,
+      _dbContext,
+      Mock.Of<IRelayTaskService>());
 
     // Act
     await service.RequestUpdatedTerms();
@@ -121,6 +128,110 @@ public class RequestUpdatedTermsTests : IDisposable
           x.Code == expectedTask.Code &&
           x.Collection == expectedTask.Collection &&
           x.Owner == expectedTask.Owner),
+        It.IsAny<List<SubNodeModel>>()),
+      Times.Once);
+  }
+
+  [Theory]
+  [InlineData(TaskTypes.TaskApi_CodeDistribution)]
+  [InlineData(TaskTypes.TaskApi_Availability)]
+  [InlineData(TaskTypes.TaskApi_DemographicsDistribution)]
+  [InlineData(null)]
+  public async Task RequestUpdatedTerms_WhenCodeDistributionTasksInProgress_LogsInformationAndReturns(string? inProgressTask)
+  {
+    // Arrange
+    var logger = new Mock<ILogger<FilteringTermsService>>();
+    var downstreamTasks = new Mock<IDownstreamTaskService>();
+
+    var relayTasks = new Mock<IRelayTaskService>();
+    relayTasks.Setup(x => x.ListIncomplete())
+      .Returns(() => Task.FromResult(
+        inProgressTask is not null
+        ? new List<RelayTaskModel>()
+          {
+            new() { Collection = "", Id = "123", Type = inProgressTask }
+          }.AsEnumerable()
+        : []));
+
+    var service = new FilteringTermsService(
+      logger.Object,
+      _defaultOptions,
+      Mock.Of<ISubNodeService>(),
+      downstreamTasks.Object,
+      _dbContext,
+      relayTasks.Object);
+
+    // Act
+    await service.RequestUpdatedTerms();
+
+    // Assert
+    var shouldReturn = inProgressTask == TaskTypes.TaskApi_CodeDistribution;
+
+    logger.Verify(
+      x => x.Log<It.IsAnyType>( // Must use logger.Log<It.IsAnyType> to sub-out FormattedLogValues, the internal class
+        LogLevel.Information, // Match whichever log level you want here
+        0, // EventId
+        It.Is<It.IsAnyType>((o, t) => string.Equals(
+          "Downstream Generic Code Distribution Tasks are already in progress; not requesting updated Filtering Terms.", o.ToString())), // The type here must match the `logger.Log<T>` type used above
+        null, //It.IsAny<Exception>(), // Whatever exception may have been logged with it, change as needed.
+        (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), // The message formatter
+      shouldReturn ? Times.Once : Times.Never);
+
+    downstreamTasks.Verify(
+      x => x.Enqueue(
+        It.IsAny<TaskApiBaseResponse>(),
+        It.IsAny<List<SubNodeModel>>()),
+      shouldReturn ? Times.Never : Times.Once);
+  }
+
+  [Theory]
+  [InlineData(TaskTypes.TaskApi_CodeDistribution)]
+  [InlineData(TaskTypes.TaskApi_Availability)]
+  [InlineData(TaskTypes.TaskApi_DemographicsDistribution)]
+  [InlineData(null)]
+  public async Task RequestUpdatedTerms_WhenForced_CreatesTasks(string? inProgressTask)
+  {
+    // Arrange
+    var logger = new Mock<ILogger<FilteringTermsService>>();
+    var downstreamTasks = new Mock<IDownstreamTaskService>();
+
+    var relayTasks = new Mock<IRelayTaskService>();
+    relayTasks.Setup(x => x.ListIncomplete())
+      .Returns(() => Task.FromResult(
+        inProgressTask is not null
+        ? new List<RelayTaskModel>()
+          {
+            new() { Collection = "", Id = "123", Type = inProgressTask }
+          }.AsEnumerable()
+        : []));
+
+    var service = new FilteringTermsService(
+      logger.Object,
+      _defaultOptions,
+      Mock.Of<ISubNodeService>(),
+      downstreamTasks.Object,
+      _dbContext,
+      relayTasks.Object);
+
+    // Act
+    await service.RequestUpdatedTerms(force: true);
+
+    var shouldLog = inProgressTask == TaskTypes.TaskApi_CodeDistribution;
+
+    // Assert
+    logger.Verify(
+      x => x.Log<It.IsAnyType>( // Must use logger.Log<It.IsAnyType> to sub-out FormattedLogValues, the internal class
+        LogLevel.Information, // Match whichever log level you want here
+        0, // EventId
+        It.Is<It.IsAnyType>((o, t) => string.Equals(
+          "Downstream Generic Code Distribution Tasks are already in progress; forced to create updated Filtering Terms request anyway.", o.ToString())), // The type here must match the `logger.Log<T>` type used above
+        null, //It.IsAny<Exception>(), // Whatever exception may have been logged with it, change as needed.
+        (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), // The message formatter
+      shouldLog ? Times.Once : Times.Never);
+
+    downstreamTasks.Verify(
+      x => x.Enqueue(
+        It.IsAny<TaskApiBaseResponse>(),
         It.IsAny<List<SubNodeModel>>()),
       Times.Once);
   }
