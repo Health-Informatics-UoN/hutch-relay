@@ -23,7 +23,7 @@ public class FilteringTermsController(IFilteringTermsService filteringTerms) : C
         StringComparison.InvariantCultureIgnoreCase);
 
     // Fetch cached terms
-    var terms = await filteringTerms.List(skip, limit);
+    var terms = await filteringTerms.List(skip, limit); // TODO: SKIP a PAGE not a RECORD. Unit tests SKIP!
 
     // Request terms update if applicable
     if (hasDownstreamUpdateHeader || terms.Count == 0)

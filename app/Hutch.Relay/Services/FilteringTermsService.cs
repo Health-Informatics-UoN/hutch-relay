@@ -36,12 +36,14 @@ public class FilteringTermsService(
         Id = term.Term,
         Label = term.Description
       })
-      .Skip(skip);
+      .Skip(skip*limit);
 
     // limit 0 means unlimited, otherwise add the limit clause
     if (limit != 0) termsQuery = termsQuery.Take(limit);
 
-    return await termsQuery.ToListAsync();
+    var terms = await termsQuery.ToListAsync();
+
+    return terms;
   }
 
   public async Task<bool> IsFilteringTermsRequestInProgress()
