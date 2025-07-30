@@ -11,6 +11,8 @@ namespace Hutch.Relay.Config;
 /// </summary>
 public class DatabaseOptions
 {
+  public static string Section { get; set; } = "Database";
+
   /// <summary>
   /// Whether Relay should automatically migrate to the latest (per the version of Relay being run) schema on startup if necessary.
   /// </summary>

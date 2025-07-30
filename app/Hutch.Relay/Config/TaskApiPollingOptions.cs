@@ -4,6 +4,8 @@ namespace Hutch.Relay.Config;
 
 public class TaskApiPollingOptions : ApiClientOptions
 {
+  public static string Section { get; set; } = "UpstreamTaskApi";
+
   /// <summary>
   /// <para>
   /// Whether to enable the functionality of polling an Upstream Task API (and submitting results to it)

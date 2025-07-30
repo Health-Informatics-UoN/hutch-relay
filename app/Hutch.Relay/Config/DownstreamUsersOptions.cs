@@ -9,4 +9,7 @@ public class DownstreamUser
 }
 
 // keys are usernames
-public class DownstreamUsersOptions : Dictionary<string, DownstreamUser> { }
+public class DownstreamUsersOptions : Dictionary<string, DownstreamUser>
+{
+  public static string Section { get; set; } = "DownstreamUsers";
+}

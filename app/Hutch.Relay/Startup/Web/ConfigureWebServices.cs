@@ -12,6 +12,7 @@ using Hutch.Relay.Services.Contracts;
 using Hutch.Relay.Services.Hosted;
 using Hutch.Relay.Services.JobResultAggregators;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.FeatureManagement;
 using Serilog;
 
 namespace Hutch.Relay.Startup.Web;
@@ -20,6 +21,12 @@ public static class ConfigureWebServices
 {
   public static WebApplicationBuilder ConfigureServices(this WebApplicationBuilder builder)
   {
+    // Feature Management from config sections with "Enable" keys
+    builder.Configuration.DeclareSectionFeatures([
+      TaskApiPollingOptions.Section,
+      RelayBeaconOptions.Section]);
+    builder.Services.AddFeatureManagement();
+
     // Logging
     builder.Services.AddSerilog((services, lc) => lc
       .ReadFrom.Configuration(builder.Configuration)
@@ -28,7 +35,7 @@ public static class ConfigureWebServices
 
     var connectionString = builder.Configuration.GetConnectionString("Default");
     builder.Services.AddDbContext<ApplicationDbContext>(o => { o.UseNpgsql(connectionString); });
-    builder.Services.Configure<DatabaseOptions>(builder.Configuration.GetSection("Database"));
+    builder.Services.Configure<DatabaseOptions>(builder.Configuration.GetSection(DatabaseOptions.Section));
 
     builder.Services.AddIdentityCore<RelayUser>(DefaultIdentityOptions.Configure)
       .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -43,8 +50,8 @@ public static class ConfigureWebServices
 
     // Upstream Task API
     builder.Services
-      .Configure<TaskApiPollingOptions>(builder.Configuration.GetSection("UpstreamTaskApi"))
-      .Configure<ApiClientOptions>(builder.Configuration.GetSection("UpstreamTaskApi"))
+      .Configure<TaskApiPollingOptions>(builder.Configuration.GetSection(TaskApiPollingOptions.Section))
+      .Configure<ApiClientOptions>(builder.Configuration.GetSection(TaskApiPollingOptions.Section))
       .AddHttpClient()
       .AddTransient<ITaskApiClient, TaskApiClient>()
       .AddScoped<UpstreamTaskPoller>()
@@ -52,12 +59,12 @@ public static class ConfigureWebServices
 
     // Task Queue
     builder.Services
-      .Configure<RelayTaskQueueOptions>(builder.Configuration.GetSection("RelayTaskQueue"))
+      .Configure<RelayTaskQueueOptions>(builder.Configuration.GetSection(RelayTaskQueueOptions.Section))
       .AddTransient<IRelayTaskQueue, RabbitRelayTaskQueue>(); // TODO: Azure / Other native queues
 
     // App Initialisation Services
     builder.Services
-      .Configure<DownstreamUsersOptions>(builder.Configuration.GetSection("DownstreamUsers"))
+      .Configure<DownstreamUsersOptions>(builder.Configuration.GetSection(DownstreamUsersOptions.Section))
       .AddTransient<WebInitialisationService>()
       .AddTransient<DeclarativeConfigService>()
       .AddTransient<DbManagementService>();
@@ -70,7 +77,7 @@ public static class ConfigureWebServices
 
     // Obfuscation
     builder.Services
-      .Configure<ObfuscationOptions>(builder.Configuration.GetSection("Obfuscation"))
+      .Configure<ObfuscationOptions>(builder.Configuration.GetSection(ObfuscationOptions.Section))
       .AddTransient<IObfuscator, Obfuscator>();
 
     // Aggregators
@@ -80,15 +87,15 @@ public static class ConfigureWebServices
       .AddKeyedTransient<IQueryResultAggregator, DemographicsDistributionAggregator>(nameof(DemographicsDistributionAggregator));
 
     // Beacon
-    var isBeaconEnabled = builder.Configuration.GetSection("Beacon").GetValue<bool>("Enable");
+    var isBeaconEnabled = builder.Configuration.IsSectionEnabled(RelayBeaconOptions.Section);
     builder.Services
-      .Configure<BaseBeaconOptions>(builder.Configuration.GetSection("Beacon"))
-      .Configure<RelayBeaconOptions>(builder.Configuration.GetSection("Beacon"));
+      .Configure<BaseBeaconOptions>(builder.Configuration.GetSection(RelayBeaconOptions.Section))
+      .Configure<RelayBeaconOptions>(builder.Configuration.GetSection(RelayBeaconOptions.Section));
     if (isBeaconEnabled)
       builder.Services.AddTransient<IFilteringTermsService, FilteringTermsService>();
 
     // Hosted Services
-    var isUpstreamTaskApiEnabled = builder.Configuration.GetSection("UpstreamTaskApi").GetValue<bool>("Enable");
+    var isUpstreamTaskApiEnabled = builder.Configuration.IsSectionEnabled(TaskApiPollingOptions.Section);
     if (isUpstreamTaskApiEnabled)
       builder.Services
         .AddHostedService<BackgroundUpstreamTaskPoller>()
@@ -97,7 +104,7 @@ public static class ConfigureWebServices
     builder.Services.AddHostedService<TaskCompletionHostedService>();
 
     // Monitoring
-    builder.Services.Configure<MonitoringOptions>(builder.Configuration.GetSection("Monitoring"));
+    builder.Services.Configure<MonitoringOptions>(builder.Configuration.GetSection(MonitoringOptions.Section));
     builder.Services.AddHealthChecks()
       .AddDbContextCheck<ApplicationDbContext>();
 
