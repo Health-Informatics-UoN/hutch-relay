@@ -17,7 +17,7 @@ public class CacheUpdatedTermsTests : IDisposable
 {
   private readonly DbConnection? _connection = null;
 
-  private static readonly IOptions<RelayBeaconOptions> _defaultOptions = Options.Create<RelayBeaconOptions>(new() // TODO: CacheUpdatedTerms should check Enabled!
+  private static readonly IOptions<RelayBeaconOptions> _defaultOptions = Options.Create<RelayBeaconOptions>(new()
   {
     Enable = true
   });
@@ -37,6 +37,55 @@ public class CacheUpdatedTermsTests : IDisposable
     _connection?.Dispose();
   }
 
+  [Theory]
+  [InlineData(true)]
+  [InlineData(false)]
+  public async Task CacheUpdatedTerms_WhenBeaconDisabled_LogsWarningAndReturns(bool isBeaconEnabled)
+  {
+    // Arrange
+    var results = new JobResult()
+    {
+      Results = new QueryResult()
+      {
+        Files = [ new ResultFile()
+        {
+          FileName = ResultFileName.DemographicsDistribution,
+        }]
+      }
+    };
+
+    RelayBeaconOptions beaconOptions = new()
+    {
+      Enable = isBeaconEnabled
+    };
+
+    var logger = new Mock<ILogger<FilteringTermsService>>();
+
+    var filteringTermsService = new FilteringTermsService(
+      logger.Object,
+      Options.Create(beaconOptions),
+      Mock.Of<ISubNodeService>(),
+      Mock.Of<IDownstreamTaskService>(),
+      _dbContext);
+
+    // Act
+    await filteringTermsService.CacheUpdatedTerms(results);
+
+    // Assert
+    logger.Verify(
+      x => x.Log<It.IsAnyType>( // Must use logger.Log<It.IsAnyType> to sub-out FormattedLogValues, the internal class
+        LogLevel.Warning, // Match whichever log level you want here
+        0, // EventId
+        It.Is<It.IsAnyType>((o, t) => string.Equals(
+          "GA4GH Beacon Functionality is disabled; not updated Filtering Terms cache.", o.ToString())), // The type here must match the `logger.Log<T>` type used above
+        null, //It.IsAny<Exception>(), // Whatever exception may have been logged with it, change as needed.
+        (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), // The message formatter
+      isBeaconEnabled ? Times.Never : Times.Once);
+
+    // Nothing was done to the DB
+    Assert.Empty(_dbContext.FilteringTerms);
+  }
+
   [Fact]
   public async Task CacheUpdatedTerms_WhenNoDistributionResults_LogsWarningAndReturns()
   {
@@ -54,16 +103,12 @@ public class CacheUpdatedTermsTests : IDisposable
 
     var logger = new Mock<ILogger<FilteringTermsService>>();
 
-    var subNodes = Mock.Of<ISubNodeService>();
-
-    var downstreamTasks = Mock.Of<IDownstreamTaskService>();
-
     var filteringTermsService = new FilteringTermsService(
       logger.Object,
-      Options.Create<RelayBeaconOptions>(new()
-      {
-        Enable = true
-      }), subNodes, downstreamTasks, _dbContext);
+      _defaultOptions,
+      Mock.Of<ISubNodeService>(),
+      Mock.Of<IDownstreamTaskService>(),
+      _dbContext);
 
     // Act
     await filteringTermsService.CacheUpdatedTerms(results);
@@ -100,16 +145,12 @@ public class CacheUpdatedTermsTests : IDisposable
 
     var logger = new Mock<ILogger<FilteringTermsService>>();
 
-    var subNodes = Mock.Of<ISubNodeService>();
-
-    var downstreamTasks = Mock.Of<IDownstreamTaskService>();
-
     var filteringTermsService = new FilteringTermsService(
       logger.Object,
-      Options.Create<RelayBeaconOptions>(new()
-      {
-        Enable = true
-      }), subNodes, downstreamTasks, _dbContext);
+      _defaultOptions,
+      Mock.Of<ISubNodeService>(),
+      Mock.Of<IDownstreamTaskService>(),
+      _dbContext);
 
     // Act
     await filteringTermsService.CacheUpdatedTerms(results);
@@ -200,16 +241,12 @@ public class CacheUpdatedTermsTests : IDisposable
 
     var logger = new Mock<ILogger<FilteringTermsService>>();
 
-    var subNodes = Mock.Of<ISubNodeService>();
-
-    var downstreamTasks = Mock.Of<IDownstreamTaskService>();
-
     var filteringTermsService = new FilteringTermsService(
       logger.Object,
-      Options.Create<RelayBeaconOptions>(new()
-      {
-        Enable = true
-      }), subNodes, downstreamTasks, _dbContext);
+      _defaultOptions,
+      Mock.Of<ISubNodeService>(),
+      Mock.Of<IDownstreamTaskService>(),
+      _dbContext);
 
     // Act
     await filteringTermsService.CacheUpdatedTerms(results);

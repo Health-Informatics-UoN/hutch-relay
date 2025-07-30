@@ -61,6 +61,12 @@ public class FilteringTermsService(
 
   public async Task CacheUpdatedTerms(JobResult finalResult)
   {
+    if (!beaconOptions.Value.Enable)
+    {
+      logger.LogWarning("GA4GH Beacon Functionality is disabled; not updated Filtering Terms cache.");
+      return;
+    }
+
     // Try and get Generic Code Distribution ResultFile
     List<GenericDistributionRecord> distributionData = [];
     foreach (var file in finalResult.Results.Files)
