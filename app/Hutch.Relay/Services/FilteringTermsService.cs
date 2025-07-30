@@ -18,7 +18,7 @@ public class FilteringTermsService(
   ApplicationDbContext db,
   IRelayTaskService relayTasks) : IFilteringTermsService
 {
-  public async Task<List<FilteringTerm>> List()
+  public async Task<List<FilteringTerm>> List(int skip = 0, int limit = 10)
   {
     if (!beaconOptions.Value.Enable)
     {
@@ -26,15 +26,22 @@ public class FilteringTermsService(
       return [];
     }
 
-    var terms = await db.FilteringTerms.AsNoTracking()
+    // reset invalid args to default
+    if (limit < 0) limit = 10;
+    if (skip < 0) skip = 0;
+
+    var termsQuery = db.FilteringTerms.AsNoTracking()
       .Select(term => new FilteringTerm()
       {
         Id = term.Term,
         Label = term.Description
       })
-      .ToListAsync();
+      .Skip(skip);
 
-    return terms;
+    // limit 0 means unlimited, otherwise add the limit clause
+    if (limit != 0) termsQuery = termsQuery.Take(limit);
+
+    return await termsQuery.ToListAsync();
   }
 
   public async Task<bool> IsFilteringTermsRequestInProgress()
