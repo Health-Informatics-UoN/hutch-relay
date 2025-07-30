@@ -43,7 +43,7 @@ public class FilteringTermsService(
     return inProgress.Any(x => x.Type == TaskTypes.TaskApi_CodeDistribution);
   }
 
-  public async Task RequestUpdatedTerms()
+  public async Task RequestUpdatedTerms(bool force = false)
   {
     if (!beaconOptions.Value.Enable)
     {
@@ -53,9 +53,12 @@ public class FilteringTermsService(
 
     if (await IsFilteringTermsRequestInProgress())
     {
+      var actionMessage = force
+        ? "forced to create updated Filtering Terms request anyway."
+        : "not requesting updated Filtering Terms.";
       logger.LogInformation(
-        "Downstream Generic Code Distribution Tasks are already in progress; not requesting updated Filtering Terms.");
-      return;
+        "Downstream Generic Code Distribution Tasks are already in progress; {ActionMessage}", actionMessage);
+      if(!force) return;
     }
 
     // Get up-to-date Sub Nodes list
