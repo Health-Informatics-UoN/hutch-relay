@@ -32,8 +32,6 @@ public class UpstreamTaskPollerTests()
     var options = Options.Create<TaskApiPollingOptions>(new() { Enable = isUpstreamTaskApiEnabled });
 
     var queues = new Mock<IRelayTaskQueue>();
-    queues.Setup(x =>
-      x.IsReady(It.IsAny<string>())).Returns(Task.FromResult(false));
 
     var poller = new UpstreamTaskPoller(_logger, options, null!, null!, queues.Object, null!);
 
@@ -99,7 +97,6 @@ public class UpstreamTaskPollerTests()
       x.IsReady(It.IsAny<string>())).Returns(Task.FromResult(true));
 
     var downstreamTasks = new Mock<IDownstreamTaskService>();
-    downstreamTasks.Setup(x => x.Enqueue(It.IsAny<AvailabilityJob>(), It.IsAny<List<SubNodeModel>>()));
 
     // Setup a scope factory that mostly just resolves dependencies with our setup mocks
     var serviceScopeFactory = new ServiceCollection()

@@ -50,9 +50,6 @@ public class ResultsServiceTests
     var logger = Mock.Of<ILogger<ResultsService>>();
 
     var taskApi = new Mock<ITaskApiClient>();
-    taskApi
-      .Setup(x =>
-        x.SubmitResultAsync(It.IsAny<string>(), It.IsAny<JobResult>(), It.IsAny<ApiClientOptions>()));
 
     TaskApiPollingOptions taskApiOptions = new()
     {
@@ -174,10 +171,6 @@ public class ResultsServiceTests
     var logger = Mock.Of<ILogger<ResultsService>>();
 
     var filteringTerms = new Mock<IFilteringTermsService>();
-    filteringTerms
-      .Setup(x =>
-        x.CacheUpdatedTerms(It.IsAny<JobResult>()))
-      .Verifiable(isBeaconEnabled && taskType == TaskTypes.TaskApi_CodeDistribution ? Times.Once : Times.Never);
 
     RelayBeaconOptions beaconOptions = new()
     {
@@ -203,6 +196,8 @@ public class ResultsServiceTests
     await resultsService.CompleteRelayTask(relayTask);
 
     // Assert
-    filteringTerms.VerifyAll();
+    filteringTerms.Verify(x =>
+      x.CacheUpdatedTerms(It.IsAny<JobResult>()),
+      isBeaconEnabled && taskType == TaskTypes.TaskApi_CodeDistribution ? Times.Once : Times.Never);
   }
 }
