@@ -127,4 +127,91 @@ public class ListTests : IDisposable
 
     Assert.Equivalent(expected, actual);
   }
+
+  [Theory]
+  [InlineData(11, null, 10)] // default to 10
+  [InlineData(11, 10, 10)]
+  [InlineData(2, 1, 1)]
+  [InlineData(11, -10, 10)] // negative reverts to default
+  [InlineData(2, 10, 2)] // fewer records than limit
+  [InlineData(11, 0, 11)] // limit 0 means unlimited
+  public async Task List_Limit(int nTerms, int? limit, int expectedCount)
+  {
+    List<Data.Entities.FilteringTerm> cachedTerms = [.. Enumerable.Range(0, nTerms)
+      .Select(i => new Data.Entities.FilteringTerm() {
+        Term = $"OMOP:123{i}",
+        SourceCategory = "Condition",
+        Description = "An OMOP Condition",
+      })];
+
+    _dbContext.AddRange(cachedTerms);
+    await _dbContext.SaveChangesAsync();
+
+    var service = new FilteringTermsService(
+      Mock.Of<ILogger<FilteringTermsService>>(),
+      _defaultOptions,
+      Mock.Of<ISubNodeService>(),
+      Mock.Of<IDownstreamTaskService>(),
+      _dbContext,
+      Mock.Of<IRelayTaskService>());
+
+    var actual = limit is null
+      ? await service.List(0)
+      : await service.List(0, limit.Value);
+
+    Assert.Equal(expectedCount, actual.Count);
+  }
+
+  [Theory]
+  [InlineData(11, null, 10, 0)] // default to 0
+  [InlineData(11, 1, 10, 10)] // skip a whole page, sized by limit
+  [InlineData(11, 2, 1, 2)]
+  [InlineData(11, -10, 5, 0)] // negative reverts to default
+  [InlineData(6, 1, 10, null)] // fewer records than limit; returns empty because skip takes it beyond
+  [InlineData(6, 4, 2, null)] // fewer records than pages skipped; returns empty because skip takes it beyond
+  public async Task List_Skip(int nTerms, int? skip, int limit, int? expectedStartIndex)
+  {
+    List<Data.Entities.FilteringTerm> cachedTerms = [.. Enumerable.Range(0, nTerms)
+      .Select(i => new Data.Entities.FilteringTerm() {
+        Term = $"OMOP:123{i}",
+        SourceCategory = "Condition",
+        Description = "An OMOP Condition",
+      })];
+
+    // order of insertion is important to this test :(
+    foreach (var entity in cachedTerms)
+    {
+      _dbContext.Add(entity);
+      await _dbContext.SaveChangesAsync();
+    }
+
+    var service = new FilteringTermsService(
+      Mock.Of<ILogger<FilteringTermsService>>(),
+      _defaultOptions,
+      Mock.Of<ISubNodeService>(),
+      Mock.Of<IDownstreamTaskService>(),
+      _dbContext,
+      Mock.Of<IRelayTaskService>());
+
+    var actual = skip is null
+      ? await service.List()
+      : await service.List(skip.Value, limit);
+
+    if (expectedStartIndex is not null)
+    {
+      var expectedCachedTerm = cachedTerms[expectedStartIndex.Value];
+
+      Assert.Equivalent(
+        new FilteringTerm()
+        {
+          Id = expectedCachedTerm.Term,
+          Label = expectedCachedTerm.Description
+        },
+        actual[0]);
+    }
+    else
+    {
+      Assert.Empty(actual);
+    }
+  }
 }

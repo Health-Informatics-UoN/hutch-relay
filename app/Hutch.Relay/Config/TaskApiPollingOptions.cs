@@ -1,7 +1,9 @@
 using Hutch.Rackit;
+using Hutch.Relay.Config.Helpers;
 
 namespace Hutch.Relay.Config;
 
+[ConfigSection(Features.UpstreamTaskApi)]
 public class TaskApiPollingOptions : ApiClientOptions
 {
   /// <summary>

@@ -1,5 +1,8 @@
+using Hutch.Relay.Config.Helpers;
+
 namespace Hutch.Relay.Config.Beacon;
 
+[ConfigSection(Features.Beacon)]
 public class BaseBeaconOptions
 {
   public MaturityAttributes MaturityAttributes { get; set; } = new();

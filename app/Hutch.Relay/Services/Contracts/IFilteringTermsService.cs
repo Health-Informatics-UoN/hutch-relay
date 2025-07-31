@@ -10,5 +10,5 @@ public interface IFilteringTermsService
 
   Task<bool> IsFilteringTermsRequestInProgress();
 
-  Task<List<FilteringTerm>> List();
+  Task<List<FilteringTerm>> List(int skip = 0, int limit = 10);
 }
