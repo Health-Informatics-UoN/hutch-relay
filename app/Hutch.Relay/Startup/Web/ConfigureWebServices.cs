@@ -36,7 +36,7 @@ public static class ConfigureWebServices
 
     var connectionString = b.Configuration.GetConnectionString("Default");
     b.Services.AddDbContext<ApplicationDbContext>(o => { o.UseNpgsql(connectionString); });
-    b.Services.Configure<DatabaseOptions>(b.Configuration.GetSection<DatabaseOptions>());
+    b.Services.Configure<DatabaseOptions>();
 
     b.Services.AddIdentityCore<RelayUser>(DefaultIdentityOptions.Configure)
       .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -51,7 +51,7 @@ public static class ConfigureWebServices
 
     // Upstream Task API
     b.Services
-      .Configure<TaskApiPollingOptions>(b.Configuration.GetSection<TaskApiPollingOptions>())
+      .Configure<TaskApiPollingOptions>()
       .Configure<ApiClientOptions>(b.Configuration.GetSection<TaskApiPollingOptions>())
       .AddHttpClient()
       .AddTransient<ITaskApiClient, TaskApiClient>()
@@ -60,12 +60,12 @@ public static class ConfigureWebServices
 
     // Task Queue
     b.Services
-      .Configure<RelayTaskQueueOptions>(b.Configuration.GetSection<RelayTaskQueueOptions>())
+      .Configure<RelayTaskQueueOptions>()
       .AddTransient<IRelayTaskQueue, RabbitRelayTaskQueue>(); // TODO: Azure / Other native queues
 
     // App Initialisation Services
     b.Services
-      .Configure<DownstreamUsersOptions>(b.Configuration.GetSection<DownstreamUsersOptions>())
+      .Configure<DownstreamUsersOptions>()
       .AddTransient<WebInitialisationService>()
       .AddTransient<DeclarativeConfigService>()
       .AddTransient<DbManagementService>();
@@ -78,7 +78,7 @@ public static class ConfigureWebServices
 
     // Obfuscation
     b.Services
-      .Configure<ObfuscationOptions>(b.Configuration.GetSection<ObfuscationOptions>())
+      .Configure<ObfuscationOptions>()
       .AddTransient<IObfuscator, Obfuscator>();
 
     // Aggregators
@@ -90,8 +90,8 @@ public static class ConfigureWebServices
     // Beacon
     var isBeaconEnabled = b.Configuration.IsSectionEnabled(Features.Beacon);
     b.Services
-      .Configure<BaseBeaconOptions>(b.Configuration.GetSection<BaseBeaconOptions>())
-      .Configure<RelayBeaconOptions>(b.Configuration.GetSection<RelayBeaconOptions>());
+      .Configure<BaseBeaconOptions>()
+      .Configure<RelayBeaconOptions>();
     if (isBeaconEnabled)
       b.Services.AddTransient<IFilteringTermsService, FilteringTermsService>();
 
@@ -105,7 +105,7 @@ public static class ConfigureWebServices
     b.Services.AddHostedService<TaskCompletionHostedService>();
 
     // Monitoring
-    b.Services.Configure<MonitoringOptions>(b.Configuration.GetSection<MonitoringOptions>());
+    b.Services.Configure<MonitoringOptions>();
     b.Services.AddHealthChecks()
       .AddDbContextCheck<ApplicationDbContext>();
 

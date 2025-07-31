@@ -3,11 +3,39 @@ namespace Hutch.Relay.Config.Helpers;
 public static class ConfigurationExtensions
 {
   public const string EnableKey = "Enable";
-  public static IConfiguration GetSection<T>(this ConfigurationManager config)
+
+  /// <summary>
+  /// Configure an OptionsModel by implicitly deriving the Config Section from the type `T`
+  /// </summary>
+  /// <typeparam name="T">The class to derive the Config Section from. Uses the classname without the `Options` suffix, or <see cref="ConfigSectionAttribute"/></typeparam>
+  /// <param name="s"></param>
+  /// <returns></returns>
+  public static IServiceCollection Configure<T>(this IServiceCollection s)
+    where T : class
+  {
+    var config = s.BuildServiceProvider().GetRequiredService<IConfiguration>();
+    s.Configure<T>(config.GetSection<T>());
+
+    return s;
+  }
+
+  /// <summary>
+  /// Get a Config Section by implicitly deriving the Config Section name from the type `T`
+  /// </summary>
+  /// <typeparam name="T">The class to derive the Config Section from. Uses the classname without the `Options` suffix, or <see cref="ConfigSectionAttribute"/></typeparam>
+  /// <param name="config"></param>
+  /// <returns></returns>
+  public static IConfiguration GetSection<T>(this IConfiguration config)
     where T : class
     => config.GetSection(OptionsModel<T>.Section);
 
-  public static IConfiguration GetRequiredSection<T>(this ConfigurationManager config)
+  /// <summary>
+  /// Get a Config Section by implicitly deriving the Config Section name from the type `T`
+  /// </summary>
+  /// <typeparam name="T">The class to derive the Config Section from. Uses the classname without the `Options` suffix, or <see cref="ConfigSectionAttribute"/></typeparam>
+  /// <param name="config"></param>
+  /// <returns></returns>
+  public static IConfiguration GetRequiredSection<T>(this IConfiguration config)
     where T : class
     => config.GetRequiredSection(OptionsModel<T>.Section);
 
@@ -46,6 +74,12 @@ public static class ConfigurationExtensions
   public static bool IsSectionEnabled(this ConfigurationManager config, string section)
     => config.GetSection(section).GetValue<bool>(EnableKey);
 
+  /// <summary>
+  ///Check if a config section has an `Enable` key set to `true`. The Config Section name is implicitly derived from the type `T`
+  /// </summary>
+  /// <typeparam name="T">The class to derive the Config Section from. Uses the classname without the `Options` suffix, or <see cref="ConfigSectionAttribute"/></typeparam>
+  /// <param name="config"></param>
+  /// <returns></returns>
   public static bool IsSectionEnabled<T>(this ConfigurationManager config)
     where T : class
     => config.GetSection<T>().GetValue<bool>(EnableKey);
