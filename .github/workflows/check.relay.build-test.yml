@@ -39,7 +39,7 @@ jobs:
           --verbosity normal
           --logger trx
           --collect:"XPlat Code Coverage"
-          -p:ExcludeByFile="**/*Migrations/*.cs"
+          --settings hutch-relay.runsettings
 
       # ---
       # Producing Coverage report and PR Comment
