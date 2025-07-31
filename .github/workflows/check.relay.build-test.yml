@@ -11,6 +11,7 @@ env:
   build-config: release
   dotnet-version: 9.0.x
   project: ./app/Hutch.Relay
+  test-project: ./tests/Hutch.Relay.Tests
 
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_NOLOGO: true
@@ -35,11 +36,11 @@ jobs:
       - name: Run Hutch.Relay Tests
         run: >-
           dotnet test
+          ${{ env.Hutch_Relay_test_project }}
           -c ${{ env.build-config }}
           --verbosity normal
           --logger trx
           --collect:"XPlat Code Coverage"
-          --settings hutch-relay.runsettings
 
       # ---
       # Producing Coverage report and PR Comment
@@ -55,6 +56,7 @@ jobs:
           tag: "${{ github.run_number }}_${{ github.run_id }}" # Optional tag or build version.
           customSettings: "" # Optional custom settings (separated by semicolon). See: https://github.com/danielpalme/ReportGenerator/wiki/Settings.
           toolpath: "reportgeneratortool" # Default directory for installing the dotnet tool.
+          classfilters: -*.Migrations.* # we don't want Migrations as they are auto-generated and untested
 
       - name: Upload Combined Coverage XML
         uses: actions/upload-artifact@v4
