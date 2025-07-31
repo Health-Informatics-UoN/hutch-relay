@@ -1,17 +1,19 @@
 using Hutch.Relay.Config;
 using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Services;
+using Hutch.Relay.Services.Contracts;
 using Microsoft.Extensions.Options;
 
 namespace Hutch.Relay.Startup.Web;
 
 public class WebInitialisationService(
+  ILogger<WebInitialisationService> logger,
   IOptions<DatabaseOptions> databaseOptions,
   IOptions<RelayBeaconOptions> beaconOptions,
   IOptions<TaskApiPollingOptions> taskApiOptions,
   DbManagementService dbManagement,
   DeclarativeConfigService declarativeConfig,
-  ILogger<WebInitialisationService> logger)
+  IFilteringTermsService filteringTerms)
 {
   /// <summary>
   /// Perform any initialisation tasks
@@ -29,11 +31,34 @@ public class WebInitialisationService(
     // Resolve Declarative Config
     await declarativeConfig.ReconcileDownstreamUsers();
 
+    // Request Initial Beacon Filtering Terms
+    if (beaconOptions.Value.Enable) await RequestBeaconFilteringTerms();
+
     // Report Configuration
     //   This gives CLI feedback at startup
     //   To indicate whether features are on or off
     //   or if there are any configuration warnings (or terminal errors!)
     ReportConfiguration();
+  }
+
+  private async Task RequestBeaconFilteringTerms()
+  {
+    var shouldRequest = beaconOptions.Value.RequestFilteringTermsOnStartup switch
+    {
+      StartupFilteringTermsBehaviour.IfEmpty => !await filteringTerms.Any(),
+      StartupFilteringTermsBehaviour.ForceIfEmpty => !await filteringTerms.Any(),
+      StartupFilteringTermsBehaviour.Always => true,
+      StartupFilteringTermsBehaviour.ForceAlways => true,
+      _ => false
+    };
+    var shouldForce = beaconOptions.Value.RequestFilteringTermsOnStartup switch
+    {
+      StartupFilteringTermsBehaviour.ForceIfEmpty => true,
+      StartupFilteringTermsBehaviour.ForceAlways => true,
+      _ => false
+    };
+
+    if (shouldRequest) await filteringTerms.RequestUpdatedTerms(shouldForce);
   }
 
   private void ReportConfiguration()
