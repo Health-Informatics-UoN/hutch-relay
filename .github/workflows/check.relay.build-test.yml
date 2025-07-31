@@ -11,7 +11,6 @@ env:
   build-config: release
   dotnet-version: 9.0.x
   project: ./app/Hutch.Relay
-  test-project: ./tests/Hutch.Relay.Tests
 
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_NOLOGO: true
@@ -36,7 +35,6 @@ jobs:
       - name: Run Hutch.Relay Tests
         run: >-
           dotnet test
-          ${{ env.Hutch_Relay_test_project }}
           -c ${{ env.build-config }}
           --verbosity normal
           --logger trx
