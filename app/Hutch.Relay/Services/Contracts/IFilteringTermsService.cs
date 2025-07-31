@@ -5,6 +5,7 @@ namespace Hutch.Relay.Services.Contracts;
 
 public interface IFilteringTermsService
 {
+  Task<bool> Any();
   Task CacheUpdatedTerms(JobResult finalResult);
   Task RequestUpdatedTerms(bool force = false);
 

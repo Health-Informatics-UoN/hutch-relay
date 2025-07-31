@@ -18,11 +18,22 @@ public class FilteringTermsService(
   ApplicationDbContext db,
   IRelayTaskService relayTasks) : IFilteringTermsService
 {
+  public async Task<bool> Any()
+  {
+    if (!beaconOptions.Value.Enable)
+    {
+      logger.LogWarning("GA4GH Beacon Functionality is disabled; reporting Filtering Terms cache as empty.");
+      return false;
+    }
+
+    return await db.FilteringTerms.AsNoTracking().AnyAsync();
+  }
+
   public async Task<List<FilteringTerm>> List(int skip = 0, int limit = 10)
   {
     if (!beaconOptions.Value.Enable)
     {
-      logger.LogWarning("GA4GH Beacon Functionality is disabled; returning empty Filtering Terms list");
+      logger.LogWarning("GA4GH Beacon Functionality is disabled; reporting Filtering Terms cache as empty.");
       return [];
     }
 
@@ -36,7 +47,7 @@ public class FilteringTermsService(
         Id = term.Term,
         Label = term.Description
       })
-      .Skip(skip*limit);
+      .Skip(skip * limit);
 
     // limit 0 means unlimited, otherwise add the limit clause
     if (limit != 0) termsQuery = termsQuery.Take(limit);

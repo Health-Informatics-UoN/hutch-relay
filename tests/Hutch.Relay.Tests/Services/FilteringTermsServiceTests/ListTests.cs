@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Hutch.Relay.Tests.Services.FilteringTermsServiceTests;
 
-public class ListTests : IDisposable
+public class FilteringTermsListTests : IDisposable
 {
   private readonly DbConnection? _connection = null;
 
@@ -22,7 +22,7 @@ public class ListTests : IDisposable
 
   private readonly ApplicationDbContext _dbContext;
 
-  public ListTests()
+  public FilteringTermsListTests()
   {
     // Ensure a unique DB per Test
     _dbContext = FixtureHelpers.NewDbContext(ref _connection);
@@ -59,7 +59,7 @@ public class ListTests : IDisposable
         LogLevel.Warning, // Match whichever log level you want here
         0, // EventId
         It.Is<It.IsAnyType>((o, t) => string.Equals(
-          "GA4GH Beacon Functionality is disabled; returning empty Filtering Terms list", o.ToString())), // The type here must match the `logger.Log<T>` type used above
+          "GA4GH Beacon Functionality is disabled; reporting Filtering Terms cache as empty.", o.ToString())), // The type here must match the `logger.Log<T>` type used above
         null, //It.IsAny<Exception>(), // Whatever exception may have been logged with it, change as needed.
         (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), // The message formatter
       isBeaconEnabled ? Times.Never : Times.Once);
@@ -73,6 +73,23 @@ public class ListTests : IDisposable
     var service = new FilteringTermsService(
       Mock.Of<ILogger<FilteringTermsService>>(),
       Options.Create(beaconOptions),
+      Mock.Of<ISubNodeService>(),
+      Mock.Of<IDownstreamTaskService>(),
+      _dbContext,
+      Mock.Of<IRelayTaskService>()
+    );
+
+    var actual = await service.List();
+
+    Assert.Empty(actual);
+  }
+
+  [Fact]
+  public async Task List_WhenNoTerms_ReturnsEmpty()
+  {
+    var service = new FilteringTermsService(
+      Mock.Of<ILogger<FilteringTermsService>>(),
+      _defaultOptions,
       Mock.Of<ISubNodeService>(),
       Mock.Of<IDownstreamTaskService>(),
       _dbContext,
