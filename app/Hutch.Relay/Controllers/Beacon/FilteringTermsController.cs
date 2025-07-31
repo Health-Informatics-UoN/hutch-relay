@@ -1,10 +1,13 @@
+using Hutch.Relay.Config;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Models.Beacon;
 using Hutch.Relay.Services.Contracts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.FeatureManagement.Mvc;
 
 namespace Hutch.Relay.Controllers.Beacon;
 
+[FeatureGate(Features.Beacon)]
 [ApiController]
 [Route($"{BeaconApiConstants.RoutePrefix}/filtering_terms")]
 public class FilteringTermsController(IFilteringTermsService filteringTerms) : ControllerBase

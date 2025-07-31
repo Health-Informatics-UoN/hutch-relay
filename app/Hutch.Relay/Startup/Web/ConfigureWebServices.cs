@@ -4,6 +4,7 @@ using Hutch.Rackit.TaskApi.Contracts;
 using Hutch.Relay.Auth.Basic;
 using Hutch.Relay.Config;
 using Hutch.Relay.Config.Beacon;
+using Hutch.Relay.Config.Helpers;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
@@ -19,95 +20,95 @@ namespace Hutch.Relay.Startup.Web;
 
 public static class ConfigureWebServices
 {
-  public static WebApplicationBuilder ConfigureServices(this WebApplicationBuilder builder)
+  public static WebApplicationBuilder ConfigureServices(this WebApplicationBuilder b)
   {
-    // Feature Management from config sections with "Enable" keys
-    builder.Configuration.DeclareSectionFeatures([
-      TaskApiPollingOptions.Section,
-      RelayBeaconOptions.Section]);
-    builder.Services.AddFeatureManagement();
+    // Feature Management
+    b.Configuration.DeclareSectionFeatures([
+      Features.UpstreamTaskApi,
+      Features.Beacon]);
+    b.Services.AddFeatureManagement();
 
     // Logging
-    builder.Services.AddSerilog((services, lc) => lc
-      .ReadFrom.Configuration(builder.Configuration)
+    b.Services.AddSerilog((services, lc) => lc
+      .ReadFrom.Configuration(b.Configuration)
       .ReadFrom.Services(services)
       .Enrich.FromLogContext());
 
-    var connectionString = builder.Configuration.GetConnectionString("Default");
-    builder.Services.AddDbContext<ApplicationDbContext>(o => { o.UseNpgsql(connectionString); });
-    builder.Services.Configure<DatabaseOptions>(builder.Configuration.GetSection(DatabaseOptions.Section));
+    var connectionString = b.Configuration.GetConnectionString("Default");
+    b.Services.AddDbContext<ApplicationDbContext>(o => { o.UseNpgsql(connectionString); });
+    b.Services.Configure<DatabaseOptions>(b.Configuration.GetSection<DatabaseOptions>());
 
-    builder.Services.AddIdentityCore<RelayUser>(DefaultIdentityOptions.Configure)
+    b.Services.AddIdentityCore<RelayUser>(DefaultIdentityOptions.Configure)
       .AddEntityFrameworkStores<ApplicationDbContext>();
-    builder.Services.AddControllers();
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddAuthentication("Basic")
+    b.Services.AddControllers();
+    b.Services.AddEndpointsApiExplorer();
+    b.Services.AddAuthentication("Basic")
       .AddScheme<BasicAuthSchemeOptions, BasicAuthHandler>("Basic", opts =>
       {
         opts.Realm = "relay";
       });
-    builder.Services.AddSwaggerGen(o => o.UseOneOfForPolymorphism());
+    b.Services.AddSwaggerGen(o => o.UseOneOfForPolymorphism());
 
     // Upstream Task API
-    builder.Services
-      .Configure<TaskApiPollingOptions>(builder.Configuration.GetSection(TaskApiPollingOptions.Section))
-      .Configure<ApiClientOptions>(builder.Configuration.GetSection(TaskApiPollingOptions.Section))
+    b.Services
+      .Configure<TaskApiPollingOptions>(b.Configuration.GetSection<TaskApiPollingOptions>())
+      .Configure<ApiClientOptions>(b.Configuration.GetSection<TaskApiPollingOptions>())
       .AddHttpClient()
       .AddTransient<ITaskApiClient, TaskApiClient>()
       .AddScoped<UpstreamTaskPoller>()
       .AddTransient<ResultsService>();
 
     // Task Queue
-    builder.Services
-      .Configure<RelayTaskQueueOptions>(builder.Configuration.GetSection(RelayTaskQueueOptions.Section))
+    b.Services
+      .Configure<RelayTaskQueueOptions>(b.Configuration.GetSection<RelayTaskQueueOptions>())
       .AddTransient<IRelayTaskQueue, RabbitRelayTaskQueue>(); // TODO: Azure / Other native queues
 
     // App Initialisation Services
-    builder.Services
-      .Configure<DownstreamUsersOptions>(builder.Configuration.GetSection(DownstreamUsersOptions.Section))
+    b.Services
+      .Configure<DownstreamUsersOptions>(b.Configuration.GetSection<DownstreamUsersOptions>())
       .AddTransient<WebInitialisationService>()
       .AddTransient<DeclarativeConfigService>()
       .AddTransient<DbManagementService>();
 
     // Other App Services
-    builder.Services
+    b.Services
       .AddTransient<IDownstreamTaskService, DownstreamTaskService>()
       .AddTransient<IRelayTaskService, RelayTaskService>()
       .AddTransient<ISubNodeService, SubNodeService>();
 
     // Obfuscation
-    builder.Services
-      .Configure<ObfuscationOptions>(builder.Configuration.GetSection(ObfuscationOptions.Section))
+    b.Services
+      .Configure<ObfuscationOptions>(b.Configuration.GetSection<ObfuscationOptions>())
       .AddTransient<IObfuscator, Obfuscator>();
 
     // Aggregators
-    builder.Services
+    b.Services
       .AddKeyedTransient<IQueryResultAggregator, AvailabilityAggregator>(nameof(AvailabilityAggregator))
       .AddKeyedTransient<IQueryResultAggregator, GenericDistributionAggregator>(nameof(GenericDistributionAggregator))
       .AddKeyedTransient<IQueryResultAggregator, DemographicsDistributionAggregator>(nameof(DemographicsDistributionAggregator));
 
     // Beacon
-    var isBeaconEnabled = builder.Configuration.IsSectionEnabled(RelayBeaconOptions.Section);
-    builder.Services
-      .Configure<BaseBeaconOptions>(builder.Configuration.GetSection(RelayBeaconOptions.Section))
-      .Configure<RelayBeaconOptions>(builder.Configuration.GetSection(RelayBeaconOptions.Section));
+    var isBeaconEnabled = b.Configuration.IsSectionEnabled(Features.Beacon);
+    b.Services
+      .Configure<BaseBeaconOptions>(b.Configuration.GetSection<BaseBeaconOptions>())
+      .Configure<RelayBeaconOptions>(b.Configuration.GetSection<RelayBeaconOptions>());
     if (isBeaconEnabled)
-      builder.Services.AddTransient<IFilteringTermsService, FilteringTermsService>();
+      b.Services.AddTransient<IFilteringTermsService, FilteringTermsService>();
 
     // Hosted Services
-    var isUpstreamTaskApiEnabled = builder.Configuration.IsSectionEnabled(TaskApiPollingOptions.Section);
+    var isUpstreamTaskApiEnabled = b.Configuration.IsSectionEnabled(Features.UpstreamTaskApi);
     if (isUpstreamTaskApiEnabled)
-      builder.Services
+      b.Services
         .AddHostedService<BackgroundUpstreamTaskPoller>()
         .AddScoped<ScopedTaskHandler>();
 
-    builder.Services.AddHostedService<TaskCompletionHostedService>();
+    b.Services.AddHostedService<TaskCompletionHostedService>();
 
     // Monitoring
-    builder.Services.Configure<MonitoringOptions>(builder.Configuration.GetSection(MonitoringOptions.Section));
-    builder.Services.AddHealthChecks()
+    b.Services.Configure<MonitoringOptions>(b.Configuration.GetSection<MonitoringOptions>());
+    b.Services.AddHealthChecks()
       .AddDbContextCheck<ApplicationDbContext>();
 
-    return builder;
+    return b;
   }
 }

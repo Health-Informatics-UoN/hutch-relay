@@ -2,8 +2,6 @@ namespace Hutch.Relay.Config.Beacon;
 
 public class RelayBeaconOptions : BaseBeaconOptions
 {
-  public static string Section { get; set; } = "Beacon";
-
   /// <summary>
   /// Enable or disable the Beacon API.
   /// </summary>
