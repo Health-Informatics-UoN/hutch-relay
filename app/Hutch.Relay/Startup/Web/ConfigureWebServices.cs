@@ -88,12 +88,10 @@ public static class ConfigureWebServices
       .AddKeyedTransient<IQueryResultAggregator, DemographicsDistributionAggregator>(nameof(DemographicsDistributionAggregator));
 
     // Beacon
-    var isBeaconEnabled = b.Configuration.IsSectionEnabled(Features.Beacon);
     b.Services
       .Configure<BaseBeaconOptions>()
-      .Configure<RelayBeaconOptions>();
-    if (isBeaconEnabled)
-      b.Services.AddTransient<IFilteringTermsService, FilteringTermsService>();
+      .Configure<RelayBeaconOptions>()
+      .AddTransient<IFilteringTermsService, FilteringTermsService>();
 
     // Hosted Services
     var isUpstreamTaskApiEnabled = b.Configuration.IsSectionEnabled(Features.UpstreamTaskApi);
