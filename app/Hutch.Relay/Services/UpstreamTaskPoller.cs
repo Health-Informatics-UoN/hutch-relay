@@ -15,6 +15,7 @@ public class UpstreamTaskPoller(
   IOptions<TaskApiPollingOptions> options,
   ITaskApiClient upstreamTasks,
   ISubNodeService subNodes,
+  IQueueConnectionManager queueConnection,
   IServiceScopeFactory serviceScopeFactory)
 {
 
@@ -26,6 +27,11 @@ public class UpstreamTaskPoller(
       logger.LogDebug("Upstream Task API functionality is disabled; Task polling will not be started.");
       return; // nothing to do!
     }
+
+    // Test Queue Backend availability before we start pulling tasks from upstream
+    if (!await queueConnection.IsReady())
+      throw new InvalidOperationException(
+        "The RelayTask Queue Backend is not ready; please check the logs and your configuration.");
 
     var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
 

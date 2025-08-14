@@ -31,13 +31,13 @@ public class UpstreamTaskPollerTests()
     // Arrange
     var options = Options.Create<TaskApiPollingOptions>(new() { Enable = isUpstreamTaskApiEnabled });
 
-    var queues = new Mock<IDownstreamTaskQueue>();
+    var queues = new Mock<IQueueConnectionManager>();
 
     var poller = new UpstreamTaskPoller(_logger, options, null!, null!, queues.Object, null!);
 
     try
     {
-      await poller.PollAllQueues(new());
+      await poller.PollAllQueues(CancellationToken.None);
     }
     catch { /* Just swallowing the intentional exception if we're enabled but missing queue config */ }
     finally
@@ -55,14 +55,14 @@ public class UpstreamTaskPollerTests()
     // Arrange
     var options = Options.Create<TaskApiPollingOptions>(new());
 
-    var queues = new Mock<IDownstreamTaskQueue>();
+    var queues = new Mock<IQueueConnectionManager>();
     queues.Setup(x =>
       x.IsReady(It.IsAny<string>())).Returns(Task.FromResult(false));
 
     var poller = new UpstreamTaskPoller(_logger, options, null!, null!, queues.Object, null!);
 
     // Act, Assert
-    await Assert.ThrowsAsync<InvalidOperationException>(async () => await poller.PollAllQueues(new()));
+    await Assert.ThrowsAsync<InvalidOperationException>(async () => await poller.PollAllQueues(CancellationToken.None));
   }
 
   [Fact]
@@ -92,7 +92,7 @@ public class UpstreamTaskPollerTests()
       }]);
     subNodes.Setup(x => x.List()).Returns(Task.FromResult(subnodes.AsEnumerable()));
 
-    var queues = new Mock<IDownstreamTaskQueue>();
+    var queues = new Mock<IQueueConnectionManager>();
     queues.Setup(x =>
       x.IsReady(It.IsAny<string>())).Returns(Task.FromResult(true));
 
