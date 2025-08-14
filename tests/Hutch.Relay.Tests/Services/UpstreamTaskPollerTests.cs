@@ -31,7 +31,7 @@ public class UpstreamTaskPollerTests()
     // Arrange
     var options = Options.Create<TaskApiPollingOptions>(new() { Enable = isUpstreamTaskApiEnabled });
 
-    var queues = new Mock<IRelayTaskQueue>();
+    var queues = new Mock<IDownstreamTaskQueue>();
 
     var poller = new UpstreamTaskPoller(_logger, options, null!, null!, queues.Object, null!);
 
@@ -55,7 +55,7 @@ public class UpstreamTaskPollerTests()
     // Arrange
     var options = Options.Create<TaskApiPollingOptions>(new());
 
-    var queues = new Mock<IRelayTaskQueue>();
+    var queues = new Mock<IDownstreamTaskQueue>();
     queues.Setup(x =>
       x.IsReady(It.IsAny<string>())).Returns(Task.FromResult(false));
 
@@ -92,7 +92,7 @@ public class UpstreamTaskPollerTests()
       }]);
     subNodes.Setup(x => x.List()).Returns(Task.FromResult(subnodes.AsEnumerable()));
 
-    var queues = new Mock<IRelayTaskQueue>();
+    var queues = new Mock<IDownstreamTaskQueue>();
     queues.Setup(x =>
       x.IsReady(It.IsAny<string>())).Returns(Task.FromResult(true));
 

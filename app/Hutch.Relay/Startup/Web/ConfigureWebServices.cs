@@ -12,6 +12,7 @@ using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
 using Hutch.Relay.Services.Hosted;
 using Hutch.Relay.Services.JobResultAggregators;
+using Hutch.Relay.Services.RabbitQueues;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.FeatureManagement;
 using Serilog;
@@ -59,9 +60,11 @@ public static class ConfigureWebServices
       .AddTransient<ResultsService>();
 
     // Task Queue
-    b.Services
+    b.Services // TODO: Azure / Other native queues
       .Configure<RelayTaskQueueOptions>()
-      .AddTransient<IRelayTaskQueue, RabbitRelayTaskQueue>(); // TODO: Azure / Other native queues
+      .AddSingleton<RabbitConnectionManager>()
+      .AddSingleton<IQueueConnectionManager,RabbitConnectionManager>(s => s.GetRequiredService<RabbitConnectionManager>())
+      .AddTransient<IDownstreamTaskQueue, RabbitDownstreamTaskQueue>(); 
 
     // App Initialisation Services
     b.Services

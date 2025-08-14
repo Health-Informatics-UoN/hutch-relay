@@ -16,7 +16,7 @@ namespace Hutch.Relay.Controllers.LinkConnectorApi;
 public class TaskController(
   IRelayTaskService relayTaskService,
   ResultsService resultsService,
-  IRelayTaskQueue queues
+  IDownstreamTaskQueue queues
 ) : ControllerBase
 {
   [HttpGet("nextjob/{collectionId}")]

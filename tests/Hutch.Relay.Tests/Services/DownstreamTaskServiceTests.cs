@@ -56,7 +56,7 @@ public class DownstreamTaskServiceTests
 
     var logger = Mock.Of<ILogger<DownstreamTaskService>>();
 
-    var queues = new Mock<IRelayTaskQueue>();
+    var queues = new Mock<IDownstreamTaskQueue>();
     var queue = new List<AvailabilityJob>();
     queues.Setup(x =>
       x.IsReady(It.IsAny<string>())).Returns(Task.FromResult(true));
@@ -94,7 +94,7 @@ public class DownstreamTaskServiceTests
 
     var tasks = new Mock<IRelayTaskService>();
 
-    var queues = new Mock<IRelayTaskQueue>();
+    var queues = new Mock<IDownstreamTaskQueue>();
 
     var service = new DownstreamTaskService(logger, queues.Object, tasks.Object);
 
