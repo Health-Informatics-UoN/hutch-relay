@@ -1,18 +1,21 @@
 using Hutch.Rackit.TaskApi.Models;
+using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Services;
+using Hutch.Relay.Services.Contracts;
+using Microsoft.Extensions.Options;
+using Moq;
 using Xunit;
 
-namespace Hutch.Relay.Tests.Services;
+namespace Hutch.Relay.Tests.Services.IndividualsQueryServiceTests;
 
-public class IndividualsQueryServiceTests
+public class CreateAvailabilityJobTests
 {
   [Fact]
-  public async Task CreateAvailabilityJob_NoQueryTerms_ReturnsNull()
+  public async Task CreateAvailabilityJob_NoQueryTerms_Throws()
   {
-    var result = await IndividualsQueryService.CreateAvailabilityJob([]);
-
-    Assert.Null(result);
+    await Assert.ThrowsAsync<ArgumentException>(async () =>
+      await IndividualsQueryService.CreateAvailabilityJob([]));
   }
 
   [Fact]

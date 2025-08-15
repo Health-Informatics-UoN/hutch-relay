@@ -9,7 +9,7 @@ public interface ISubNodeService
   /// Check if there are any SubNodes configured
   /// </summary>
   /// <exception cref="InvalidOperationException">Thrown when there are no subnodes configured.</exception>
-  public void EnsureSubNodes();
+  public Task EnsureSubNodes();
 
   /// <summary>
   /// Create a new SubNode associated with the provided user
