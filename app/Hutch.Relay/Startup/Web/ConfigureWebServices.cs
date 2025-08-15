@@ -77,7 +77,7 @@ public static class ConfigureWebServices
       .AddSingleton<IQueueConnectionManager, RabbitConnectionManager>(s =>
         s.GetRequiredService<RabbitConnectionManager>())
       .AddTransient<IDownstreamTaskQueue, RabbitDownstreamTaskQueue>()
-      .AddTransient<IRabbitBeaconResultsQueue, RabbitBeaconResultsQueue>();
+      .AddTransient<IBeaconResultsQueue, RabbitBeaconResultsQueue>();
 
     // App Initialisation Services
     b.Services

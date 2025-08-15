@@ -1,6 +1,6 @@
 namespace Hutch.Relay.Services.RabbitQueues;
 
-public interface IRabbitBeaconResultsQueue
+public interface IBeaconResultsQueue
 {
   /// <summary>
   /// Publish the results of a given Beacon Individuals Availability Job to its queue

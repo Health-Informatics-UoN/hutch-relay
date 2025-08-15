@@ -5,7 +5,7 @@ using RabbitMQ.Client;
 
 namespace Hutch.Relay.Services.RabbitQueues;
 
-public class RabbitBeaconResultsQueue(IRabbitConnectionManager rabbit) : IRabbitBeaconResultsQueue
+public class RabbitBeaconResultsQueue(IRabbitConnectionManager rabbit) : IBeaconResultsQueue
 {
   public async Task Publish(string jobId, int count)
   {

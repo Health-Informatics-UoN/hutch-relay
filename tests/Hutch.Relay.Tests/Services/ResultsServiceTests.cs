@@ -8,6 +8,7 @@ using Hutch.Relay.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
 using Hutch.Relay.Services.JobResultAggregators;
+using Hutch.Relay.Services.RabbitQueues;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -22,7 +23,8 @@ public class ResultsServiceTests
   [InlineData(false, true)]
   [InlineData(true, false)]
   [InlineData(false, false)]
-  public async Task CompleteRelayTask_SubmitsResults_WhenUpstreamTaskApiIsEnabledAndCollectionMatches(bool isUpstreamTaskApiEnabled, bool matchCollections)
+  public async Task CompleteRelayTask_SubmitsResults_WhenUpstreamTaskApiIsEnabledAndCollectionMatches(
+    bool isUpstreamTaskApiEnabled, bool matchCollections)
   {
     var taskCollection = Guid.NewGuid().ToString();
     var configuredCollection = matchCollections ? taskCollection : Guid.NewGuid().ToString();
@@ -66,6 +68,7 @@ public class ResultsServiceTests
       Options.Create<DatabaseOptions>(new()),
       taskApi.Object,
       tasks.Object,
+      Mock.Of<IBeaconResultsQueue>(),
       filteringTerms,
       aggregator.Object,
       aggregator.Object,
@@ -77,7 +80,7 @@ public class ResultsServiceTests
 
     // Assert
     taskApi.Verify(x =>
-      x.SubmitResultAsync(It.IsAny<string>(), It.IsAny<JobResult>(), It.IsAny<ApiClientOptions>()),
+        x.SubmitResultAsync(It.IsAny<string>(), It.IsAny<JobResult>(), It.IsAny<ApiClientOptions>()),
       isUpstreamTaskApiEnabled && matchCollections ? Times.Once : Times.Never);
   }
 
@@ -122,6 +125,7 @@ public class ResultsServiceTests
       Options.Create<DatabaseOptions>(new()),
       null!,
       tasks.Object,
+      Mock.Of<IBeaconResultsQueue>(),
       filteringTerms,
       aggregator.Object,
       aggregator.Object,
@@ -145,8 +149,8 @@ public class ResultsServiceTests
   [InlineData(false, TaskTypes.TaskApi_Availability)]
   [InlineData(true, TaskTypes.TaskApi_DemographicsDistribution)]
   [InlineData(false, TaskTypes.TaskApi_DemographicsDistribution)]
-
-  public async Task CompleteRelayTask_WhenBeaconEnabledAndCodeDistributionResult_CachesFilteringTerms(bool isBeaconEnabled, string taskType)
+  public async Task CompleteRelayTask_WhenBeaconEnabledAndCodeDistributionResult_CachesFilteringTerms(
+    bool isBeaconEnabled, string taskType)
   {
     var relayTask = new RelayTaskModel()
     {
@@ -186,6 +190,7 @@ public class ResultsServiceTests
       Options.Create<DatabaseOptions>(new()),
       taskApi,
       tasks.Object,
+      Mock.Of<IBeaconResultsQueue>(),
       filteringTerms.Object,
       aggregator.Object,
       aggregator.Object,
@@ -197,7 +202,74 @@ public class ResultsServiceTests
 
     // Assert
     filteringTerms.Verify(x =>
-      x.CacheUpdatedTerms(It.IsAny<JobResult>()),
+        x.CacheUpdatedTerms(It.IsAny<JobResult>()),
       isBeaconEnabled && taskType == TaskTypes.TaskApi_CodeDistribution ? Times.Once : Times.Never);
+  }
+
+  [Theory]
+  [InlineData(true, "non-beacon-collection", TaskTypes.TaskApi_CodeDistribution)]
+  [InlineData(true, RelayBeaconTaskDetails.Collection, TaskTypes.TaskApi_CodeDistribution)]
+  [InlineData(false, "non-beacon-collection", TaskTypes.TaskApi_CodeDistribution)]
+  [InlineData(false, RelayBeaconTaskDetails.Collection, TaskTypes.TaskApi_CodeDistribution)]
+  [InlineData(true, "non-beacon-collection", TaskTypes.TaskApi_Availability)]
+  [InlineData(true, RelayBeaconTaskDetails.Collection, TaskTypes.TaskApi_Availability)]
+  [InlineData(false, "non-beacon-collection", TaskTypes.TaskApi_Availability)]
+  [InlineData(false, RelayBeaconTaskDetails.Collection, TaskTypes.TaskApi_Availability)]
+  [InlineData(true, "non-beacon-collection", TaskTypes.TaskApi_DemographicsDistribution)]
+  [InlineData(true, RelayBeaconTaskDetails.Collection, TaskTypes.TaskApi_DemographicsDistribution)]
+  [InlineData(false, "non-beacon-collection", TaskTypes.TaskApi_DemographicsDistribution)]
+  [InlineData(false, RelayBeaconTaskDetails.Collection, TaskTypes.TaskApi_DemographicsDistribution)]
+  public async Task CompleteRelayTask_WhenBeaconEnabledAndBeaconAvailabilityResult_PublishesResultToQueue(
+    bool isBeaconEnabled, string collection, string taskType)
+  {
+    var jobId = Guid.NewGuid().ToString();
+    var relayTask = new RelayTaskModel()
+    {
+      Id = jobId,
+      Collection = collection,
+      Type = taskType,
+    };
+
+    var tasks = new Mock<IRelayTaskService>();
+    tasks.Setup(x =>
+        x.ListSubTasks(
+          It.Is<string>(y => y == relayTask.Id),
+          It.Is<bool>(y => y == true)))
+      .Returns(() => Task.FromResult<IEnumerable<RelaySubTaskModel>>([]));
+
+    var aggregator = new Mock<IQueryResultAggregator>();
+    aggregator
+      .Setup(x =>
+        x.Process(It.IsAny<string>(), It.IsAny<List<RelaySubTaskModel>>()))
+      .Returns(() => new() { Count = 0 });
+
+    RelayBeaconOptions beaconOptions = new()
+    {
+      Enable = isBeaconEnabled
+    };
+
+    var beaconResultsQueue = new Mock<IBeaconResultsQueue>();
+
+    var resultsService = new ResultsService(
+      Mock.Of<ILogger<ResultsService>>(),
+      Options.Create<TaskApiPollingOptions>(new()),
+      Options.Create(beaconOptions),
+      Options.Create<DatabaseOptions>(new()),
+      Mock.Of<ITaskApiClient>(),
+      tasks.Object,
+      beaconResultsQueue.Object,
+      Mock.Of<IFilteringTermsService>(),
+      aggregator.Object,
+      aggregator.Object,
+      aggregator.Object
+    );
+
+    // Act
+    await resultsService.CompleteRelayTask(relayTask);
+
+    // Assert
+    beaconResultsQueue.Verify(x =>
+        x.Publish(It.Is(jobId, StringComparer.InvariantCulture),  It.IsAny<int>()),
+      isBeaconEnabled && taskType == TaskTypes.TaskApi_Availability && collection == RelayBeaconTaskDetails.Collection ? Times.Once : Times.Never);
   }
 }

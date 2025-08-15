@@ -20,7 +20,7 @@ public class ResultsService(
   IOptions<DatabaseOptions> databaseOptions,
   ITaskApiClient upstreamTasks,
   IRelayTaskService relayTaskService,
-  IRabbitBeaconResultsQueue beaconResultsQueue,
+  IBeaconResultsQueue beaconResultsQueue,
   IFilteringTermsService filteringTermsService,
   [FromKeyedServices(nameof(AvailabilityAggregator))]
   IQueryResultAggregator availabilityAggregator,
@@ -106,7 +106,8 @@ public class ResultsService(
             await filteringTermsService.CacheUpdatedTerms(finalResult);
             break;
           case TaskTypes.TaskApi_Availability: // Publish Availability results to the open request's queue
-            await beaconResultsQueue.Publish(task.Id, finalResult.Results.Count);
+            if (task.Collection == RelayBeaconTaskDetails.Collection) // only if for Beacon collection
+              await beaconResultsQueue.Publish(task.Id, finalResult.Results.Count);
             break;
         }
       }
