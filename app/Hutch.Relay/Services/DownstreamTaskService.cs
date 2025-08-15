@@ -10,7 +10,7 @@ namespace Hutch.Relay.Services;
 /// </summary>
 public class DownstreamTaskService(
   ILogger<DownstreamTaskService> logger,
-  IRelayTaskQueue queues,
+  IDownstreamTaskQueue downstreamTaskQueue,
   IRelayTaskService relayTasks) : IDownstreamTaskService
 {
   /// <summary>
@@ -51,7 +51,7 @@ public class DownstreamTaskService(
       task.Owner = subnode.Owner;
 
       // Queue the task for the subnode
-      await queues.Send(subnode.Id.ToString(), task);
+      await downstreamTaskQueue.Publish(subnode.Id.ToString(), task);
     }
   }
 }

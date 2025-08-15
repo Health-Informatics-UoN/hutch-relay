@@ -13,7 +13,8 @@ public class WebInitialisationService(
   IOptions<TaskApiPollingOptions> taskApiOptions,
   DbManagementService dbManagement,
   DeclarativeConfigService declarativeConfig,
-  IFilteringTermsService filteringTerms)
+  IFilteringTermsService filteringTerms,
+  IQueueConnectionManager queueConnection)
 {
   /// <summary>
   /// Perform any initialisation tasks
@@ -30,6 +31,11 @@ public class WebInitialisationService(
 
     // Resolve Declarative Config
     await declarativeConfig.ReconcileDownstreamUsers();
+    
+    // Test Queue Backend availability
+    if (!await queueConnection.IsReady())
+      throw new InvalidOperationException(
+        "The RelayTask Queue Backend is not ready; please check the logs and your configuration.");
 
     // Request Initial Beacon Filtering Terms
     if (beaconOptions.Value.Enable) await RequestBeaconFilteringTerms();

@@ -15,7 +15,7 @@ public class UpstreamTaskPoller(
   IOptions<TaskApiPollingOptions> options,
   ITaskApiClient upstreamTasks,
   ISubNodeService subNodes,
-  IRelayTaskQueue queues,
+  IQueueConnectionManager queueConnection,
   IServiceScopeFactory serviceScopeFactory)
 {
 
@@ -28,8 +28,8 @@ public class UpstreamTaskPoller(
       return; // nothing to do!
     }
 
-    // Test Queue Backend availability
-    if (!await queues.IsReady())
+    // Test Queue Backend availability before we start pulling tasks from upstream
+    if (!await queueConnection.IsReady())
       throw new InvalidOperationException(
         "The RelayTask Queue Backend is not ready; please check the logs and your configuration.");
 

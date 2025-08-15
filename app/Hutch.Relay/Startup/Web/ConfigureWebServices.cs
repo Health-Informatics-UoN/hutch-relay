@@ -12,8 +12,11 @@ using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
 using Hutch.Relay.Services.Hosted;
 using Hutch.Relay.Services.JobResultAggregators;
+using Hutch.Relay.Services.RabbitQueues;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
+using RabbitMQ.Client;
 using Serilog;
 
 namespace Hutch.Relay.Startup.Web;
@@ -25,7 +28,8 @@ public static class ConfigureWebServices
     // Feature Management
     b.Configuration.DeclareSectionFeatures([
       Features.UpstreamTaskApi,
-      Features.Beacon]);
+      Features.Beacon
+    ]);
     b.Services.AddFeatureManagement();
 
     // Logging
@@ -43,10 +47,7 @@ public static class ConfigureWebServices
     b.Services.AddControllers();
     b.Services.AddEndpointsApiExplorer();
     b.Services.AddAuthentication("Basic")
-      .AddScheme<BasicAuthSchemeOptions, BasicAuthHandler>("Basic", opts =>
-      {
-        opts.Realm = "relay";
-      });
+      .AddScheme<BasicAuthSchemeOptions, BasicAuthHandler>("Basic", opts => { opts.Realm = "relay"; });
     b.Services.AddSwaggerGen(o => o.UseOneOfForPolymorphism());
 
     // Upstream Task API
@@ -59,9 +60,24 @@ public static class ConfigureWebServices
       .AddTransient<ResultsService>();
 
     // Task Queue
+    // TODO: Azure / Other native queues
     b.Services
       .Configure<RelayTaskQueueOptions>()
-      .AddTransient<IRelayTaskQueue, RabbitRelayTaskQueue>(); // TODO: Azure / Other native queues
+      .AddSingleton<IConnectionFactory>(s =>
+      {
+        var queueConnectionString = s
+          .GetRequiredService<IOptions<RelayTaskQueueOptions>>()
+          .Value.ConnectionString;
+        return new ConnectionFactory
+        {
+          Uri = new(queueConnectionString),
+        };
+      })
+      .AddSingleton<IRabbitConnectionManager, RabbitConnectionManager>()
+      .AddSingleton<IQueueConnectionManager, RabbitConnectionManager>(s =>
+        s.GetRequiredService<RabbitConnectionManager>())
+      .AddTransient<IDownstreamTaskQueue, RabbitDownstreamTaskQueue>()
+      .AddTransient<IBeaconResultsQueue, RabbitBeaconResultsQueue>();
 
     // App Initialisation Services
     b.Services
@@ -85,7 +101,8 @@ public static class ConfigureWebServices
     b.Services
       .AddKeyedTransient<IQueryResultAggregator, AvailabilityAggregator>(nameof(AvailabilityAggregator))
       .AddKeyedTransient<IQueryResultAggregator, GenericDistributionAggregator>(nameof(GenericDistributionAggregator))
-      .AddKeyedTransient<IQueryResultAggregator, DemographicsDistributionAggregator>(nameof(DemographicsDistributionAggregator));
+      .AddKeyedTransient<IQueryResultAggregator, DemographicsDistributionAggregator>(
+        nameof(DemographicsDistributionAggregator));
 
     // Beacon
     b.Services

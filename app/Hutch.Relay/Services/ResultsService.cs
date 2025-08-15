@@ -8,6 +8,7 @@ using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services.Contracts;
 using Hutch.Relay.Services.JobResultAggregators;
+using Hutch.Relay.Services.RabbitQueues;
 using Microsoft.Extensions.Options;
 
 namespace Hutch.Relay.Services;
@@ -19,6 +20,7 @@ public class ResultsService(
   IOptions<DatabaseOptions> databaseOptions,
   ITaskApiClient upstreamTasks,
   IRelayTaskService relayTaskService,
+  IBeaconResultsQueue beaconResultsQueue,
   IFilteringTermsService filteringTermsService,
   [FromKeyedServices(nameof(AvailabilityAggregator))]
   IQueryResultAggregator availabilityAggregator,
@@ -37,7 +39,7 @@ public class ResultsService(
   /// </summary>
   /// <param name="relayTask"><see cref="RelayTaskModel"/> describing the RelayTask to submit results for.</param>
   /// <param name="jobResult">The <see cref="JobResult"/> payload to submit.</param>
-  public async Task SubmitResults(RelayTaskModel relayTask, JobResult jobResult)
+  public async Task SubmitUpstreamTaskApiResults(RelayTaskModel relayTask, JobResult jobResult)
   {
     var retryCount = 0;
     const int delayInSeconds = 5;
@@ -95,13 +97,24 @@ public class ResultsService(
     {
       var finalResult = await PrepareFinalJobResult(task);
 
-      // cache Code Distribution results if Beacon is Enabled and is Code Distribution task
-      if (_beaconOptions.Enable && task.Type == TaskTypes.TaskApi_CodeDistribution)
-        await filteringTermsService.CacheUpdatedTerms(finalResult);
+
+      if (_beaconOptions.Enable) // Beacon behaviours if enabled
+      {
+        switch (task.Type)
+        {
+          case TaskTypes.TaskApi_CodeDistribution: // cache Code Distribution results
+            await filteringTermsService.CacheUpdatedTerms(finalResult);
+            break;
+          case TaskTypes.TaskApi_Availability: // Publish Availability results to the open request's queue
+            if (task.Collection == RelayBeaconTaskDetails.Collection) // only if for Beacon collection
+              await beaconResultsQueue.Publish(task.Id, finalResult.Results.Count);
+            break;
+        }
+      }
 
       // Submit Results to Upstream Task API if it's Enabled and if this task is intended for the upstream collection
       if (_taskApiOptions.Enable && task.Collection == _taskApiOptions.CollectionId)
-        await SubmitResults(task, finalResult);
+        await SubmitUpstreamTaskApiResults(task, finalResult);
     }
     catch (ArgumentOutOfRangeException e)
     {
@@ -164,7 +177,8 @@ public class ResultsService(
       {
         TaskTypes.TaskApi_DemographicsDistribution
           or TaskTypes.TaskApi_CodeDistribution
-          => TimeSpan.FromHours(1.8), // Default Task API configurations wait 2 hours between sending and processing distribution
+          => TimeSpan.FromHours(
+            1.8), // Default Task API configurations wait 2 hours between sending and processing distribution
         _ => TimeSpan.FromMinutes(4) // Default Task API configurations expect Availability results within 5 mins
       };
 

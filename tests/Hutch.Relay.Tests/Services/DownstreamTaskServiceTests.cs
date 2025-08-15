@@ -56,15 +56,15 @@ public class DownstreamTaskServiceTests
 
     var logger = Mock.Of<ILogger<DownstreamTaskService>>();
 
-    var queues = new Mock<IRelayTaskQueue>();
+    var queues = new Mock<IDownstreamTaskQueue>();
     var queue = new List<AvailabilityJob>();
-    queues.Setup(x =>
-      x.IsReady(It.IsAny<string>())).Returns(Task.FromResult(true));
-    queues.Setup(x => x.Send(relaySubTask.Owner.Id.ToString(), availabilityTask)).Returns(() =>
-    {
-      queue.Add(availabilityTask);
-      return Task.CompletedTask;
-    });
+    queues
+      .Setup(x => x.Publish(relaySubTask.Owner.Id.ToString(), availabilityTask))
+      .Returns(() =>
+      {
+        queue.Add(availabilityTask);
+        return Task.CompletedTask;
+      });
 
     var service = new DownstreamTaskService(logger, queues.Object, tasks.Object);
 
@@ -94,7 +94,7 @@ public class DownstreamTaskServiceTests
 
     var tasks = new Mock<IRelayTaskService>();
 
-    var queues = new Mock<IRelayTaskQueue>();
+    var queues = new Mock<IDownstreamTaskQueue>();
 
     var service = new DownstreamTaskService(logger, queues.Object, tasks.Object);
 
@@ -104,6 +104,6 @@ public class DownstreamTaskServiceTests
     // Assert
     tasks.Verify(x => x.Create(It.IsAny<RelayTaskModel>()), Times.Never);
     tasks.Verify(x => x.Create(It.IsAny<RelayTaskModel>()), Times.Never);
-    queues.Verify(x => x.Send(It.IsAny<string>(), It.IsAny<AvailabilityJob>()), Times.Never);
+    queues.Verify(x => x.Publish(It.IsAny<string>(), It.IsAny<AvailabilityJob>()), Times.Never);
   }
 }
