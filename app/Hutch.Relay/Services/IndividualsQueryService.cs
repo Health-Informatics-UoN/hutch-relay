@@ -1,6 +1,7 @@
 using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Constants;
+using Hutch.Relay.Extensions;
 using Hutch.Relay.Models.Beacon;
 using Hutch.Relay.Services.Contracts;
 using Microsoft.Extensions.Options;
@@ -73,6 +74,13 @@ public class IndividualsQueryService(
     return queueName;
   }
 
+  public async Task<IndividualsResponseSummary> AwaitResults(string queueName)
+  {
+    var count = await resultsQueue.AwaitResults(queueName);
+
+    return GetResultsSummary(count);
+  }
+
   public static Task<AvailabilityJob> CreateAvailabilityJob(List<string> queryTerms, string queueName)
   {
     if (queryTerms.Count < 1)
@@ -91,7 +99,7 @@ public class IndividualsQueryService(
           Operand = "=",
           Type = "TEXT",
           VariableName = "OMOP",
-          Value = term[(term.IndexOf(':') + 1)..]
+          Value = term.ExtractAfterSubstring(":")
         }
       ).ToList();
 

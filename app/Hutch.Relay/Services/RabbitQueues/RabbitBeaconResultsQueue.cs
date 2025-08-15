@@ -4,11 +4,13 @@ using Hutch.Relay.Constants;
 using Hutch.Relay.Extensions;
 using Hutch.Relay.Services.Contracts;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 
 namespace Hutch.Relay.Services.RabbitQueues;
 
 public class RabbitBeaconResultsQueue(IRabbitConnectionManager rabbit) : IBeaconResultsQueue
 {
+  // TODO: unit test
   public async Task<string> CreateResultsQueue()
   {
     await using var channel = await rabbit.ConnectChannel();
@@ -27,6 +29,36 @@ public class RabbitBeaconResultsQueue(IRabbitConnectionManager rabbit) : IBeacon
       });
 
     return result.QueueName;
+  }
+
+  public async Task<int> AwaitResults(string queueName)
+  {
+    int? result = null;
+
+    await using var channel = await rabbit.ConnectChannel();
+
+    // check the job's transient queue is there
+    await channel.QueueDeclarePassiveAsync(queueName);
+
+    // Set up a consumer and event handlers
+    var consumer = new AsyncEventingBasicConsumer(channel);
+    consumer.ReceivedAsync += async (_, ea) =>
+    {
+      result = JsonSerializer.Deserialize<int>(
+        Encoding.UTF8.GetString(
+          ea.Body.ToArray()));
+
+      // stop consuming as soon as we get a result
+      await consumer.Channel.BasicCancelAsync(ea.ConsumerTag);
+    };
+
+    // "consume" the queue
+    await channel.BasicConsumeAsync(queueName, autoAck: true, consumer: consumer);
+
+    await channel.CloseAsync();
+
+    return result ?? throw new InvalidOperationException(
+      "Beacon Results Queue Channel closed before a result was retrieved!");
   }
 
   public async Task Publish(string jobId, int count)
