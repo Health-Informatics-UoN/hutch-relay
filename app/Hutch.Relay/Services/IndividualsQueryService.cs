@@ -5,7 +5,7 @@ namespace Hutch.Relay.Services;
 
 public class IndividualsQueryService
 {
-  public Task<AvailabilityJob?> CreateAvailabilityJob(List<string> queryTerms)
+  public static Task<AvailabilityJob?> CreateAvailabilityJob(List<string> queryTerms)
   {
     if (queryTerms.Count < 1)
       return Task.FromResult<AvailabilityJob?>(null);

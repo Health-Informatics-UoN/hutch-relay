@@ -9,14 +9,14 @@ using RabbitMQ.Client.Events;
 
 namespace Hutch.Relay.Services.RabbitQueues;
 
-public class RabbitDownstreamTaskQueue(RabbitConnectionManager rabbitConnect)
+public class RabbitDownstreamTaskQueue(IRabbitConnectionManager rabbit)
   : IDownstreamTaskQueue
 {
   public async Task Publish<T>(string subnodeId, T message) where T : TaskApiBaseResponse
   {
     // TODO: Consider how we could optionally use a longer lived channel for publishing?
     // This could work due to how we only publish from the UpstreamTaskPoller thread and scope?
-    await using var channel = await rabbitConnect.ConnectChannel(subnodeId);
+    await using var channel = await rabbit.ConnectChannel(subnodeId);
 
     var body = Encoding.UTF8.GetBytes(
       JsonSerializer.Serialize(message));
@@ -37,7 +37,7 @@ public class RabbitDownstreamTaskQueue(RabbitConnectionManager rabbitConnect)
   public async Task<(Type, TaskApiBaseResponse)?> Pop(string subnodeId)
   {
     // Due to the usage (on HTTP requests) sharing channels for consumption seems not worth it
-    await using var channel = await rabbitConnect.ConnectChannel(subnodeId);
+    await using var channel = await rabbit.ConnectChannel(subnodeId);
 
     // TODO: REMOVE WHEN WORKING
     // don't use the consumer model, since we aren't watching the queue continuously;

@@ -10,8 +10,7 @@ public class IndividualsQueryServiceTests
   [Fact]
   public async Task CreateAvailabilityJob_NoQueryTerms_ReturnsNull()
   {
-    var individuals = new IndividualsQueryService();
-    var result = await individuals.CreateAvailabilityJob([]);
+    var result = await IndividualsQueryService.CreateAvailabilityJob([]);
 
     Assert.Null(result);
   }
@@ -39,8 +38,7 @@ public class IndividualsQueryServiceTests
       }
     ];
 
-    var individuals = new IndividualsQueryService();
-    var actual = await individuals.CreateAvailabilityJob(terms);
+    var actual = await IndividualsQueryService.CreateAvailabilityJob(terms);
 
     Assert.NotNull(actual);
     Assert.Equal("OR", actual.Cohort.Combinator);
@@ -54,8 +52,7 @@ public class IndividualsQueryServiceTests
   {
     List<string> terms = ["OMOP:123", "OMOP:456"];
 
-    var individuals = new IndividualsQueryService();
-    var actual = await individuals.CreateAvailabilityJob(terms);
+    var actual = await IndividualsQueryService.CreateAvailabilityJob(terms);
 
     Assert.NotNull(actual);
 

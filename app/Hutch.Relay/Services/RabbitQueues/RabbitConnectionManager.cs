@@ -2,6 +2,7 @@ using Hutch.Relay.Config;
 using Hutch.Relay.Services.Contracts;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Exceptions;
 
 namespace Hutch.Relay.Services.RabbitQueues;
 
@@ -10,17 +11,20 @@ namespace Hutch.Relay.Services.RabbitQueues;
 /// and provides some helpers for interacting wth RabbitMQ
 /// </summary>
 public class RabbitConnectionManager(
-  IOptions<RelayTaskQueueOptions> options,
-  ILogger<RabbitConnectionManager> logger) : IQueueConnectionManager, IAsyncDisposable
+  ILogger<RabbitConnectionManager> logger,
+  IConnectionFactory factory) : IRabbitConnectionManager, IAsyncDisposable
 {
   private IConnection? _connection;
 
-  private readonly ConnectionFactory _factory = new()
-  {
-    Uri = new(options.Value.ConnectionString)
-  };
-  
-  public async Task<IChannel> ConnectChannel(string queueName)
+  /// <summary>
+  /// <para>Ensure the RabbitMQ Connection is ready, and return a new channel on the connection.</para>
+  ///
+  /// <para>If a queue name is provided, declare a classic queue with that name.</para>
+  /// <para>For more complex queue declarations, recommend doing it manually to pass arguments and get the declaration result.</para>
+  /// </summary>
+  /// <param name="queueName"></param>
+  /// <returns></returns>
+  public async Task<IChannel> ConnectChannel(string? queueName = null)
   {
     if (_connection is not null && !_connection.IsOpen)
     {
@@ -28,17 +32,18 @@ public class RabbitConnectionManager(
       _connection = null;
     }
 
-    _connection ??= await _factory.CreateConnectionAsync();
+    _connection ??= await factory.CreateConnectionAsync();
 
     var channel = await _connection.CreateChannelAsync();
 
-    await channel.QueueDeclareAsync( // TODO: what about exchanges?
-      queue: queueName,
-      durable: false,
-      exclusive: false,
-      autoDelete: false,
-      arguments: null);
-    
+    if (queueName is not null)
+      await channel.QueueDeclareAsync(
+        queue: queueName,
+        durable: false,
+        exclusive: false,
+        autoDelete: false,
+        arguments: null);
+
     return channel;
   }
 
@@ -46,9 +51,9 @@ public class RabbitConnectionManager(
   {
     try
     {
-      await using var channel = await ConnectChannel(queueName ?? "readyTest");
+      await using var channel = await ConnectChannel(queueName);
     }
-    catch (Exception e) // It's OK that this is broad; any exception while trying to do this means the app is unusable.
+    catch (BrokerUnreachableException e)
     {
       logger.LogCritical(e, "{ExceptionMessage}", e.Message);
       return false;
