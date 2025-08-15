@@ -15,7 +15,7 @@ public class CreateAvailabilityJobTests
   public async Task CreateAvailabilityJob_NoQueryTerms_Throws()
   {
     await Assert.ThrowsAsync<ArgumentException>(async () =>
-      await IndividualsQueryService.CreateAvailabilityJob([]));
+      await IndividualsQueryService.CreateAvailabilityJob([], "test"));
   }
 
   [Fact]
@@ -41,7 +41,7 @@ public class CreateAvailabilityJobTests
       }
     ];
 
-    var actual = await IndividualsQueryService.CreateAvailabilityJob(terms);
+    var actual = await IndividualsQueryService.CreateAvailabilityJob(terms, "test");
 
     Assert.NotNull(actual);
     Assert.Equal("OR", actual.Cohort.Combinator);
@@ -53,17 +53,30 @@ public class CreateAvailabilityJobTests
   [Fact]
   public async Task CreateAvailabilityJob_SetsRequiredBaseProperties()
   {
+    var queueName = "test-queue";
+    
     List<string> terms = ["OMOP:123", "OMOP:456"];
 
-    var actual = await IndividualsQueryService.CreateAvailabilityJob(terms);
+    var actual = await IndividualsQueryService.CreateAvailabilityJob(terms, queueName);
 
     Assert.NotNull(actual);
 
     Assert.NotEmpty(actual.Uuid);
-    Assert.StartsWith(RelayBeaconTaskDetails.IdPrefix, actual.Uuid);
-    Assert.IsType<Guid>(Guid.Parse(actual.Uuid.Replace(RelayBeaconTaskDetails.IdPrefix, string.Empty)));
+    Assert.EndsWith(RelayBeaconTaskDetails.IdSuffix + queueName, actual.Uuid);
+    Assert.IsType<Guid>(Guid.Parse(actual.Uuid.Replace(RelayBeaconTaskDetails.IdSuffix + queueName, string.Empty)));
 
     Assert.Equal(RelayBeaconTaskDetails.Collection, actual.Collection);
     Assert.Equal(RelayBeaconTaskDetails.Owner, actual.Owner);
+  }
+  
+  [Theory]
+  [InlineData("")]
+  [InlineData("    ")]
+  public async Task CreateAvailabilityJob_EmptyQueueName_Throws(string queueName)
+  {
+    await Assert.ThrowsAsync<ArgumentException>(async () =>
+      await IndividualsQueryService.CreateAvailabilityJob(
+        ["OMOP:123", "OMOP:456"], 
+        queueName));
   }
 }

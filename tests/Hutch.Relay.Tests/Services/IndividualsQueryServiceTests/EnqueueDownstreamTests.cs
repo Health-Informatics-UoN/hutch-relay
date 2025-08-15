@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Hutch.Relay.Tests.Services.IndividualsQueryServiceTests;
 
-public class TryEnqueueDownstreamTests
+public class EnqueueDownstreamTests
 {
   private static readonly IOptions<RelayBeaconOptions> _defaultOptions = Options.Create<RelayBeaconOptions>(new()
   {
@@ -18,7 +18,7 @@ public class TryEnqueueDownstreamTests
   });
 
   [Fact]
-  public async Task TryEnqueueDownstream_BeaconDisabled_ReturnsFalseWithLogs()
+  public async Task EnqueueDownstream_BeaconDisabled_ReturnsNullWithLogs()
   {
     var logger = new Mock<ILogger<IndividualsQueryService>>();
 
@@ -26,13 +26,14 @@ public class TryEnqueueDownstreamTests
       logger.Object,
       Options.Create<RelayBeaconOptions>(new()),
       Mock.Of<ISubNodeService>(),
-      Mock.Of<IDownstreamTaskService>());
+      Mock.Of<IDownstreamTaskService>(),
+      Mock.Of<IBeaconResultsQueue>());
 
-    var actual = await service.TryEnqueueDownstream([]);
+    var actual = await service.EnqueueDownstream([]);
 
-    Assert.False(actual);
+    Assert.Null(actual);
     logger.Verify(
-      x => x.Log<It.IsAnyType>( // Must use logger.Log<It.IsAnyType> to sub-out FormattedLogValues, the internal class
+      x => x.Log( // Must use logger.Log<It.IsAnyType> to sub-out FormattedLogValues, the internal class
         LogLevel.Warning, // Match whichever log level you want here
         0, // EventId
         It.Is<It.IsAnyType>((o, t) => string.Equals(
@@ -44,7 +45,7 @@ public class TryEnqueueDownstreamTests
   }
 
   [Fact]
-  public async Task TryEnqueueDownstream_NoSubnodes_ReturnsFalseWithLogs()
+  public async Task EnqueueDownstream_NoSubnodes_ReturnsNullWithLogs()
   {
     var logger = new Mock<ILogger<IndividualsQueryService>>();
 
@@ -52,11 +53,12 @@ public class TryEnqueueDownstreamTests
       logger.Object,
       _defaultOptions,
       Mock.Of<ISubNodeService>(),
-      Mock.Of<IDownstreamTaskService>());
+      Mock.Of<IDownstreamTaskService>(),
+      Mock.Of<IBeaconResultsQueue>());
 
-    var actual = await service.TryEnqueueDownstream(["OMOP:123", "OMOP:456"]);
+    var actual = await service.EnqueueDownstream(["OMOP:123", "OMOP:456"]);
 
-    Assert.False(actual);
+    Assert.Null(actual);
     logger.Verify(
       x => x.Log( // Must use logger.Log<It.IsAnyType> to sub-out FormattedLogValues, the internal class
         LogLevel.Error, // Match whichever log level you want here
@@ -70,7 +72,7 @@ public class TryEnqueueDownstreamTests
   }
 
   [Fact]
-  public async Task TryEnqueueDownstream_EmptyTermsList_ReturnsFalseWithLogs()
+  public async Task EnqueueDownstream_EmptyTermsList_ReturnsNullWithLogs()
   {
     var logger = new Mock<ILogger<IndividualsQueryService>>();
 
@@ -78,13 +80,14 @@ public class TryEnqueueDownstreamTests
       logger.Object,
       _defaultOptions,
       Mock.Of<ISubNodeService>(),
-      Mock.Of<IDownstreamTaskService>());
+      Mock.Of<IDownstreamTaskService>(),
+      Mock.Of<IBeaconResultsQueue>());
 
-    var actual = await service.TryEnqueueDownstream([]);
+    var actual = await service.EnqueueDownstream([]);
 
-    Assert.False(actual);
+    Assert.Null(actual);
     logger.Verify(
-      x => x.Log<It.IsAnyType>( // Must use logger.Log<It.IsAnyType> to sub-out FormattedLogValues, the internal class
+      x => x.Log( // Must use logger.Log<It.IsAnyType> to sub-out FormattedLogValues, the internal class
         LogLevel.Warning, // Match whichever log level you want here
         0, // EventId
         It.Is<It.IsAnyType>((o, t) => string.Equals(
@@ -96,8 +99,10 @@ public class TryEnqueueDownstreamTests
   }
 
   [Fact]
-  public async Task TryEnqueueDownstream_ValidState_EnqueuesAndReturnsTrue()
+  public async Task EnqueueDownstream_ValidState_EnqueuesAndReturnsQueueName()
   {
+    var resultsQueueName = "test-queue";
+    
     var logger = new Mock<ILogger<IndividualsQueryService>>();
     var downstreamTasks = new Mock<IDownstreamTaskService>();
     
@@ -112,25 +117,29 @@ public class TryEnqueueDownstreamTests
           }
         }.AsEnumerable()));
 
+    var resultsQueue = new Mock<IBeaconResultsQueue>();
+    resultsQueue.Setup(x => x.CreateResultsQueue()).Returns(() => Task.FromResult(resultsQueueName));
+
     var service = new IndividualsQueryService(
       logger.Object,
       _defaultOptions,
       subnodes.Object,
-      downstreamTasks.Object);
+      downstreamTasks.Object,
+      resultsQueue.Object);
 
-    var actual = await service.TryEnqueueDownstream(["OMOP:123", "OMOP:456"]);
+    var actual = await service.EnqueueDownstream(["OMOP:123", "OMOP:456"]);
 
     // Enqueues
     downstreamTasks.Verify(x =>
         x.Enqueue(It.IsAny<AvailabilityJob>(), It.IsAny<List<SubNodeModel>>()),
       Times.Once);
 
-    // Returns true
-    Assert.True(actual);
+    // Returns queue name
+    Assert.Equal(resultsQueueName, actual);
 
     // No warning logs
     logger.Verify(
-      x => x.Log<It.IsAnyType>( // Must use logger.Log<It.IsAnyType> to sub-out FormattedLogValues, the internal class
+      x => x.Log( // Must use logger.Log<It.IsAnyType> to sub-out FormattedLogValues, the internal class
         LogLevel.Warning, // Match whichever log level you want here
         0, // EventId
         It.IsAny<It.IsAnyType>(), // The type here must match the `logger.Log<T>` type used above
@@ -140,7 +149,7 @@ public class TryEnqueueDownstreamTests
 
     // No error logs
     logger.Verify(
-      x => x.Log<It.IsAnyType>( // Must use logger.Log<It.IsAnyType> to sub-out FormattedLogValues, the internal class
+      x => x.Log( // Must use logger.Log<It.IsAnyType> to sub-out FormattedLogValues, the internal class
         LogLevel.Error, // Match whichever log level you want here
         0, // EventId
         It.IsAny<It.IsAnyType>(), // The type here must match the `logger.Log<T>` type used above

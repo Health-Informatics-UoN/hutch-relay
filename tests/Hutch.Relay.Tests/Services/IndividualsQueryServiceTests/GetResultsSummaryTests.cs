@@ -28,7 +28,8 @@ public class GetResultsSummaryTests
       Mock.Of<ILogger<IndividualsQueryService>>(),
       options,
       Mock.Of<ISubNodeService>(),
-      Mock.Of<IDownstreamTaskService>());
+      Mock.Of<IDownstreamTaskService>(),
+      Mock.Of<IBeaconResultsQueue>());
 
     var actual = service.GetResultsSummary(count);
 
@@ -63,7 +64,8 @@ public class GetResultsSummaryTests
       Mock.Of<ILogger<IndividualsQueryService>>(),
       options,
       Mock.Of<ISubNodeService>(),
-      Mock.Of<IDownstreamTaskService>());
+      Mock.Of<IDownstreamTaskService>(),
+      Mock.Of<IBeaconResultsQueue>());
 
     var actual = service.GetResultsSummary(0);
 
@@ -98,7 +100,8 @@ public class GetResultsSummaryTests
       Mock.Of<ILogger<IndividualsQueryService>>(),
       options,
       Mock.Of<ISubNodeService>(),
-      Mock.Of<IDownstreamTaskService>());
+      Mock.Of<IDownstreamTaskService>(),
+      Mock.Of<IBeaconResultsQueue>());
 
     var actual = service.GetEmptySummary();
 

@@ -11,7 +11,8 @@ public class IndividualsQueryService(
   ILogger<IndividualsQueryService> logger,
   IOptions<RelayBeaconOptions> options,
   ISubNodeService subNodes,
-  IDownstreamTaskService downstreamTasks)
+  IDownstreamTaskService downstreamTasks,
+  IBeaconResultsQueue resultsQueue)
 {
   public IndividualsResponseSummary GetResultsSummary(int count)
   {
@@ -32,7 +33,7 @@ public class IndividualsQueryService(
   public IndividualsResponseSummary GetEmptySummary()
     => GetResultsSummary(0);
 
-  public async Task<bool> TryEnqueueDownstream(List<string> queryTerms)
+  public async Task<string?> EnqueueDownstream(List<string> queryTerms)
   {
     // Check Beacon Enabled (should never happen tbh)
     if (!options.Value.Enable)
@@ -40,7 +41,7 @@ public class IndividualsQueryService(
       logger.LogWarning(
         "GA4GH Beacon Functionality is disabled; Individuals query will not be queued."
       );
-      return false;
+      return null;
     }
 
     // Short circuit if no terms
@@ -49,7 +50,7 @@ public class IndividualsQueryService(
       logger.LogWarning(
         "GA4GH Beacon Individuals Query with no Filters will not be queued."
       );
-      return false;
+      return null;
     }
 
     // check for subnodes
@@ -59,21 +60,29 @@ public class IndividualsQueryService(
       logger.LogError(
         "No subnodes are configured. The requested GA4GH Beacon Individuals Query will not be queued."
       );
-      return false;
+      return null;
     }
 
     // Create the job and Enqueue it
-    var availabilityJob = await CreateAvailabilityJob(queryTerms);
+    var queueName = await resultsQueue.CreateResultsQueue();
+    
+    var availabilityJob = await CreateAvailabilityJob(queryTerms, queueName);
+    
     await downstreamTasks.Enqueue(availabilityJob, subnodes);
 
-    return true;
+    return queueName;
   }
 
-  public static Task<AvailabilityJob> CreateAvailabilityJob(List<string> queryTerms)
+  public static Task<AvailabilityJob> CreateAvailabilityJob(List<string> queryTerms, string queueName)
   {
     if (queryTerms.Count < 1)
       throw new ArgumentException(
         "Expected at least one query term, but got none.", nameof(queryTerms));
+    
+    if (string.IsNullOrWhiteSpace(queueName))
+      throw new ArgumentException(
+        "Beacon Individuals queries must include queue names in their AvailabilityJob ID.", 
+        queueName);
 
     var rules = queryTerms
       .Select(term =>
@@ -90,7 +99,7 @@ public class IndividualsQueryService(
     {
       Collection = RelayBeaconTaskDetails.Collection,
       Owner = RelayBeaconTaskDetails.Owner,
-      Uuid = RelayBeaconTaskDetails.IdPrefix + Guid.NewGuid(),
+      Uuid = Guid.NewGuid() + RelayBeaconTaskDetails.IdSuffix + queueName,
       Cohort = new()
       {
         Combinator = "OR",

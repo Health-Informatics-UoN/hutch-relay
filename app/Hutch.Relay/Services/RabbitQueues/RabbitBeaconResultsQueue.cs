@@ -1,18 +1,44 @@
 using System.Text;
 using System.Text.Json;
 using Hutch.Relay.Constants;
+using Hutch.Relay.Extensions;
+using Hutch.Relay.Services.Contracts;
 using RabbitMQ.Client;
 
 namespace Hutch.Relay.Services.RabbitQueues;
 
 public class RabbitBeaconResultsQueue(IRabbitConnectionManager rabbit) : IBeaconResultsQueue
 {
+  public async Task<string> CreateResultsQueue()
+  {
+    await using var channel = await rabbit.ConnectChannel();
+
+    var result = await channel.QueueDeclareAsync(
+      string.Empty, // empty name forces server to generate a name
+
+      // Auto Delete will delete the queue when the last consumer disconnects,
+      // as long as there has been at least one consumer
+      autoDelete: true,
+      arguments: new Dictionary<string, object?>
+      {
+        // Queue Expiry guarantees queue deletion after specified time with no activity
+        // Even if no consumers have ever connected
+        ["x-expires"] = TimeSpan.FromMinutes(10).TotalMilliseconds // TODO: make configurable? 
+      });
+
+    return result.QueueName;
+  }
+
   public async Task Publish(string jobId, int count)
   {
-    var queueName = jobId.Replace(RelayBeaconTaskDetails.IdPrefix, string.Empty);
-    
+    var queueName = jobId.ExtractAfterSubstring(RelayBeaconTaskDetails.IdSuffix);
+    if (string.IsNullOrWhiteSpace(queueName))
+      throw new ArgumentException(
+        "Failed to get Queue name. Beacon queries expecting results must include queue names in their ID.",
+        jobId);
+
     await using var channel = await rabbit.ConnectChannel();
-    
+
     // check the job's transient queue is there; we shouldn't publish to it if it isn't
     try
     {

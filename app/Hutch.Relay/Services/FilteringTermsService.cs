@@ -86,7 +86,7 @@ public class FilteringTermsService(
 
     var task = new CollectionAnalysisJob()
     {
-      Uuid = RelayBeaconTaskDetails.IdPrefix + Guid.NewGuid().ToString(),
+      Uuid = Guid.NewGuid() + RelayBeaconTaskDetails.IdSuffix,
       Analysis = AnalysisType.Distribution,
       Code = DistributionCode.Generic,
       Collection = RelayBeaconTaskDetails.Collection,
