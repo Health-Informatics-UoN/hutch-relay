@@ -14,6 +14,7 @@ namespace Hutch.Relay.Controllers.Beacon;
 [Route($"{BeaconApiConstants.RoutePrefix}/[controller]")]
 public class IndividualsController(
   IndividualsQueryService individuals,
+  FilteringTermsService filteringTerms,
   IOptions<RelayBeaconOptions> options) : ControllerBase
 {
   /// <summary>
@@ -31,16 +32,35 @@ public class IndividualsController(
     [FromQuery] int limit = 0,
     [FromQuery] string requestedSchema = "")
   {
+    var granularity = options.Value.SecurityAttributes.DefaultGranularity;
+
     // prep response meta based on config and request
     Meta meta = new()
     {
-      ReturnedGranularity = options.Value.SecurityAttributes.DefaultGranularity.ToString()
+      ReturnedGranularity = granularity.ToString()
     };
 
-    // TODO: Cached Terms shortcuts
+    var matchedTerms = await filteringTerms.Find(filters);
+
+    // If not all terms are found, you can't even send a valid Availability request, since VarCat is now required (?)
+    // but we can't populate VarCat without the terms cache (or a complete OMOP database?)
+
+    if(matchedTerms.Count != filters.Count)
+      return new()
+      {
+        Meta = meta,
+        ResponseSummary = individuals.GetEmptySummary()
+      };
+    
+    if(granularity == Granularity.boolean)
+      return new()
+      {
+        Meta = meta,
+        ResponseSummary = individuals.GetResultsSummary(1) // we know it's true; the count is irrelevant (TODO: what about suppression?)
+      };
 
     // try and queue downstream for the query 
-    var queueName = await individuals.EnqueueDownstream(filters);
+      var queueName = await individuals.EnqueueDownstream(matchedTerms);
     if (queueName is null)
       return new()
       {
