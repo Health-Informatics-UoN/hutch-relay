@@ -111,7 +111,7 @@ public class IndividualsQueryService(
           Type = "TEXT",
           VariableName = "OMOP",
           Value = term.ExtractAfterSubstring(":"),
-          Category = "NotPerson" // TODO: correctly map varcat; for now Bunny just requires it to be present and not "Person" for general queries
+          Category = "Condition" // TODO: correctly map varcat; for now Bunny requires it to be any valid non-Person value
         }
       ).ToList();
 
