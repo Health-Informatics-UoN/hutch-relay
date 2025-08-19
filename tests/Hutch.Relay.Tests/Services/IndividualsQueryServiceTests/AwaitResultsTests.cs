@@ -31,7 +31,7 @@ public class AwaitResultsTests
   {
     const string queueName = "test-queue";
     const int count = 123;
-    var expected = new IndividualsResponseSummary()
+    var expected = new EntryTypeResponseSummary()
     {
       Exists = true,
       NumTotalResults = count

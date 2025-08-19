@@ -15,9 +15,9 @@ public class IndividualsQueryService(
   IDownstreamTaskService downstreamTasks,
   IBeaconResultsQueue resultsQueue)
 {
-  public IndividualsResponseSummary GetResultsSummary(int count)
+  public EntryTypeResponseSummary GetResultsSummary(int count)
   {
-    IndividualsResponseSummary result = new()
+    EntryTypeResponseSummary result = new()
     {
       Exists = count > 0
     };
@@ -31,7 +31,7 @@ public class IndividualsQueryService(
     };
   }
 
-  public IndividualsResponseSummary GetEmptySummary()
+  public EntryTypeResponseSummary GetEmptySummary()
     => GetResultsSummary(0);
 
   public async Task<string?> EnqueueDownstream(List<string> queryTerms)
@@ -80,7 +80,7 @@ public class IndividualsQueryService(
   /// <param name="queueName">The name of the queue to check for results</param>
   /// <returns>The query results as soon as they are available</returns>
   /// <exception cref="ArgumentException">When queue name is an empty value</exception>
-  public async Task<IndividualsResponseSummary> AwaitResults(string queueName)
+  public async Task<EntryTypeResponseSummary> AwaitResults(string queueName)
   {
     if (string.IsNullOrWhiteSpace(queueName))
       throw new ArgumentException(

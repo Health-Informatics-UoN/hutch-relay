@@ -1,0 +1,62 @@
+using System.CodeDom.Compiler;
+using System.ComponentModel.DataAnnotations;
+using Hutch.Relay.Config;
+using Hutch.Relay.Config.Beacon;
+using Hutch.Relay.Constants;
+using Hutch.Relay.Models.Beacon;
+using Hutch.Relay.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement.Mvc;
+
+namespace Hutch.Relay.Controllers.Beacon;
+
+[FeatureGate(Features.Beacon)]
+[ApiController]
+[Route($"{BeaconApiConstants.RoutePrefix}/[controller]")]
+public class IndividualsController(
+  IndividualsQueryService individuals,
+  IOptions<RelayBeaconOptions> options) : ControllerBase
+{
+  /// <summary>
+  /// Return a Summary of Individuals matching the provided filter criteria.
+  /// </summary>
+  /// <param name="filters">Filtering terms to match against</param>
+  /// <param name="skip">Results records to skip; ignored by Relay due to lack of granularity support.</param>
+  /// <param name="limit">Results records to return; ignored by Relay due to lack of granularity support.</param>
+  /// <param name="requestedSchema">Schema for returned results records; ignored by Relay due to lack of granularity support.</param>
+  /// <returns></returns>
+  [HttpGet]
+  public async Task<EntryTypeResponse> GetIndividuals(
+    [FromQuery] List<string> filters,
+    [FromQuery] int skip = 0,
+    [FromQuery] int limit = 0,
+    [FromQuery] string requestedSchema = "")
+  {
+    // prep response meta based on config and request
+    Meta meta = new()
+    {
+      ReturnedGranularity = options.Value.SecurityAttributes.DefaultGranularity.ToString()
+    };
+
+    // TODO: Cached Terms shortcuts
+
+    // try and queue downstream for the query 
+    var queueName = await individuals.EnqueueDownstream(filters);
+    if (queueName is null)
+      return new()
+      {
+        Meta = meta,
+        ResponseSummary = individuals.GetEmptySummary()
+      };
+
+    var results = await individuals.AwaitResults(queueName);
+
+    return new()
+    {
+      Meta = meta,
+      ResponseSummary = results
+    };
+  }
+}
