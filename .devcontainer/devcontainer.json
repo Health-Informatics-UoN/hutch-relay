@@ -23,7 +23,8 @@
   // "customizations": {},
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [
-    5432 // postgres
+    5432, // postgres
+    15672 // Rabbit GUI
   ],
   // "portsAttributes": {
   //		"5001": {

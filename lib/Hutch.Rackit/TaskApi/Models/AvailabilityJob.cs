@@ -39,14 +39,14 @@ public class Rule
 
   [JsonPropertyName("varname")]
   public string VariableName { get; set; } = string.Empty;
-  
+
   /// <summary>
   /// Variable Category; this can be used to direct queries for a given term at a specific table.
   ///
   /// e.g. MALE should be directed specifically at Person
   /// </summary>
   [JsonPropertyName("varcat")]
-  public string? Category { get; set; }
+  public string Category { get; set; } = string.Empty;
 
   /// <summary>
   /// Note that this isn't really an operand on the value

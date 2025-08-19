@@ -44,7 +44,7 @@ public static class ConfigureWebServices
 
     b.Services.AddIdentityCore<RelayUser>(DefaultIdentityOptions.Configure)
       .AddEntityFrameworkStores<ApplicationDbContext>();
-    b.Services.AddControllers();
+    b.Services.AddControllers().AddJsonOptions(DefaultJsonOptions.Configure);
     b.Services.AddEndpointsApiExplorer();
     b.Services.AddAuthentication("Basic")
       .AddScheme<BasicAuthSchemeOptions, BasicAuthHandler>("Basic", opts => { opts.Realm = "relay"; });

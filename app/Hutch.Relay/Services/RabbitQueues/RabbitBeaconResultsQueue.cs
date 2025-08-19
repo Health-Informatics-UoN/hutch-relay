@@ -24,7 +24,7 @@ public class RabbitBeaconResultsQueue(IRabbitConnectionManager rabbit) : IBeacon
       {
         // Queue Expiry guarantees queue deletion after specified time with no activity
         // Even if no consumers have ever connected
-        ["x-expires"] = TimeSpan.FromMinutes(10).TotalMilliseconds // TODO: make configurable? 
+        ["x-expires"] = (int)TimeSpan.FromMinutes(10).TotalMilliseconds // TODO: make configurable? 
       });
 
     return result.QueueName;
@@ -32,32 +32,28 @@ public class RabbitBeaconResultsQueue(IRabbitConnectionManager rabbit) : IBeacon
 
   public async Task<int> AwaitResults(string queueName)
   {
-    int? result = null;
-
     await using var channel = await rabbit.ConnectChannel();
 
     // check the job's transient queue is there
     await channel.QueueDeclarePassiveAsync(queueName);
 
-    // Set up a consumer and event handlers
-    var consumer = new AsyncEventingBasicConsumer(channel);
-    consumer.ReceivedAsync += async (_, ea) =>
-    {
-      result = JsonSerializer.Deserialize<int>(
-        Encoding.UTF8.GetString(
-          ea.Body.ToArray()));
+    // Set up a consumer that will await and return a single queue message
+    var consumer = new AsyncSingleMessageConsumer(channel);
+    var consumerTag = await channel.BasicConsumeAsync(queueName, autoAck: true, consumer: consumer);
 
-      // stop consuming as soon as we get a result
-      await consumer.Channel.BasicCancelAsync(ea.ConsumerTag);
-    };
-
-    // "consume" the queue
-    await channel.BasicConsumeAsync(queueName, autoAck: true, consumer: consumer);
+    var delivery = await consumer.MessageDelivered();
+    
+    // Fully process the body before cancelling and closing
+    var result = JsonSerializer.Deserialize<int>(
+      Encoding.UTF8.GetString(
+        delivery.Body.ToArray()));
+    
+    // stop consuming as soon as we get a result
+    await consumer.Channel.BasicCancelAsync(consumerTag);
 
     await channel.CloseAsync();
 
-    return result ?? throw new InvalidOperationException(
-      "Beacon Results Queue Channel closed before a result was retrieved!");
+    return result;
   }
 
   public async Task Publish(string jobId, int count)
@@ -76,10 +72,10 @@ public class RabbitBeaconResultsQueue(IRabbitConnectionManager rabbit) : IBeacon
       await channel.QueueDeclarePassiveAsync(queueName);
     }
     catch (Exception)
-      // It's ok that this is broad;
-      // Passive Declaration exceptions are not clearly documented
-      // Any exception from the above try should cause us to not proceed
-      // If it's a bigger queue problem it will show up elsewhere
+    // It's ok that this is broad;
+    // Passive Declaration exceptions are not clearly documented
+    // Any exception from the above try should cause us to not proceed
+    // If it's a bigger queue problem it will show up elsewhere
     {
       return;
     }
