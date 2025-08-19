@@ -1,11 +1,8 @@
-using System.CodeDom.Compiler;
-using System.ComponentModel.DataAnnotations;
 using Hutch.Relay.Config;
 using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Models.Beacon;
 using Hutch.Relay.Services;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement.Mvc;
