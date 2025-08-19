@@ -44,7 +44,7 @@ public static class ConfigureWebServices
 
     b.Services.AddIdentityCore<RelayUser>(DefaultIdentityOptions.Configure)
       .AddEntityFrameworkStores<ApplicationDbContext>();
-    b.Services.AddControllers();
+    b.Services.AddControllers().AddJsonOptions(DefaultJsonOptions.Configure);
     b.Services.AddEndpointsApiExplorer();
     b.Services.AddAuthentication("Basic")
       .AddScheme<BasicAuthSchemeOptions, BasicAuthHandler>("Basic", opts => { opts.Realm = "relay"; });
@@ -73,7 +73,9 @@ public static class ConfigureWebServices
           Uri = new(queueConnectionString),
         };
       })
-      .AddSingleton<IRabbitConnectionManager, RabbitConnectionManager>()
+      .AddSingleton<RabbitConnectionManager>()
+      .AddSingleton<IRabbitConnectionManager, RabbitConnectionManager>(s =>
+        s.GetRequiredService<RabbitConnectionManager>())
       .AddSingleton<IQueueConnectionManager, RabbitConnectionManager>(s =>
         s.GetRequiredService<RabbitConnectionManager>())
       .AddTransient<IDownstreamTaskQueue, RabbitDownstreamTaskQueue>()
@@ -108,7 +110,8 @@ public static class ConfigureWebServices
     b.Services
       .Configure<BaseBeaconOptions>()
       .Configure<RelayBeaconOptions>()
-      .AddTransient<IFilteringTermsService, FilteringTermsService>();
+      .AddTransient<IFilteringTermsService, FilteringTermsService>()
+      .AddTransient<IndividualsQueryService>();
 
     // Hosted Services
     var isUpstreamTaskApiEnabled = b.Configuration.IsSectionEnabled(Features.UpstreamTaskApi);

@@ -30,14 +30,16 @@ public class CreateAvailabilityJobTests
         Type = "TEXT",
         VariableName = "OMOP",
         Operand = "=",
-        Value = "123"
+        Value = "123",
+        Category = "Condition"
       },
       new()
       {
         Type = "TEXT",
         VariableName = "OMOP",
         Operand = "=",
-        Value = "456"
+        Value = "456",
+        Category = "Condition"
       }
     ];
 

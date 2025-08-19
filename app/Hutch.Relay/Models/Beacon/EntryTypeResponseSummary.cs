@@ -1,6 +1,6 @@
 namespace Hutch.Relay.Models.Beacon;
 
-public record IndividualsResponseSummary
+public record EntryTypeResponseSummary
 {
   public bool Exists { get; init; }
   

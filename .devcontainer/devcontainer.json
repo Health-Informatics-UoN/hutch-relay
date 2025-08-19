@@ -8,12 +8,10 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "nromanov.dotrush",
         "EditorConfig.EditorConfig",
         "ms-azuretools.vscode-docker",
-        "adrianwilczynski.user-secrets",
-        "patcx.vscode-nuget-gallery",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "ms-dotnettools.vscodeintellicode-csharp"
       ]
     }
   },
@@ -23,7 +21,8 @@
   // "customizations": {},
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [
-    5432 // postgres
+    5432, // postgres
+    15672 // Rabbit GUI
   ],
   // "portsAttributes": {
   //		"5001": {

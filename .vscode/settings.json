@@ -1,9 +1,3 @@
 {
-  "[csharp]": {
-    "editor.defaultFormatter": "nromanov.dotrush"
-  },
-  "dotrush.roslyn.projectOrSolutionFiles": [
-    "/workspaces/hutch-relay/Hutch.Relay.sln"
-  ],
   "remote.localPortHost": "allInterfaces"
 }
