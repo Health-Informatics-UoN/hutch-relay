@@ -74,8 +74,19 @@ public class IndividualsQueryService(
     return queueName;
   }
 
+  /// <summary>
+  /// Await results from a job-specific queue, which should have been created by <see cref="EnqueueDownstream"/>
+  /// </summary>
+  /// <param name="queueName">The name of the queue to check for results</param>
+  /// <returns>The query results as soon as they are available</returns>
+  /// <exception cref="ArgumentException">When queue name is an empty value</exception>
   public async Task<IndividualsResponseSummary> AwaitResults(string queueName)
   {
+    if (string.IsNullOrWhiteSpace(queueName))
+      throw new ArgumentException(
+        "Invalid queue name provided; unable to await results from unknown queue.", 
+        queueName);
+    
     var count = await resultsQueue.AwaitResults(queueName);
 
     return GetResultsSummary(count);
