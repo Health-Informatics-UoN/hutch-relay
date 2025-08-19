@@ -10,7 +10,6 @@ namespace Hutch.Relay.Services.RabbitQueues;
 
 public class RabbitBeaconResultsQueue(IRabbitConnectionManager rabbit) : IBeaconResultsQueue
 {
-  // TODO: unit test
   public async Task<string> CreateResultsQueue()
   {
     await using var channel = await rabbit.ConnectChannel();

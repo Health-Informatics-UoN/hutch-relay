@@ -87,4 +87,36 @@ public class RabbitBeaconResultsQueueTests
           It.IsAny<CancellationToken>()),
       Times.Once());
   }
+
+  [Fact]
+  public async Task CreateResultsQueue_DeclaresQueueAndReturnsName()
+  {
+    const string expected = "test";
+
+    var channel = new Mock<IChannel>();
+
+    channel.Setup(x => x.QueueDeclareAsync(
+        It.Is(string.Empty, StringComparer.InvariantCulture),
+        It.Is<bool>(durable => !durable),
+        It.Is<bool>(exclusive => exclusive),
+        It.Is<bool>(autoDelete => autoDelete),
+        It.Is<Dictionary<string, object?>>(args => args.ContainsKey("x-expires")),
+        It.Is<bool>(passive => !passive),
+        It.Is<bool>(noWait => !noWait),
+        It.IsAny<CancellationToken>()))
+      .Returns(() => Task.FromResult(new QueueDeclareOk(expected, 0, 0)))
+      .Verifiable(Times.Once);
+
+    var rabbit = new Mock<IRabbitConnectionManager>();
+    rabbit.Setup(x => x.ConnectChannel(It.IsAny<string?>()))
+      .Returns(() => Task.FromResult(channel.Object));
+
+    var service = new RabbitBeaconResultsQueue(rabbit.Object);
+
+    var actual = await service.CreateResultsQueue();
+
+    channel.VerifyAll();
+
+    Assert.Equal(expected, actual);
+  }
 }
