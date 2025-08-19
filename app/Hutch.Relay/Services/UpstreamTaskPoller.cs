@@ -76,7 +76,7 @@ public class UpstreamTaskPoller(
       {
         // Check for subnodes before we even start polling,
         // to avoid pulling jobs and losing them / making http requests with no purpose
-        subNodes.EnsureSubNodes(); // Though this uses the parent's scoped db context and we poll on different threads, it is an untracked read operation
+        await subNodes.EnsureSubNodes(); // Though this uses the parent's scoped db context and we poll on different threads, it is an untracked read operation
 
         await foreach (var (type, job) in jobs.WithCancellation(cancellationToken))
         {
@@ -139,7 +139,7 @@ public class UpstreamTaskPoller(
       {
         // Check for subnodes before we even start polling,
         // to avoid pulling jobs and losing them / making http requests with no purpose
-        subNodes.EnsureSubNodes(); // Though this uses the parent's scoped db context and we poll on different threads, it is an untracked read operation
+        await subNodes.EnsureSubNodes(); // Though this uses the parent's scoped db context and we poll on different threads, it is an untracked read operation
 
         await foreach (var job in jobs.WithCancellation(cts.Token))
         {

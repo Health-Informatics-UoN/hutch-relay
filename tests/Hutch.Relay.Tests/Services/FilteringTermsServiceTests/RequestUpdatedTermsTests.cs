@@ -122,12 +122,12 @@ public class RequestUpdatedTermsTests : IDisposable
     // Assert
     downstreamTasks.Verify(
       x => x.Enqueue(
-        It.Is<CollectionAnalysisJob>(x =>
-          x.Uuid.StartsWith(RelayBeaconTaskDetails.IdPrefix) &&
-          x.Analysis == expectedTask.Analysis &&
-          x.Code == expectedTask.Code &&
-          x.Collection == expectedTask.Collection &&
-          x.Owner == expectedTask.Owner),
+        It.Is<CollectionAnalysisJob>(job =>
+          job.Uuid.EndsWith(RelayBeaconTaskDetails.IdSuffix) &&
+          job.Analysis == expectedTask.Analysis &&
+          job.Code == expectedTask.Code &&
+          job.Collection == expectedTask.Collection &&
+          job.Owner == expectedTask.Owner),
         It.IsAny<List<SubNodeModel>>()),
       Times.Once);
   }
