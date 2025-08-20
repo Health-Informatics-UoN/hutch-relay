@@ -9,9 +9,9 @@ namespace Hutch.Relay.Services;
 
 public class SubNodeService(ApplicationDbContext db) : ISubNodeService
 {
-  public async Task EnsureSubNodes()
+  public void EnsureSubNodes()
   {
-    var subNodesExist = await db.SubNodes.AsNoTracking().AnyAsync();
+    var subNodesExist = db.SubNodes.AsNoTracking().Any();
     if (subNodesExist) return;
 
     throw new InvalidOperationException("There are no subnodes configured!")
