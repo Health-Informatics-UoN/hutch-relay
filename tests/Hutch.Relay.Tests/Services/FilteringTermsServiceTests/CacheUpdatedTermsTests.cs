@@ -227,7 +227,7 @@ public class CacheUpdatedTermsTests : IDisposable
         Term = "OMOP:987",
         SourceCategory = "Gender",
         Description = "Male",
-        VarCat = "person"
+        VarCat = "Person"
       },
       new() {
         Term = "OMOP:654",
@@ -238,7 +238,7 @@ public class CacheUpdatedTermsTests : IDisposable
         Term = "OMOP:321",
         SourceCategory = "Race",
         Description = "Human",
-        VarCat = "person"
+        VarCat = "Person"
       }
     ];
 

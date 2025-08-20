@@ -47,7 +47,7 @@ public class CreateAvailabilityJobTests
         VariableName = "OMOP",
         Operand = "=",
         Value = "456",
-        Category = "Condition"
+        Category = "Observation"
       }
     ];
 
