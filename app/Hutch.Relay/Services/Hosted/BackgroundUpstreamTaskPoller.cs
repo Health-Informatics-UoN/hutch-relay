@@ -20,7 +20,7 @@ public class BackgroundUpstreamTaskPoller(
       {
         // Ensure we have subnodes before we start polling; this is considered critical
         var subnodes = initScope.ServiceProvider.GetRequiredService<ISubNodeService>();
-        await subnodes.EnsureSubNodes();
+        subnodes.EnsureSubNodes();
       }
 
       // use a longer-lived scope to run the poller and its threads
