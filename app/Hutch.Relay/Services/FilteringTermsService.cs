@@ -32,6 +32,8 @@ public class FilteringTermsService(
 
   public async Task<List<CachedFilteringTerm>> Find(List<string> termIds)
   {
+    if (termIds.Count == 0) return [];
+    
     var matchingTerms = await db.FilteringTerms.AsNoTracking()
       .Where(x => termIds.Contains(x.Term))
       .Select(x => new CachedFilteringTerm

@@ -23,8 +23,7 @@ public class IndividualsQueryService(
       Exists = count > 0
     };
 
-    // TODO: how is "non-default" granularity specified?
-    // TODO: meta etc.
+    // TODO: support "non-default" granularity
     return options.Value.SecurityAttributes.DefaultGranularity switch
     {
       Granularity.boolean => result,

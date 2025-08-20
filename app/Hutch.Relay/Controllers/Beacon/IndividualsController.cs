@@ -40,27 +40,28 @@ public class IndividualsController(
       ReturnedGranularity = granularity.ToString()
     };
 
-    var matchedTerms = await filteringTerms.Find(filters);
+    var matchedTerms = await filteringTerms.Find(filters); // TODO: if none match, check if we should queue a terms update?
 
     // If not all terms are found, you can't even send a valid Availability request, since VarCat is now required (?)
     // but we can't populate VarCat without the terms cache (or a complete OMOP database?)
 
-    if(matchedTerms.Count != filters.Count)
+    if (matchedTerms.Count != filters.Count) // Beacon terms rules are always AND, so any missing term means false
       return new()
       {
         Meta = meta,
         ResponseSummary = individuals.GetEmptySummary()
       };
-    
-    if(granularity == Granularity.boolean)
+
+    // Boolean matches don't require a downstream query as we don't need the exact count
+    if (granularity == Granularity.boolean)
       return new()
       {
         Meta = meta,
-        ResponseSummary = individuals.GetResultsSummary(1) // we know it's true; the count is irrelevant (TODO: what about suppression?)
+        ResponseSummary = individuals.GetResultsSummary(1) // we know it's true; the count is irrelevant
       };
 
     // try and queue downstream for the query 
-      var queueName = await individuals.EnqueueDownstream(matchedTerms);
+    var queueName = await individuals.EnqueueDownstream(matchedTerms);
     if (queueName is null)
       return new()
       {

@@ -1,6 +1,7 @@
 using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Constants;
+using Hutch.Relay.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
 using Microsoft.Extensions.Options;
@@ -21,7 +22,14 @@ public class CreateAvailabilityJobTests
   [Fact]
   public async Task CreateAvailabilityJob_QueryTerms_ReturnsJobWithTermRules()
   {
-    List<string> terms = ["OMOP:123", "OMOP:456"];
+    List<CachedFilteringTerm> filterTerms = [
+      new() {
+        Term = "OMOP:123", SourceCategory = "Condition"
+      },
+      new() {
+        Term = "OMOP:456", SourceCategory = "Observation"
+      }
+    ];
 
     List<Rule> expectedRules =
     [
@@ -43,7 +51,7 @@ public class CreateAvailabilityJobTests
       }
     ];
 
-    var actual = await IndividualsQueryService.CreateAvailabilityJob(terms, "test");
+    var actual = await IndividualsQueryService.CreateAvailabilityJob(filterTerms, "test");
 
     Assert.NotNull(actual);
     Assert.Equal("OR", actual.Cohort.Combinator);
@@ -56,10 +64,17 @@ public class CreateAvailabilityJobTests
   public async Task CreateAvailabilityJob_SetsRequiredBaseProperties()
   {
     var queueName = "test-queue";
-    
-    List<string> terms = ["OMOP:123", "OMOP:456"];
 
-    var actual = await IndividualsQueryService.CreateAvailabilityJob(terms, queueName);
+    List<CachedFilteringTerm> filterTerms = [
+      new() {
+        Term = "OMOP:123", SourceCategory = "Condition"
+      },
+      new() {
+        Term = "OMOP:456", SourceCategory = "Observation"
+      }
+    ];
+
+    var actual = await IndividualsQueryService.CreateAvailabilityJob(filterTerms, queueName);
 
     Assert.NotNull(actual);
 
@@ -70,15 +85,26 @@ public class CreateAvailabilityJobTests
     Assert.Equal(RelayBeaconTaskDetails.Collection, actual.Collection);
     Assert.Equal(RelayBeaconTaskDetails.Owner, actual.Owner);
   }
-  
+
   [Theory]
   [InlineData("")]
   [InlineData("    ")]
   public async Task CreateAvailabilityJob_EmptyQueueName_Throws(string queueName)
   {
+    List<CachedFilteringTerm> filterTerms = [
+      new() {
+        Term = "OMOP:123", SourceCategory = "Condition"
+      },
+      new() {
+        Term = "OMOP:456", SourceCategory = "Observation"
+      }
+    ];
+
     await Assert.ThrowsAsync<ArgumentException>(async () =>
       await IndividualsQueryService.CreateAvailabilityJob(
-        ["OMOP:123", "OMOP:456"], 
+        filterTerms,
         queueName));
   }
+
+  // TODO: Test Varcat mapping
 }
