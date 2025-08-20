@@ -56,7 +56,7 @@ public static class CodeCategory
 
 
   // VarCat mapping
-  private const string _personVarCat = "person";
+  private const string _personVarCat = "Person"; // TODO: Bunny expects Title Case, but not sure what the spec suggests
   public static Dictionary<string, string> VarCatMap { get; } = new()
   {
     [Gender] = _personVarCat,

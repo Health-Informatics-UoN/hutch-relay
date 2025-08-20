@@ -47,6 +47,15 @@ public class EnqueueDownstreamTests
   [Fact]
   public async Task EnqueueDownstream_NoSubnodes_ReturnsNullWithLogs()
   {
+    List<CachedFilteringTerm> filterTerms = [
+      new() {
+        Term = "OMOP:123", SourceCategory = "Condition"
+      },
+      new() {
+        Term = "OMOP:456", SourceCategory = "Observation"
+      }
+    ];
+
     var logger = new Mock<ILogger<IndividualsQueryService>>();
 
     var service = new IndividualsQueryService(
@@ -56,7 +65,7 @@ public class EnqueueDownstreamTests
       Mock.Of<IDownstreamTaskService>(),
       Mock.Of<IBeaconResultsQueue>());
 
-    var actual = await service.EnqueueDownstream(["OMOP:123", "OMOP:456"]);
+    var actual = await service.EnqueueDownstream(filterTerms);
 
     Assert.Null(actual);
     logger.Verify(
@@ -105,6 +114,15 @@ public class EnqueueDownstreamTests
     
     var logger = new Mock<ILogger<IndividualsQueryService>>();
     var downstreamTasks = new Mock<IDownstreamTaskService>();
+
+    List<CachedFilteringTerm> filterTerms = [
+      new() {
+        Term = "OMOP:123", SourceCategory = "Condition"
+      },
+      new() {
+        Term = "OMOP:456", SourceCategory = "Observation"
+      }
+    ];
     
     var subnodes = new Mock<ISubNodeService>();
     subnodes.Setup(x => x.List())
@@ -127,7 +145,7 @@ public class EnqueueDownstreamTests
       downstreamTasks.Object,
       resultsQueue.Object);
 
-    var actual = await service.EnqueueDownstream(["OMOP:123", "OMOP:456"]);
+    var actual = await service.EnqueueDownstream(filterTerms);
 
     // Enqueues
     downstreamTasks.Verify(x =>

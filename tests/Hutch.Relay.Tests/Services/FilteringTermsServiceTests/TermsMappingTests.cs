@@ -38,9 +38,9 @@ public class TermsMappingTests
   [InlineData(CodeCategory.Condition, null)]
   [InlineData(CodeCategory.Measurement, null)]
   [InlineData(CodeCategory.Observation, null)]
-  [InlineData(CodeCategory.Ethnicity, "person")]
-  [InlineData(CodeCategory.Race, "person")]
-  [InlineData(CodeCategory.Gender, "person")]
+  [InlineData(CodeCategory.Ethnicity, "Person")]
+  [InlineData(CodeCategory.Race, "Person")]
+  [InlineData(CodeCategory.Gender, "Person")]
   public void Map_SetsVarCat(string category, string? varcat)
   {
     var distributionRecord = new GenericDistributionRecord()
@@ -125,7 +125,7 @@ public class TermsMappingTests
         Term = "OMOP:789",
         SourceCategory = "Gender",
         Description = "Female",
-        VarCat = "person"
+        VarCat = "Person"
       },
       new() {
         Term = "OMOP:54321",

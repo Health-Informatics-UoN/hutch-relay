@@ -2,6 +2,7 @@ using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Extensions;
+using Hutch.Relay.Models;
 using Hutch.Relay.Models.Beacon;
 using Hutch.Relay.Services.Contracts;
 using Microsoft.Extensions.Options;
@@ -22,8 +23,7 @@ public class IndividualsQueryService(
       Exists = count > 0
     };
 
-    // TODO: how is "non-default" granularity specified?
-    // TODO: meta etc.
+    // TODO: support "non-default" granularity
     return options.Value.SecurityAttributes.DefaultGranularity switch
     {
       Granularity.boolean => result,
@@ -34,7 +34,7 @@ public class IndividualsQueryService(
   public EntryTypeResponseSummary GetEmptySummary()
     => GetResultsSummary(0);
 
-  public async Task<string?> EnqueueDownstream(List<string> queryTerms)
+  public async Task<string?> EnqueueDownstream(List<CachedFilteringTerm> queryTerms)
   {
     // Check Beacon Enabled (should never happen tbh)
     if (!options.Value.Enable)
@@ -92,7 +92,7 @@ public class IndividualsQueryService(
     return GetResultsSummary(count);
   }
 
-  public static Task<AvailabilityJob> CreateAvailabilityJob(List<string> queryTerms, string queueName)
+  public static Task<AvailabilityJob> CreateAvailabilityJob(List<CachedFilteringTerm> queryTerms, string queueName)
   {
     if (queryTerms.Count < 1)
       throw new ArgumentException(
@@ -110,8 +110,8 @@ public class IndividualsQueryService(
           Operand = "=",
           Type = "TEXT",
           VariableName = "OMOP",
-          Value = term.ExtractAfterSubstring(":"),
-          Category = "Condition" // TODO: correctly map varcat; for now Bunny requires it to be any valid non-Person value
+          Value = term.Term.ExtractAfterSubstring(":"),
+          Category = term.VarCat ?? term.SourceCategory
         }
       ).ToList();
 

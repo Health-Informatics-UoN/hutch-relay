@@ -3,6 +3,7 @@ using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Models.Beacon;
 using Hutch.Relay.Services;
+using Hutch.Relay.Services.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement.Mvc;
@@ -14,6 +15,7 @@ namespace Hutch.Relay.Controllers.Beacon;
 [Route($"{BeaconApiConstants.RoutePrefix}/[controller]")]
 public class IndividualsController(
   IndividualsQueryService individuals,
+  IFilteringTermsService filteringTerms,
   IOptions<RelayBeaconOptions> options) : ControllerBase
 {
   /// <summary>
@@ -31,16 +33,40 @@ public class IndividualsController(
     [FromQuery] int limit = 0,
     [FromQuery] string requestedSchema = "")
   {
+    var granularity = options.Value.SecurityAttributes.DefaultGranularity;
+
     // prep response meta based on config and request
     Meta meta = new()
     {
-      ReturnedGranularity = options.Value.SecurityAttributes.DefaultGranularity.ToString()
+      ReturnedGranularity = granularity.ToString()
     };
 
-    // TODO: Cached Terms shortcuts
+    var matchedTerms = await filteringTerms.Find(filters);
+
+    if (matchedTerms.Count == 0) // nothing matched; make sure we even have cached terms
+    {
+      if (!await filteringTerms.Any()) await filteringTerms.RequestUpdatedTerms();
+    }
+
+    if (matchedTerms.Count != filters.Count) // Beacon terms rules are always AND, so any missing term means false
+    {
+      return new()
+      {
+        Meta = meta,
+        ResponseSummary = individuals.GetEmptySummary()
+      };
+    }
+
+    // Boolean matches don't require a downstream query as we don't need the exact count
+    if (granularity == Granularity.boolean)
+      return new()
+      {
+        Meta = meta,
+        ResponseSummary = individuals.GetResultsSummary(1) // we know it's true; the count is irrelevant
+      };
 
     // try and queue downstream for the query 
-    var queueName = await individuals.EnqueueDownstream(filters);
+    var queueName = await individuals.EnqueueDownstream(matchedTerms);
     if (queueName is null)
       return new()
       {

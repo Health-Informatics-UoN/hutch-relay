@@ -3,6 +3,7 @@ using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Data;
+using Hutch.Relay.Models;
 using Hutch.Relay.Models.Beacon;
 using Hutch.Relay.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,24 @@ public class FilteringTermsService(
     }
 
     return await db.FilteringTerms.AsNoTracking().AnyAsync();
+  }
+
+  public async Task<List<CachedFilteringTerm>> Find(List<string> termIds)
+  {
+    if (termIds.Count == 0) return [];
+    
+    var matchingTerms = await db.FilteringTerms.AsNoTracking()
+      .Where(x => termIds.Contains(x.Term))
+      .Select(x => new CachedFilteringTerm
+      {
+        Term = x.Term,
+        SourceCategory = x.SourceCategory,
+        VarCat = x.VarCat,
+        Description = x.Description
+      })
+      .ToListAsync();
+
+    return matchingTerms;
   }
 
   public async Task<List<FilteringTerm>> List(int skip = 0, int limit = 10)
@@ -78,7 +97,7 @@ public class FilteringTermsService(
         : "not requesting updated Filtering Terms.";
       logger.LogInformation(
         "Downstream Generic Code Distribution Tasks are already in progress; {ActionMessage}", actionMessage);
-      if(!force) return;
+      if (!force) return;
     }
 
     // Get up-to-date Sub Nodes list
