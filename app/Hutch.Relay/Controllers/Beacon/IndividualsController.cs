@@ -3,6 +3,7 @@ using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Models.Beacon;
 using Hutch.Relay.Services;
+using Hutch.Relay.Services.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement.Mvc;
@@ -14,7 +15,7 @@ namespace Hutch.Relay.Controllers.Beacon;
 [Route($"{BeaconApiConstants.RoutePrefix}/[controller]")]
 public class IndividualsController(
   IndividualsQueryService individuals,
-  FilteringTermsService filteringTerms,
+  IFilteringTermsService filteringTerms,
   IOptions<RelayBeaconOptions> options) : ControllerBase
 {
   /// <summary>
