@@ -106,5 +106,31 @@ public class CreateAvailabilityJobTests
         queueName));
   }
 
-  // TODO: Test Varcat mapping
+  [Theory]
+  [InlineData("category", null, "category")]
+  [InlineData("category", "varcat", "varcat")]
+  // Test expected RQuest values while we're here
+  [InlineData("Condition", null, "Condition")]
+  [InlineData("Observation", null, "Observation")]
+  [InlineData("Drug", null, "Drug")]
+  [InlineData("Measurement", null, "Measurement")]
+  [InlineData("Medication", null, "Medication")]
+  [InlineData("Procedure", null, "Procedure")]
+  [InlineData("Gender", "Person", "Person")]
+  [InlineData("Race", "Person", "Person")]
+  [InlineData("Ethnicity", "Person", "Person")]
+  public async Task CreateAvailabilityJob_MapsCategoryCorrectly(string sourceCategory, string? varcat, string expectedCategory)
+  {
+    var queueName = "test-queue";
+
+    List<CachedFilteringTerm> filterTerms = [
+      new() {
+        Term = "OMOP:123", SourceCategory = sourceCategory, VarCat = varcat
+      }
+    ];
+
+    var actual = await IndividualsQueryService.CreateAvailabilityJob(filterTerms, queueName);
+
+    Assert.Equal(expectedCategory, actual.Cohort.Groups.Single().Rules.Single().Category);
+  }
 }
