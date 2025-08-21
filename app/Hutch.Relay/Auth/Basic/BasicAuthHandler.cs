@@ -102,6 +102,8 @@ internal class BasicAuthHandler : AuthenticationHandler<BasicAuthSchemeOptions>
 
     try
     {
+      var routeCollectionGuid = Guid.Parse(routeCollectionId.ToString() ?? string.Empty);
+
       var (clientId, clientSecret) = ParseBasicAuthHeader(Request.Headers.Authorization!);
 
       var claimsPrincipal = await Authenticate(clientId, clientSecret);
@@ -113,10 +115,10 @@ internal class BasicAuthHandler : AuthenticationHandler<BasicAuthSchemeOptions>
           .Where(subNode =>
             subNode.RelayUsers.Select(user => user.UserName)
               .Contains(clientId))
-          .Select(x => x.Id.ToString())
+          .Select(x => x.Id)
           .ToList();
 
-        if (!clientCollections.Contains(routeCollectionId.ToString() ?? string.Empty))
+        if (!clientCollections.Contains(routeCollectionGuid))
         {
           Logger.LogWarning("collectionId \'{RouteCollectionId}\' is not valid for clientId \'{ClientId}\'.", routeCollectionId, clientId);
           return AuthenticateResult.Fail("Collection ID is not valid for client credentials.");

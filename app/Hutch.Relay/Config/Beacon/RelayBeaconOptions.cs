@@ -1,6 +1,8 @@
+using Hutch.Relay.Config.Helpers;
+
 namespace Hutch.Relay.Config.Beacon;
 
-public class RelayBeaconOptions : BaseBeaconOptions
+public class RelayBeaconOptions : BaseBeaconOptions, IFeatureOptionsModel
 {
   /// <summary>
   /// Enable or disable the Beacon API.

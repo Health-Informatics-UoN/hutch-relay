@@ -26,9 +26,9 @@ public static class ConfigureWebServices
   public static WebApplicationBuilder ConfigureServices(this WebApplicationBuilder b)
   {
     // Feature Management
-    b.Configuration.DeclareSectionFeatures([
-      Features.UpstreamTaskApi,
-      Features.Beacon
+    b.Configuration.DeclareOptionsModelFeatures([
+      typeof(TaskApiPollingOptions),
+      typeof(RelayBeaconOptions)
     ]);
     b.Services.AddFeatureManagement();
 
@@ -114,7 +114,7 @@ public static class ConfigureWebServices
       .AddTransient<IndividualsQueryService>();
 
     // Hosted Services
-    var isUpstreamTaskApiEnabled = b.Configuration.IsSectionEnabled(Features.UpstreamTaskApi);
+    var isUpstreamTaskApiEnabled = b.Configuration.IsEnabled<TaskApiPollingOptions>();
     if (isUpstreamTaskApiEnabled)
       b.Services
         .AddHostedService<BackgroundUpstreamTaskPoller>()

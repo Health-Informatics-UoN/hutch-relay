@@ -29,7 +29,7 @@ public class BasicAuthHandlerTests
       .Returns(new BasicAuthSchemeOptions() { Realm = "test" });
     _options = options.Object;
 
-    _userManager = MockHelpers.TestUserManager(new UserStore<RelayUser>(_fixture.Database));
+    _userManager = MockHelpers.TestUserManager(new UserStore<RelayUser>(_fixture.DbContext));
   }
 
   [Fact]
@@ -39,7 +39,7 @@ public class BasicAuthHandlerTests
       _options,
       new NullLoggerFactory(),
       new UrlTestEncoder(),
-      _fixture.Database,
+      _fixture.DbContext,
       _userManager
     );
 
@@ -60,7 +60,7 @@ public class BasicAuthHandlerTests
       _options,
       new NullLoggerFactory(),
       new UrlTestEncoder(),
-      _fixture.Database,
+      _fixture.DbContext,
       _userManager
     );
 
@@ -82,7 +82,7 @@ public class BasicAuthHandlerTests
       _options,
       new NullLoggerFactory(),
       new UrlTestEncoder(),
-      _fixture.Database,
+      _fixture.DbContext,
       _userManager
     );
 
@@ -104,7 +104,7 @@ public class BasicAuthHandlerTests
       _options,
       new NullLoggerFactory(),
       new UrlTestEncoder(),
-      _fixture.Database,
+      _fixture.DbContext,
       _userManager
     );
 
@@ -129,7 +129,7 @@ public class BasicAuthHandlerTests
       _options,
       new NullLoggerFactory(),
       new UrlTestEncoder(),
-      _fixture.Database,
+      _fixture.DbContext,
       _userManager
     );
 
@@ -157,7 +157,7 @@ public class BasicAuthHandlerTests
       _options,
       new NullLoggerFactory(),
       new UrlTestEncoder(),
-      _fixture.Database,
+      _fixture.DbContext,
       _userManager
     );
 
@@ -183,13 +183,13 @@ public class BasicAuthHandlerTests
   [Theory]
   [MemberData(nameof(UserCollectionsFixture.GetUserCollections), MemberType = typeof(UserCollectionsFixture))]
   public async Task HandleAuthenticateAsync_ValidUserCollection_ReturnsSuccessResult(
-    string username, string password, string collectionId)
+    string username, string password, Guid collectionId)
   {
     var handler = new BasicAuthHandler(
       _options,
       new NullLoggerFactory(),
       new UrlTestEncoder(),
-      _fixture.Database,
+      _fixture.DbContext,
       _userManager
     );
 
