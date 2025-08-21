@@ -16,7 +16,7 @@ public class BeaconInfoOptions
 
   public string? ContactUrl { get; set; }
 
-  public DateTimeOffset CreatedDate { get; set; } = new(2025, 8, 22, 0, 0, 0, TimeSpan.Zero);
+  public DateTimeOffset CreatedDate { get; set; } = new(2025, 8, 21, 12, 15, 0, TimeSpan.Zero);
 
   public DateTimeOffset? UpdatedDate { get; set; } =
     Assembly.GetAssembly(typeof(BeaconInfoOptions))

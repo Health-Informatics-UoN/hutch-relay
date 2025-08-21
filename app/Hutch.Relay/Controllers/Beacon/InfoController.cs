@@ -34,7 +34,7 @@ public class InfoController(
 
   private string GetInfoVersion() => (string)version.EntryAssembly();
 
-  [HttpGet("/service-info")]
+  [HttpGet("service-info")]
   public ServiceInfoResponse GetServiceInfo()
   {
     return new()
