@@ -2,8 +2,6 @@ using System.Data.Common;
 using Hutch.Relay.Data;
 using Hutch.Relay.Data.Entities;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Moq;
 
 namespace Hutch.Relay.Tests.Auth;
 
@@ -12,11 +10,11 @@ public class UserCollectionsFixture : IDisposable
   private readonly DbConnection? _connection = null;
   public readonly ApplicationDbContext DbContext;
 
-  public static Guid SubNode1 = Guid.NewGuid();
-  public static Guid SubNode2 = Guid.NewGuid();
+  public static Guid SubNode1 { get; } = Guid.NewGuid();
+  public static Guid SubNode2 { get; } = Guid.NewGuid();
 
-  public static (string username, string password) User1 = ("user1", "password1");
-  public static (string username, string password) User2 = ("user2", "password2");
+  public static (string username, string password) User1 { get; } = ("user1", "password1");
+  public static (string username, string password) User2 { get; } = ("user2", "password2");
 
   public UserCollectionsFixture()
   {
