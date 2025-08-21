@@ -12,6 +12,12 @@ public class UserCollectionsFixture : IDisposable
   private readonly DbConnection? _connection = null;
   public readonly ApplicationDbContext DbContext;
 
+  public static Guid SubNode1 = Guid.NewGuid();
+  public static Guid SubNode2 = Guid.NewGuid();
+
+  public static (string username, string password) User1 = ("user1", "password1");
+  public static (string username, string password) User2 = ("user2", "password2");
+
   public UserCollectionsFixture()
   {
     // Ensure a unique DB per Test (does it, in a fixture?)
@@ -59,12 +65,6 @@ public class UserCollectionsFixture : IDisposable
     DbContext.Database.EnsureDeleted();
     _connection?.Dispose();
   }
-
-  public static Guid SubNode1 = Guid.NewGuid();
-  public static Guid SubNode2 = Guid.NewGuid();
-
-  public static (string username, string password) User1 = ("user1", "password1");
-  public static (string username, string password) User2 = ("user2", "password2");
 
   public static IEnumerable<object[]> GetUserCollections()
   {
