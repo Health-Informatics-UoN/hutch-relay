@@ -32,6 +32,8 @@ public static class ConfigureWebServices
     ]);
     b.Services.AddFeatureManagement();
 
+    b.Services.AddVersionInformation();
+
     // Logging
     b.Services.AddSerilog((services, lc) => lc
       .ReadFrom.Configuration(b.Configuration)
