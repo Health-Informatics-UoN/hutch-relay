@@ -21,12 +21,12 @@ public class UserCollectionsFixture
     yield return
     [
       User1.username, User1.password,
-      SubNode1.ToString()
+      SubNode1
     ];
     yield return
     [
       User2.username, User2.password,
-      SubNode2.ToString()
+      SubNode2
     ];
   }
 
@@ -60,7 +60,7 @@ public class UserCollectionsFixture
     users[0].PasswordHash = hasher.HashPassword(users[0], User1.password);
     users[1].PasswordHash = hasher.HashPassword(users[1], User2.password);
 
-    Database.RelayUsers.AddRange(users);
+    // Database.RelayUsers.AddRange(users);
 
     Database.SubNodes.AddRange(
       new()

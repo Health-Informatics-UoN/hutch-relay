@@ -183,7 +183,7 @@ public class BasicAuthHandlerTests
   [Theory]
   [MemberData(nameof(UserCollectionsFixture.GetUserCollections), MemberType = typeof(UserCollectionsFixture))]
   public async Task HandleAuthenticateAsync_ValidUserCollection_ReturnsSuccessResult(
-    string username, string password, string collectionId)
+    string username, string password, Guid collectionId)
   {
     var handler = new BasicAuthHandler(
       _options,
