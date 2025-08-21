@@ -114,7 +114,7 @@ public static class ConfigureWebServices
       .AddTransient<IndividualsQueryService>();
 
     // Hosted Services
-    var isUpstreamTaskApiEnabled = b.Configuration.IsFeatureEnabled<TaskApiPollingOptions>();
+    var isUpstreamTaskApiEnabled = b.Configuration.IsEnabled<TaskApiPollingOptions>();
     if (isUpstreamTaskApiEnabled)
       b.Services
         .AddHostedService<BackgroundUpstreamTaskPoller>()
