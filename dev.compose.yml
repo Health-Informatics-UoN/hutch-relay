@@ -45,6 +45,8 @@ services:
       - 8081:8081
     environment:
       Database__ApplyMigrationsOnStartup: true
+      DownstreamUsers__test__Password: testPassword
+      DownstreamUsers__test__SubNode: d7ea6f2a-ce2e-41d6-913a-a1ad2b6b88a9
 
       DOTNET_Environment: Development
       ConnectionStrings__Default: Server=db;Port=5432;Database=hutch_relay;User Id=postgres;Password=postgres

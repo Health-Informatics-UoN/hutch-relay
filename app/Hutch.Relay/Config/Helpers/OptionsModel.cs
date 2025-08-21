@@ -29,16 +29,25 @@ public static class OptionsModel<T>
     get
     {
       var derivedType = typeof(T);
-      var typeInfo = derivedType.GetTypeInfo();
 
-      // ConfigSectionAttribute overrides classname convention
-      var attributes = typeInfo.GetCustomAttributes();
-      foreach (var attribute in attributes)
-        if (attribute is ConfigSectionAttribute sectionAttribute)
-          return sectionAttribute.Section;
-
-      // Remove suffix from classname and use that
-      return derivedType.Name.Replace("Options", "");
+      return OptionsModel.GetSection(derivedType);
     }
+  }
+}
+
+public static class OptionsModel
+{
+  public static string GetSection(Type type)
+  {
+    var typeInfo = type.GetTypeInfo();
+
+    // ConfigSectionAttribute overrides classname convention
+    var attributes = typeInfo.GetCustomAttributes();
+    foreach (var attribute in attributes)
+      if (attribute is ConfigSectionAttribute sectionAttribute)
+        return sectionAttribute.Section;
+
+    // Remove suffix from classname and use that
+    return type.Name.Replace("Options", "");
   }
 }
