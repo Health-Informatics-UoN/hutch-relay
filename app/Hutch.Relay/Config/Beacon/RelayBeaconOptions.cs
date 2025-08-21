@@ -14,6 +14,8 @@ public class RelayBeaconOptions : BaseBeaconOptions, IFeatureOptionsModel
   /// filtering terms from configured subnodes on startup?
   /// </summary>
   public StartupFilteringTermsBehaviour RequestFilteringTermsOnStartup { get; set; }
+
+  public BeaconInfoOptions Info { get; set; } = new();
 }
 
 /// <summary>
