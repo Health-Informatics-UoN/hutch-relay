@@ -1,5 +1,3 @@
-using Hutch.Relay.Config.Beacon;
-
 namespace Hutch.Relay.Models.Beacon;
 
 public class ServiceInfoResponse
