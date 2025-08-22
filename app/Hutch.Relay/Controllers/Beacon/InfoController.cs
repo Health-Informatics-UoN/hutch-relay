@@ -77,6 +77,12 @@ public class InfoController(
       Meta = new()
       {
         BeaconId = _options.Info.Id,
+        ReturnedSchemas = {
+          new() {
+            EntityType = "map",
+            Schema = "https://raw.githubusercontent.com/ga4gh-beacon/beacon-framework-v2/main/responses/beaconInfoResponse.json"
+          }
+        }
       },
       Response = new()
       {

@@ -17,6 +17,5 @@ public class InfoMeta
   /// <summary>
   /// Set of schemas to be used in the response to a request
   /// </summary>
-  // Given Relay's granularity, this will always be empty currently as we never return entities in responses.
   public List<ReturnedSchema> ReturnedSchemas { get; } = [];
 }
