@@ -106,6 +106,9 @@ public class InfoController(
   [HttpGet("entry_types")]
   public EntryTypesInfoResponse GetEntryTypes()
   {
+    // Relay defines Entry Types available based on its own capabilities
+    // i.e. Downstream Individuals only
+    // so the installer doesn't need to (and can't!) add this information
     return new()
     {
       Meta = new()
