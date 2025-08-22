@@ -36,8 +36,9 @@ public class IndividualsController(
     var granularity = options.Value.SecurityAttributes.DefaultGranularity;
 
     // prep response meta based on config and request
-    Meta meta = new()
+    EntryTypeMeta meta = new()
     {
+      BeaconId = options.Value.Info.Id,
       ReturnedGranularity = granularity.ToString()
     };
 
