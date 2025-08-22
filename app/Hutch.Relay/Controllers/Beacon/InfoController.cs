@@ -32,18 +32,23 @@ public class InfoController(
     };
   }
 
-  private string GetInfoVersion() => (string)version.EntryAssembly();
+  private string GetInfoRelayVersion() => (string)version.EntryAssembly();
 
+  /// <summary>
+  /// Get information about the beacon using GA4GH ServiceInfo format
+  /// </summary>
+  /// <returns></returns>
   [HttpGet("service-info")]
   public ServiceInfoResponse GetServiceInfo()
   {
     return new()
     {
-      Version = GetInfoVersion(),
+      Version = GetInfoRelayVersion(),
 
       Id = _options.Info.Id,
       Name = _options.Info.Name,
       Organisation = _options.Info.Organization,
+
       ContactUrl = _options.Info.ContactUrl,
       Description = _options.Info.Description,
       CreatedAt = _options.Info.CreatedDate,
@@ -54,4 +59,49 @@ public class InfoController(
       Environment = GetInfoEnvironment()
     };
   }
+
+  private InfoResponse GetInfoResponse()
+  {
+    return new()
+    {
+      Meta = new()
+      {
+        BeaconId = _options.Info.Id,
+      },
+      Response = new()
+      {
+        Environment = GetInfoEnvironment(),
+
+        Id = _options.Info.Id,
+        Name = _options.Info.Name,
+        Organization = _options.Info.Organization,
+
+        Description = _options.Info.Description,
+        WelcomeUrl = _options.Info.WelcomeUrl,
+        AlternativeUrl = _options.Info.AlternativeUrl,
+        CreateDateTime = _options.Info.CreatedDate,
+        UpdateDateTime = _options.Info.UpdatedDate,
+
+        Version = GetInfoRelayVersion()
+      }
+    };
+  }
+
+  /// <summary>
+  /// Get information about the beacon
+  /// </summary>
+  /// <param name="requestedSchema">Ignored by Relay as it doesn't affect this request anyway.</param>
+  /// <returns></returns>
+  [HttpGet]
+  public InfoResponse GetRoot([FromQuery] string requestedSchema)
+    => GetInfoResponse();
+
+  /// <summary>
+  /// Get information about the beacon
+  /// </summary>
+  /// <param name="requestedSchema">Ignored by Relay as it doesn't affect this request anyway.</param>
+  /// <returns></returns>
+  [HttpGet("info")]
+  public InfoResponse GetInfo([FromQuery] string requestedSchema)
+    => GetInfoResponse();
 }

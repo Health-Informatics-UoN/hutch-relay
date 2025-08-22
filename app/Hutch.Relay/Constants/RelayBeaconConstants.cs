@@ -3,9 +3,14 @@ namespace Hutch.Relay.Constants;
 public static class BeaconApiConstants
 {
   /// <summary>
-  /// Version of the Beacon API Relay implements
+  /// Semantic Version of the GA4GH Beacon spec Relay implements
   /// </summary>
-  public const string ApiVersion = "2.0.0";
+  public const string SpecVersion = "2.0.0";
+
+  /// <summary>
+  /// Beacon API Version Relay implements
+  /// </summary>
+  public const string ApiVersion = "v2.0";
 
   public const string RoutePrefix = "ga4gh/beacon/v2";
 
