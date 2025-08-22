@@ -5,7 +5,7 @@ public class EntryTypeResponse
   //NOTE: "Info" is an optional placeholder, so Relay omits it currently:
   // https://b2ri-documentation.readthedocs.io/en/latest/endpoints/individuals.html#tag/GET-Endpoints/operation/getIndividuals
   
-  public required Meta Meta { get; set; }
+  public required EntryTypeMeta Meta { get; set; }
   
   public required EntryTypeResponseSummary ResponseSummary { get; set; }
 
