@@ -1,3 +1,4 @@
+using Flurl.Util;
 using Hutch.Relay.Config;
 using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Constants;
@@ -143,6 +144,30 @@ public class InfoController(
             }
           }
         }
+      }
+    };
+  }
+
+  [HttpGet("configuration")]
+  public ConfigurationResponse GetBeaconConfiguration()
+  {
+    return new()
+    {
+      Meta = new()
+      {
+        BeaconId = _options.Info.Id,
+        ReturnedSchemas = {
+          new() {
+            EntityType = "map",
+            Schema = "https://raw.githubusercontent.com/ga4gh-beacon/beacon-framework-v2/main/responses/beaconConfigurationResponse.json"
+          }
+        }
+      },
+      Response = new()
+      {
+        MaturityAttributes = _options.MaturityAttributes,
+        SecurityAttributes = _options.SecurityAttributes,
+        EntryTypes = GetEntryTypes().Response.EntryTypes
       }
     };
   }

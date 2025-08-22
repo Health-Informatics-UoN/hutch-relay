@@ -11,13 +11,13 @@ public class BaseBeaconOptions
 
 public class MaturityAttributes
 {
-  public ProductionStatus ProductionStatus { get; set; }
+  public ProductionStatus ProductionStatus { get; set; } = ProductionStatus.DEV;
 }
 
 public class SecurityAttributes
 {
-  public Granularity DefaultGranularity { get; set; }
-  public List<ApiSecurityLevels> SecurityLevels { get; set; } = [];
+  public Granularity DefaultGranularity { get; set; } = Granularity.boolean;
+  public List<ApiSecurityLevels> SecurityLevels { get; set; } = [ApiSecurityLevels.PUBLIC];
 }
 
 public enum ProductionStatus
@@ -33,7 +33,7 @@ public enum ApiSecurityLevels
   /// Any anonymous user can read the data
   /// </summary>
   PUBLIC,
-  
+
   // Currently unsupported by Relay
   //REGISTERED	Only known users can read the data
   //CONTROLLED	Only specifically granted users can read the data
@@ -45,12 +45,12 @@ public enum Granularity
   /// returns 'true/false' responses
   /// </summary>
   boolean,
-  
+
   /// <summary>
   /// adds the total number of positive results found
   /// </summary>
   count,
-  
+
   // Unsupported by Relay
   // returns details for every document
   //Record
