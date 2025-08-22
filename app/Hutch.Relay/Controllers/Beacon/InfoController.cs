@@ -53,7 +53,7 @@ public class InfoController(
         Url = _options.Info.Organization.WelcomeUrl
       },
 
-      ContactUrl = _options.Info.Organization.ContactUrl, // TODO: Document this change
+      ContactUrl = _options.Info.Organization.ContactUrl,
       Description = _options.Info.Description,
       CreatedAt = _options.Info.CreatedDate,
       UpdatedAt = _options.Info.UpdatedDate,
