@@ -47,9 +47,13 @@ public class InfoController(
 
       Id = _options.Info.Id,
       Name = _options.Info.Name,
-      Organisation = _options.Info.Organization,
+      Organisation = new()
+      {
+        Name = _options.Info.Organization.Name,
+        Url = _options.Info.Organization.WelcomeUrl
+      },
 
-      ContactUrl = _options.Info.ContactUrl,
+      ContactUrl = _options.Info.Organization.ContactUrl,
       Description = _options.Info.Description,
       CreatedAt = _options.Info.CreatedDate,
       UpdatedAt = _options.Info.UpdatedDate,
@@ -73,6 +77,12 @@ public class InfoController(
       Meta = new()
       {
         BeaconId = _options.Info.Id,
+        ReturnedSchemas = {
+          new() {
+            EntityType = "map",
+            Schema = "https://raw.githubusercontent.com/ga4gh-beacon/beacon-framework-v2/main/responses/beaconInfoResponse.json"
+          }
+        }
       },
       Response = new()
       {
@@ -89,6 +99,50 @@ public class InfoController(
         UpdateDateTime = _options.Info.UpdatedDate,
 
         Version = GetInfoRelayVersion()
+      }
+    };
+  }
+
+  [HttpGet("entry_types")]
+  public EntryTypesInfoResponse GetEntryTypes()
+  {
+    // Relay defines Entry Types available based on its own capabilities
+    // i.e. Downstream Individuals only
+    // so the installer doesn't need to (and can't!) add this information
+    return new()
+    {
+      Meta = new()
+      {
+        BeaconId = _options.Info.Id,
+        ReturnedSchemas = {
+          new() {
+            EntityType = "entryType",
+            Schema = "https://raw.githubusercontent.com/ga4gh-beacon/beacon-framework-v2/main/configuration/entryTypesSchema.json"
+          }
+        }
+      },
+      Response = new()
+      {
+        EntryTypes = new()
+        {
+          ["individual"] = new()
+          {
+            Id = "individual",
+            Name = "Individuals in this collection",
+            OntologyTermForThisType = new()
+            {
+              Id = "NCIT:C25190", // Per Beacon spec
+              Label = "Person"
+            },
+            PartOfSpecification = $"Beacon v{BeaconApiConstants.SpecVersion}",
+            DefaultSchema = new()
+            {
+              Id = $"ga4gh-beacon-individual-v{BeaconApiConstants.SpecVersion}",
+              Name = $"Default Beacon {BeaconApiConstants.ApiVersion} schema for individuals",
+              ReferenceToSchemaDefinition = "./individuals/defaultSchema.json",
+            }
+          }
+        }
       }
     };
   }

@@ -11,8 +11,7 @@ public class InfoResponse
 
 public class InfoResponseBody
 {
-  //NOTE: "Info" is an optional placeholder, so Relay omits it currently:
-  // https://b2ri-documentation.readthedocs.io/en/latest/endpoints/beacon-v2.html#tag/Informational-endpoints/operation/getBeaconRoot
+  public Dictionary<string, object>? Info { get; } // "Info" is an optional placeholder, so Relay omits it currently
 
   public required string Id { get; set; }
 
