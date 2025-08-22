@@ -60,7 +60,13 @@ public class InfoController(
     };
   }
 
-  private InfoResponse GetInfoResponse()
+  /// <summary>
+  /// Get information about the beacon
+  /// </summary>
+  /// <param name="requestedSchema">Ignored by Relay as it doesn't affect this request anyway.</param>
+  /// <returns></returns>
+  [HttpGet, Route(""), Route("info")]
+  public InfoResponse GetRoot([FromQuery] string? requestedSchema)
   {
     return new()
     {
@@ -86,22 +92,4 @@ public class InfoController(
       }
     };
   }
-
-  /// <summary>
-  /// Get information about the beacon
-  /// </summary>
-  /// <param name="requestedSchema">Ignored by Relay as it doesn't affect this request anyway.</param>
-  /// <returns></returns>
-  [HttpGet]
-  public InfoResponse GetRoot([FromQuery] string requestedSchema)
-    => GetInfoResponse();
-
-  /// <summary>
-  /// Get information about the beacon
-  /// </summary>
-  /// <param name="requestedSchema">Ignored by Relay as it doesn't affect this request anyway.</param>
-  /// <returns></returns>
-  [HttpGet("info")]
-  public InfoResponse GetInfo([FromQuery] string requestedSchema)
-    => GetInfoResponse();
 }
