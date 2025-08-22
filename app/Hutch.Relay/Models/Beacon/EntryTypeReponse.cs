@@ -2,11 +2,10 @@ namespace Hutch.Relay.Models.Beacon;
 
 public class EntryTypeResponse
 {
-  //NOTE: "Info" is an optional placeholder, so Relay omits it currently:
-  // https://b2ri-documentation.readthedocs.io/en/latest/endpoints/individuals.html#tag/GET-Endpoints/operation/getIndividuals
-  
+  public Dictionary<string, object>? Info { get; } // "Info" is an optional placeholder, so Relay omits it currently
+
   public required EntryTypeMeta Meta { get; set; }
-  
+
   public required EntryTypeResponseSummary ResponseSummary { get; set; }
 
   public List<BeaconHandover>? BeaconHandovers { get; set; }

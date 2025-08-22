@@ -102,4 +102,45 @@ public class InfoController(
       }
     };
   }
+
+  [HttpGet("entry_types")]
+  public EntryTypesInfoResponse GetEntryTypes()
+  {
+    return new()
+    {
+      Meta = new()
+      {
+        BeaconId = _options.Info.Id,
+        ReturnedSchemas = {
+          new() {
+            EntityType = "entryType",
+            Schema = "https://raw.githubusercontent.com/ga4gh-beacon/beacon-framework-v2/main/configuration/entryTypesSchema.json"
+          }
+        }
+      },
+      Response = new()
+      {
+        EntryTypes = new()
+        {
+          ["individual"] = new()
+          {
+            Id = "individual",
+            Name = "Individuals in this collection",
+            OntologyTermForThisType = new()
+            {
+              Id = "NCIT:C25190", // Per Beacon spec
+              Label = "Person"
+            },
+            PartOfSpecification = $"Beacon v{BeaconApiConstants.SpecVersion}",
+            DefaultSchema = new()
+            {
+              Id = $"ga4gh-beacon-individual-v{BeaconApiConstants.SpecVersion}",
+              Name = $"Default Beacon {BeaconApiConstants.ApiVersion} schema for individuals",
+              ReferenceToSchemaDefinition = "./individuals/defaultSchema.json",
+            }
+          }
+        }
+      }
+    };
+  }
 }
