@@ -47,9 +47,13 @@ public class InfoController(
 
       Id = _options.Info.Id,
       Name = _options.Info.Name,
-      Organisation = _options.Info.Organization,
+      Organisation = new()
+      {
+        Name = _options.Info.Organization.Name,
+        Url = _options.Info.Organization.WelcomeUrl
+      },
 
-      ContactUrl = _options.Info.ContactUrl,
+      ContactUrl = _options.Info.Organization.ContactUrl, // TODO: Document this change
       Description = _options.Info.Description,
       CreatedAt = _options.Info.CreatedDate,
       UpdatedAt = _options.Info.UpdatedDate,

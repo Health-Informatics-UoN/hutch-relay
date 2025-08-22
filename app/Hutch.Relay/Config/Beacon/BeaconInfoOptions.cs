@@ -27,11 +27,6 @@ public class BeaconInfoOptions
   public BeaconOrganization Organization { get; set; } = new();
 
   /// <summary>
-  /// Link to a contact form, or an email address, for contacting those responsible for this Beacon installation.
-  /// </summary>
-  public string? ContactUrl { get; set; }
-
-  /// <summary>
   /// Link to a web page for this Beacon installation.
   /// </summary>
   public string? WelcomeUrl { get; set; }
