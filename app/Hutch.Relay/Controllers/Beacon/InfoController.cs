@@ -195,12 +195,20 @@ public class InfoController(
             EntryType = x.Key,
             RootUrl = x.Key switch
             {
-              "individual" => "",
+              "individual" => Url.ActionLink(
+                action: nameof(IndividualsController.GetIndividuals),
+                controller: "Individuals",
+                protocol: Request.Scheme,
+                host: Request.Host.Value)?.ToLower() ?? string.Empty,
               _ => throw new InvalidOperationException($"Found unconfigured EndpointSets for Entrytype: {x.Key}")
             },
             FilteringTermsUrl = x.Key switch
             {
-              "individual" => "",
+              "individual" => Url.ActionLink(
+                action: nameof(FilteringTermsController.List),
+                controller: "FilteringTerms",
+                protocol: Request.Scheme,
+                host: Request.Host.Value)?.ToLower() ?? string.Empty,
               _ => throw new InvalidOperationException($"Found unconfigured EndpointSets for Entrytype: {x.Key}")
             }
           })
