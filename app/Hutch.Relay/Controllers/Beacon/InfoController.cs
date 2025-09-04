@@ -171,4 +171,41 @@ public class InfoController(
       }
     };
   }
+
+  [HttpGet("map")]
+  public MapResponse GetBeaconMap()
+  {
+    return new()
+    {
+      Meta = new()
+      {
+        BeaconId = _options.Info.Id,
+        ReturnedSchemas = {
+          new() {
+            EntityType = "map",
+            Schema = "https://raw.githubusercontent.com/ga4gh-beacon/beacon-framework-v2/main/responses/beaconMapResponse.json"
+          }
+        }
+      },
+      Response = new()
+      {
+        EndpointSets = GetEntryTypes().Response.EntryTypes
+          .Select(x => new EndpointSet
+          {
+            EntryType = x.Key,
+            RootUrl = x.Key switch
+            {
+              "individual" => "",
+              _ => throw new InvalidOperationException($"Found unconfigured EndpointSets for Entrytype: {x.Key}")
+            },
+            FilteringTermsUrl = x.Key switch
+            {
+              "individual" => "",
+              _ => throw new InvalidOperationException($"Found unconfigured EndpointSets for Entrytype: {x.Key}")
+            }
+          })
+          .ToDictionary(x => x.EntryType)
+      }
+    };
+  }
 }
