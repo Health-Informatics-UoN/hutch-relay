@@ -10,6 +10,7 @@ using Microsoft.FeatureManagement.Mvc;
 
 namespace Hutch.Relay.Controllers.Beacon;
 
+[ApiExplorerSettings(GroupName = ApiExplorerGroups.BeaconName)]
 [FeatureGate(Features.Beacon)]
 [ApiController]
 [Route($"{BeaconApiConstants.RoutePrefix}/[controller]")]

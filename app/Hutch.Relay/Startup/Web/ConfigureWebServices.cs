@@ -50,7 +50,27 @@ public static class ConfigureWebServices
     b.Services.AddEndpointsApiExplorer();
     b.Services.AddAuthentication("Basic")
       .AddScheme<BasicAuthSchemeOptions, BasicAuthHandler>("Basic", opts => { opts.Realm = "relay"; });
-    b.Services.AddSwaggerGen(o => o.UseOneOfForPolymorphism());
+    b.Services.AddSwaggerGen(o =>
+    {
+      o.UseOneOfForPolymorphism();
+      o.EnableAnnotations();
+
+      // Downstream Task API Docs definition
+      o.SwaggerDoc(ApiExplorerGroups.TaskApiName, new()
+      {
+        Title = ApiExplorerGroups.TaskApiTitle,
+        Version = "v1", // TODO: clarify version vs. RQuest implementation
+        Description = "A subset of the Link Connector Task API used for downstream clients to fetch and respond to tasks"
+      });
+
+      // Upstream GA4GH Beacon API Docs definition
+       o.SwaggerDoc(ApiExplorerGroups.BeaconName, new()
+       {
+         Title = ApiExplorerGroups.BeaconTitle,
+         Version = BeaconApiConstants.ApiVersion,
+         Description = "A partial GA4GH Beacon v2 implementation supporting summary responses to individuals queries."
+      });
+    });
 
     // Upstream Task API
     b.Services

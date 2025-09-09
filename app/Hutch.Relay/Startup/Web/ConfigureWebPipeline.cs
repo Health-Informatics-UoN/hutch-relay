@@ -1,4 +1,5 @@
 using Hutch.Relay.Config;
+using Hutch.Relay.Constants;
 using Microsoft.Extensions.Options;
 using Serilog;
 
@@ -18,15 +19,23 @@ public static class ConfigureWebPipeline
     app.UseSerilogRequestLogging();
     app.UseHttpsRedirection();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+      {
+        c.SwaggerEndpoint($"/swagger/{ApiExplorerGroups.TaskApiName}/swagger.json", ApiExplorerGroups.TaskApiTitle);
+        c.SwaggerEndpoint($"/swagger/{ApiExplorerGroups.BeaconName}/swagger.json", ApiExplorerGroups.BeaconTitle);
+      });
 
     app.MapUonVersionInformation();
 
     app.UseAuthentication();
     app.UseAuthorization();
-    
+
     app.MapHealthChecks(monitoringOptions.HealthEndpoint);
     app.MapControllers();
+
+    app.MapFallback(context =>
+      Task.Run(() => context.Response.Redirect("/swagger/index.html")))
+      .AllowAnonymous();
 
     return app;
   }
