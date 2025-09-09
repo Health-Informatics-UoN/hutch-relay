@@ -19,6 +19,8 @@ public class IndividualsController(
   IFilteringTermsService filteringTerms,
   IOptions<RelayBeaconOptions> options) : ControllerBase
 {
+  private readonly RelayBeaconOptions _options = options.Value;
+
   /// <summary>
   /// Return a Summary of Individuals matching the provided filter criteria.
   /// </summary>
@@ -34,7 +36,7 @@ public class IndividualsController(
     [FromQuery] int limit = 0,
     [FromQuery] string requestedSchema = "")
   {
-    var granularity = options.Value.SecurityAttributes.DefaultGranularity;
+    var granularity = _options.SecurityAttributes.DefaultGranularity;
 
     ReturnedSchema schema = new()
     {
@@ -45,7 +47,7 @@ public class IndividualsController(
     // prep response meta based on config and request
     EntryTypeMeta meta = new()
     {
-      BeaconId = options.Value.Info.Id,
+      BeaconId = _options.Info.Id,
       ReceivedRequestSummary = new()
       {
         Filters = filters,
@@ -95,6 +97,29 @@ public class IndividualsController(
     {
       Meta = meta,
       ResponseSummary = results
+    };
+  }
+
+  [HttpGet("filtering_terms")]
+  public async Task<FilteringTermsResponse> GetIndividualsFilteringTerms(int skip = 0, int limit = 10)
+  {
+    var terms = await filteringTerms.List(skip, limit);
+
+    return new()
+    {
+      Meta = new()
+      {
+        BeaconId = _options.Info.Id,
+        ReturnedSchemas = {
+          new() {
+            EntityType = "filteringTerm",
+            Schema = "https://raw.githubusercontent.com/ga4gh-beacon/beacon-framework-v2/main/definitions/FilteringTerm"
+          }
+        }
+      },
+      Response = new() {
+        FilteringTerms = terms
+      }
     };
   }
 }
