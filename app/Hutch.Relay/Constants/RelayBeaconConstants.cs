@@ -25,3 +25,8 @@ public static class RelayBeaconTaskDetails
   public const string Collection = "__RELAY_BEACON__";
   public const string Owner = "__RELAY_BEACON__";
 }
+
+public enum ResultsetResponses
+{
+  HIT, MISS, ALL, NONE
+}

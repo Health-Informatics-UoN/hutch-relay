@@ -35,11 +35,24 @@ public class IndividualsController(
   {
     var granularity = options.Value.SecurityAttributes.DefaultGranularity;
 
+    ReturnedSchema schema = new()
+    {
+      EntityType = "Individual",
+      Schema = $"ga4gh-beacon-individual-v{BeaconApiConstants.SpecVersion}"
+    };
+
     // prep response meta based on config and request
     EntryTypeMeta meta = new()
     {
       BeaconId = options.Value.Info.Id,
-      ReturnedGranularity = granularity.ToString()
+      ReceivedRequestSummary = new()
+      {
+        Filters = filters,
+        Granularity = granularity.ToString(),
+        Schemas = { schema },
+      },
+      ReturnedSchemas = { schema },
+      ReturnedGranularity = granularity.ToString(),
     };
 
     var matchedTerms = await filteringTerms.Find(filters);
