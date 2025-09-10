@@ -1,19 +1,26 @@
 using Hutch.Relay.Config;
+using Hutch.Relay.Config.Beacon;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Models.Beacon;
 using Hutch.Relay.Services.Contracts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement.Mvc;
 
 namespace Hutch.Relay.Controllers.Beacon;
 
+[ApiExplorerSettings(GroupName = ApiExplorerGroups.BeaconName)]
 [FeatureGate(Features.Beacon)]
 [ApiController]
 [Route($"{BeaconApiConstants.RoutePrefix}/filtering_terms")]
-public class FilteringTermsController(IFilteringTermsService filteringTerms) : ControllerBase
+public class FilteringTermsController(
+  IOptions<RelayBeaconOptions> options,
+  IFilteringTermsService filteringTerms) : ControllerBase
 {
+  private readonly RelayBeaconOptions _options = options.Value;
+
   [HttpGet]
-  public async Task<List<FilteringTerm>> List(int skip = 0, int limit = 10)
+  public async Task<FilteringTermsResponse> List(int skip = 0, int limit = 10)
   {
     // Check for custom header to queue update request
     var hasDownstreamUpdateHeader = Request.Headers.TryGetValue(
@@ -31,7 +38,23 @@ public class FilteringTermsController(IFilteringTermsService filteringTerms) : C
     // Request terms update if applicable
     if (hasDownstreamUpdateHeader || terms.Count == 0)
       await filteringTerms.RequestUpdatedTerms(mustForceDownstreamUpdate);
-    
-    return terms;
+
+    return new()
+    {
+      Meta = new()
+      {
+        BeaconId = _options.Info.Id,
+        ReturnedSchemas = {
+          new() {
+            EntityType = "filteringTerm",
+            Schema = "https://raw.githubusercontent.com/ga4gh-beacon/beacon-framework-v2/main/definitions/FilteringTerm"
+          }
+        }
+      },
+      Response = new() {
+        FilteringTerms = terms
+      }
+    };
+
   }
 }

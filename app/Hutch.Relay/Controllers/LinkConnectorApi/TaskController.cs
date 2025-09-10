@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Hutch.Rackit;
 using Hutch.Rackit.TaskApi.Models;
+using Hutch.Relay.Constants;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +11,7 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace Hutch.Relay.Controllers.LinkConnectorApi;
 
+[ApiExplorerSettings(GroupName = ApiExplorerGroups.TaskApiName)]
 [ApiController]
 [Route("/link_connector_api/[controller]")]
 [Authorize]
