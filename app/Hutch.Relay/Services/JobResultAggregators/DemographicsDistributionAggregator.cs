@@ -1,5 +1,5 @@
-using System.IO.Compression;
 using System.Text.Json;
+using CsvHelper;
 using Hutch.Rackit.TaskApi;
 using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Config;
@@ -58,9 +58,20 @@ public class DemographicsDistributionAggregator(IObfuscator obfuscator) : IQuery
         if (rawFileData.Split("\n").Length < 2) continue;
 
         // If we actually have data, go ahead and parse
-        var records = ResultFileHelpers.ParseFileData<DemographicsDistributionRecord>(rawFileData);
+        try
+        {
+          var records = ResultFileHelpers.ParseFileData<DemographicsDistributionRecord>(rawFileData);
 
-        accumulator.AccumulateData(records);
+          accumulator.AccumulateData(records);
+        }
+        catch (BadDataException e)
+        {
+          // CsvHelper didn't like something!
+          // We should skip this file as it's unparseable
+          // BUT we should
+          //   a) log the issue here in Relay
+          //   b) return something meaningful to the request that triggered aggregation? without being disclosive?
+        }
       }
     }
 

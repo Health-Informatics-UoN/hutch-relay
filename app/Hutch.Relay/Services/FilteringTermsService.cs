@@ -1,3 +1,4 @@
+using CsvHelper;
 using Hutch.Rackit.TaskApi;
 using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Config.Beacon;
@@ -33,7 +34,7 @@ public class FilteringTermsService(
   public async Task<List<CachedFilteringTerm>> Find(List<string> termIds)
   {
     if (termIds.Count == 0) return [];
-    
+
     var matchingTerms = await db.FilteringTerms.AsNoTracking()
       .Where(x => termIds.Contains(x.Term))
       .Select(x => new CachedFilteringTerm
@@ -123,44 +124,54 @@ public class FilteringTermsService(
       return;
     }
 
-    // Try and get Generic Code Distribution ResultFile
-    List<GenericDistributionRecord> distributionData = [];
-    foreach (var file in finalResult.Results.Files)
+    try
     {
-      // currently explicitly only process the first code distribution file
-      // TODO: is it possible for more than one to be present and should we combine them?!
-      if (distributionData.Count > 0) continue;
-
-      if (file.FileName == ResultFileName.CodeDistribution)
+      // Try and get Generic Code Distribution ResultFile
+      List<GenericDistributionRecord> distributionData = [];
+      foreach (var file in finalResult.Results.Files)
       {
-        var rawFileData = file.DecodeData();
+        // currently explicitly only process the first code distribution file
+        // TODO: is it possible for more than one to be present and should we combine them?!
+        if (distributionData.Count > 0) continue;
 
-        // Check we have more than just the header row; CsvHelper won't parse it if there's no actual data
-        // This could happen if the QueryResult.Count was a lie ;) or just if the file was populated weirdly
-        if (rawFileData.Split("\n").Length < 2) continue;
+        if (file.FileName == ResultFileName.CodeDistribution)
+        {
+          var rawFileData = file.DecodeData();
 
-        // If we actually have data, go ahead and parse
-        distributionData = ResultFileHelpers.ParseFileData<GenericDistributionRecord>(rawFileData);
+          // Check we have more than just the header row; CsvHelper won't parse it if there's no actual data
+          // This could happen if the QueryResult.Count was a lie ;) or just if the file was populated weirdly
+          if (rawFileData.Split("\n").Length < 2) continue;
+
+          // If we actually have data, go ahead and parse
+          distributionData = ResultFileHelpers.ParseFileData<GenericDistributionRecord>(rawFileData);
+        }
       }
-    }
 
-    if (distributionData is [])
+      if (distributionData is [])
+      {
+        logger.LogWarning(
+          "A FilteringTerms update was attempted from a downstream result that contains no Code Distribution Results. The update will not proceed.");
+        return;
+      }
+
+      var filteringTerms = Map(distributionData);
+
+      await using var transaction = await db.Database.BeginTransactionAsync();
+
+      await db.FilteringTerms.ExecuteDeleteAsync();
+
+      db.AddRange(filteringTerms);
+      await db.SaveChangesAsync();
+
+      await transaction.CommitAsync();
+    }
+    catch (BadDataException e)
     {
-      logger.LogWarning(
-        "A FilteringTerms update was attempted from a downstream result that contains no Code Distribution Results. The update will not proceed.");
-      return;
+      // CsvHelper didn't like something! This should be unlikely as data here should already have been through our aggregators.
+      // We must skip this file as it's unparseable, leaving the FilteringTerms cache untouched
+      // BUT we should log the issue here in Relay
+      logger.LogWarning(e, "Unparseable data found in Distribution results when attempting to update the FilteringTerms cache. The cache remains unchanged.");
     }
-
-    var filteringTerms = Map(distributionData);
-
-    await using var transaction = await db.Database.BeginTransactionAsync();
-
-    await db.FilteringTerms.ExecuteDeleteAsync();
-
-    db.AddRange(filteringTerms);
-    await db.SaveChangesAsync();
-
-    await transaction.CommitAsync();
   }
 
   internal static List<Data.Entities.FilteringTerm> Map(List<GenericDistributionRecord> records)

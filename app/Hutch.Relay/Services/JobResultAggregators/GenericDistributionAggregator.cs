@@ -1,7 +1,5 @@
-using System.Globalization;
 using System.Text.Json;
 using CsvHelper;
-using CsvHelper.Configuration;
 using Hutch.Rackit.TaskApi;
 using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Models;
@@ -40,10 +38,21 @@ public class GenericDistributionAggregator(IObfuscator obfuscator) : IQueryResul
         // This could happen if the QueryResult.Count was a lie ;) or just if the file was populated weirdly
         if (rawFileData.Split("\n").Length < 2) continue;
 
-        // If we actually have data, go ahead and parse
-        var records = ResultFileHelpers.ParseFileData<GenericDistributionRecord>(rawFileData);
+        try
+        {
+          // If we actually have data, go ahead and parse
+          var records = ResultFileHelpers.ParseFileData<GenericDistributionRecord>(rawFileData);
 
-        accumulator.AccumulateData(records);
+          accumulator.AccumulateData(records);
+        }
+        catch (BadDataException e)
+        {
+          // CsvHelper didn't like something!
+          // We should skip this file as it's unparseable
+          // BUT we should
+          //   a) log the issue here in Relay
+          //   b) return something meaningful to the request that triggered aggregation? without being disclosive?
+        }
       }
     }
 
