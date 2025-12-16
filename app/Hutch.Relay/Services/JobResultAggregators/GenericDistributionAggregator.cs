@@ -6,7 +6,7 @@ using Hutch.Relay.Models;
 
 namespace Hutch.Relay.Services.JobResultAggregators;
 
-public class GenericDistributionAggregator(IObfuscator obfuscator) : IQueryResultAggregator
+public class GenericDistributionAggregator(IObfuscator obfuscator, ILogger<GenericDistributionAggregator> logger) : IQueryResultAggregator
 {
   public QueryResult Process(string collectionId, List<RelaySubTaskModel> subTasks)
   {
@@ -49,9 +49,8 @@ public class GenericDistributionAggregator(IObfuscator obfuscator) : IQueryResul
         {
           // CsvHelper didn't like something!
           // We should skip this file as it's unparseable
-          // BUT we should
-          //   a) log the issue here in Relay
-          //   b) return something meaningful to the request that triggered aggregation? without being disclosive?
+          // BUT we should log the issue
+          logger.LogWarning(e, "Bad data in Distribution result; skipping this result.");
         }
       }
     }

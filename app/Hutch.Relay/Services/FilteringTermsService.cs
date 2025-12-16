@@ -169,7 +169,7 @@ public class FilteringTermsService(
     {
       // CsvHelper didn't like something! This should be unlikely as data here should already have been through our aggregators.
       // We must skip this file as it's unparseable, leaving the FilteringTerms cache untouched
-      // BUT we should log the issue here in Relay
+      // BUT we should log the issue
       logger.LogWarning(e, "Unparseable data found in Distribution results when attempting to update the FilteringTerms cache. The cache remains unchanged.");
     }
   }
