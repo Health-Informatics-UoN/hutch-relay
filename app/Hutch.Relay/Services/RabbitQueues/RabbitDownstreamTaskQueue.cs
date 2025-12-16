@@ -39,17 +39,6 @@ public class RabbitDownstreamTaskQueue(IRabbitConnectionManager rabbit)
     // Due to the usage (on HTTP requests) sharing channels for consumption seems not worth it
     await using var channel = await rabbit.ConnectChannel(subnodeId);
 
-    // TODO: REMOVE WHEN WORKING
-    // don't use the consumer model, since we aren't watching the queue continuously;
-    // instead we check it on demand from HTTP requests
-    // var consumer = new AsyncEventingBasicConsumer(channel);
-    // consumer.ReceivedAsync += (model, ea) => // WTF?
-    // {
-    //   var body = ea.Body.ToArray();
-    //
-    //   return Task.CompletedTask;
-    // };
-
     // Get a message if there is one
     var message = await channel.BasicGetAsync(subnodeId, true);
     if (message is null) return null;
