@@ -98,6 +98,8 @@ public static class ResultFileExtensions
   {
     // Convert the results object to a TSV string
     var config = CsvConfiguration.FromAttributes<T>();
+    config.Mode = CsvMode.NoEscape; // We are writing TSV, not CSV (RFC 4180), so quotes in values are allowed unescaped
+
     using var writer = new StringWriter();
     using var csv = new CsvWriter(writer, config);
 
@@ -175,6 +177,7 @@ public static class ResultFileHelpers
   {
     var config = CsvConfiguration.FromAttributes<T>();
     config.MissingFieldFound = null; // The model will initialise missing fields
+    config.Mode = CsvMode.NoEscape; // We are parsing TSV, not CSV (RFC 4180), so quotes in values are allowed
 
     using var reader = new StringReader(tsvData);
     using var tsv = new CsvReader(reader, config);
