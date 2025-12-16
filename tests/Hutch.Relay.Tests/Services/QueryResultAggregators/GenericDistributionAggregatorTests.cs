@@ -171,11 +171,9 @@ public class GenericDistributionAggregatorTests
 
     // If we have results, parse the result ourselves for assertion
     var decodedFileResult = actual.Files.Single().DecodeData();
-    var config = CsvConfiguration.FromAttributes<GenericDistributionRecord>();
-    config.MissingFieldFound = null;
     using var reader = new StringReader(decodedFileResult);
-    using var csv = new CsvReader(reader, config);
-    var rowsByCode = csv.GetRecords<GenericDistributionRecord>()
+    using var tsv = new CsvReader(reader, CsvConfig.GetDefault<GenericDistributionRecord>());
+    var rowsByCode = tsv.GetRecords<GenericDistributionRecord>()
       .ToDictionary(x => x.Code, x => (aggregate: x.Count, collection: x.Collection));
 
     // Check the row count matches what's expected and what's described
