@@ -10,7 +10,8 @@
       "extensions": [
         "EditorConfig.EditorConfig",
         "ms-azuretools.vscode-docker",
-        "esbenp.prettier-vscode",
+        "ms-dotnettools.csdevkit",
+        "biomejs.biome",
         "github.copilot-chat"
       ]
     }
