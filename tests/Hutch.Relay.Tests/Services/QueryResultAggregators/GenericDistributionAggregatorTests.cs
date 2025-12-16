@@ -7,6 +7,7 @@ using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.JobResultAggregators;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -110,7 +111,9 @@ public class GenericDistributionAggregatorTests
 
     var obfuscator = new Mock<IObfuscator>();
 
-    var aggregator = new GenericDistributionAggregator(obfuscator.Object);
+    var aggregator = new GenericDistributionAggregator(
+      obfuscator.Object,
+      Mock.Of<ILogger<GenericDistributionAggregator>>());
 
     var actual = aggregator.Process(collectionId, subTasks);
 
@@ -126,7 +129,9 @@ public class GenericDistributionAggregatorTests
 
     var obfuscator = new Mock<IObfuscator>();
 
-    var aggregator = new GenericDistributionAggregator(obfuscator.Object);
+    var aggregator = new GenericDistributionAggregator(
+      obfuscator.Object,
+      Mock.Of<ILogger<GenericDistributionAggregator>>());
     aggregator.Process(collectionId, subTasks);
 
     obfuscator.Verify(x => x.Obfuscate(It.IsAny<int>()), Times.Exactly(aggregatedRowCount));
@@ -144,7 +149,9 @@ public class GenericDistributionAggregatorTests
     obfuscator.Setup(x => x.Obfuscate(It.IsAny<int>()))
       .Returns((int value) => value);
 
-    var aggregator = new GenericDistributionAggregator(obfuscator.Object);
+    var aggregator = new GenericDistributionAggregator(
+      obfuscator.Object,
+      Mock.Of<ILogger<GenericDistributionAggregator>>());
 
     var actual = aggregator.Process(collectionId, subTasks);
 
