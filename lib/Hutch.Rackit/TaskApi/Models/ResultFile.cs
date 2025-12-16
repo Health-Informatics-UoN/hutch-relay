@@ -97,11 +97,11 @@ public static class ResultFileExtensions
   public static ResultFile WithData<T>(this ResultFile resultFile, List<T> results) where T : IResultFileRecord
   {
     // Convert the results object to a TSV string
-    var config = CsvConfiguration.FromAttributes<T>();
-    using var writer = new StringWriter();
-    using var csv = new CsvWriter(writer, config);
 
-    csv.WriteRecords(results);
+    using var writer = new StringWriter();
+    using var tsv = new CsvWriter(writer, CsvConfig.GetDefault<T>());
+
+    tsv.WriteRecords(results);
 
     // encode as normal
     return WithData(resultFile, writer.ToString().TrimEnd());
@@ -173,12 +173,9 @@ public static class ResultFileHelpers
   /// <returns></returns>
   public static List<T> ParseFileData<T>(string tsvData) where T : IResultFileRecord
   {
-    var config = CsvConfiguration.FromAttributes<T>();
-    config.MissingFieldFound = null; // The model will initialise missing fields
-
     using var reader = new StringReader(tsvData);
-    using var tsv = new CsvReader(reader, config);
+    using var tsv = new CsvReader(reader, CsvConfig.GetDefault<T>());
 
-    return tsv.GetRecords<T>().ToList();
+    return [.. tsv.GetRecords<T>()];
   }
 }

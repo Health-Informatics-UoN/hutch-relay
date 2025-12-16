@@ -1,5 +1,5 @@
-using System.IO.Compression;
 using System.Text.Json;
+using CsvHelper;
 using Hutch.Rackit.TaskApi;
 using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Config;
@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace Hutch.Relay.Services.JobResultAggregators;
 
-public class DemographicsDistributionAggregator(IObfuscator obfuscator) : IQueryResultAggregator
+public class DemographicsDistributionAggregator(IObfuscator obfuscator, ILogger<DemographicsDistributionAggregator> logger) : IQueryResultAggregator
 {
   public static DemographicsDistributionRecord GetBaseGenomicsRecord(string collectionId) => new()
   {
@@ -58,9 +58,19 @@ public class DemographicsDistributionAggregator(IObfuscator obfuscator) : IQuery
         if (rawFileData.Split("\n").Length < 2) continue;
 
         // If we actually have data, go ahead and parse
-        var records = ResultFileHelpers.ParseFileData<DemographicsDistributionRecord>(rawFileData);
+        try
+        {
+          var records = ResultFileHelpers.ParseFileData<DemographicsDistributionRecord>(rawFileData);
 
-        accumulator.AccumulateData(records);
+          accumulator.AccumulateData(records);
+        }
+        catch (BadDataException e)
+        {
+          // CsvHelper didn't like something!
+          // We should skip this file as it's unparseable
+          // BUT we should log the issue
+          logger.LogWarning(e, "Bad data in Distribution result; skipping this result.");
+        }
       }
     }
 

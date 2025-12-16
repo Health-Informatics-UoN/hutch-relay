@@ -6,6 +6,7 @@ using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.JobResultAggregators;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
@@ -481,7 +482,9 @@ public class DemographicsDistributionAggregatorTests
 
     var obfuscator = new Mock<IObfuscator>();
 
-    var aggregator = new DemographicsDistributionAggregator(obfuscator.Object);
+    var aggregator = new DemographicsDistributionAggregator(
+      obfuscator.Object,
+      Mock.Of<ILogger<DemographicsDistributionAggregator>>());
 
     var actual = aggregator.Process(collectionId, subTasks);
 
@@ -503,7 +506,9 @@ public class DemographicsDistributionAggregatorTests
 
     var obfuscator = new Mock<IObfuscator>();
 
-    var aggregator = new DemographicsDistributionAggregator(obfuscator.Object);
+    var aggregator = new DemographicsDistributionAggregator(
+      obfuscator.Object,
+      Mock.Of<ILogger<DemographicsDistributionAggregator>>());
     aggregator.Process(collectionId, subTasks);
 
     obfuscator.Verify(x => x.Obfuscate(It.IsAny<int>()), Times.Exactly(expectedTimes));
@@ -554,7 +559,9 @@ public class DemographicsDistributionAggregatorTests
     obfuscator.Setup(x => x.Obfuscate(It.IsAny<int>()))
       .Returns((int value) => value);
 
-    var aggregator = new DemographicsDistributionAggregator(obfuscator.Object);
+    var aggregator = new DemographicsDistributionAggregator(
+      obfuscator.Object,
+      Mock.Of<ILogger<DemographicsDistributionAggregator>>());
 
     var actual = aggregator.Process(collectionId, subTasks);
 

@@ -1,14 +1,12 @@
-using System.Globalization;
 using System.Text.Json;
 using CsvHelper;
-using CsvHelper.Configuration;
 using Hutch.Rackit.TaskApi;
 using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Models;
 
 namespace Hutch.Relay.Services.JobResultAggregators;
 
-public class GenericDistributionAggregator(IObfuscator obfuscator) : IQueryResultAggregator
+public class GenericDistributionAggregator(IObfuscator obfuscator, ILogger<GenericDistributionAggregator> logger) : IQueryResultAggregator
 {
   public QueryResult Process(string collectionId, List<RelaySubTaskModel> subTasks)
   {
@@ -40,10 +38,20 @@ public class GenericDistributionAggregator(IObfuscator obfuscator) : IQueryResul
         // This could happen if the QueryResult.Count was a lie ;) or just if the file was populated weirdly
         if (rawFileData.Split("\n").Length < 2) continue;
 
-        // If we actually have data, go ahead and parse
-        var records = ResultFileHelpers.ParseFileData<GenericDistributionRecord>(rawFileData);
+        try
+        {
+          // If we actually have data, go ahead and parse
+          var records = ResultFileHelpers.ParseFileData<GenericDistributionRecord>(rawFileData);
 
-        accumulator.AccumulateData(records);
+          accumulator.AccumulateData(records);
+        }
+        catch (BadDataException e)
+        {
+          // CsvHelper didn't like something!
+          // We should skip this file as it's unparseable
+          // BUT we should log the issue
+          logger.LogWarning(e, "Bad data in Distribution result; skipping this result.");
+        }
       }
     }
 
