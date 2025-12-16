@@ -11,7 +11,7 @@
         "EditorConfig.EditorConfig",
         "ms-azuretools.vscode-docker",
         "esbenp.prettier-vscode",
-        "ms-dotnettools.vscodeintellicode-csharp"
+        "github.copilot-chat"
       ]
     }
   },
