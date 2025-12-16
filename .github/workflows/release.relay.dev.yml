@@ -33,14 +33,13 @@ jobs:
         with:
           project: ${{ env.project }}/Hutch.Relay.csproj
 
-
   publish-binaries:
     needs: [init]
     runs-on: ubuntu-latest
 
     env:
       build-config: release
-      dotnet-version: 9.0.x
+      dotnet-version: 10.0.x
       publish-dir: publish
 
     strategy:
@@ -120,7 +119,7 @@ jobs:
   publish-containers:
     needs: [init]
     runs-on: ubuntu-latest
-    
+
     permissions:
       packages: write
 
