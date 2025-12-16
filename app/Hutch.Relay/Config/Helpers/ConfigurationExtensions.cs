@@ -81,7 +81,7 @@ public static class ConfigurationExtensions
   /// <returns></returns>
   public static bool IsEnabled<T>(this ConfigurationManager config)
     where T : class, IFeatureOptionsModel
-    => config.IsEnabled(typeof(T)); //config.GetSection<T>().Get<T>()?.Enable ?? false; // TODO: this should return default based on the T of the model! not false!
+    => config.IsEnabled(typeof(T)); // return default based on the T of the model
 
   /// <summary>
   /// Check if a <see cref="IFeatureOptionsModel"/> is Enabled. The Config Section name is implicitly derived from the type `T`.
