@@ -94,6 +94,23 @@ public class TaskController(
     }
   }
 
+  /// <summary>
+  /// <para>Task status endpoint.</para>
+  /// 
+  /// <para>Used by BC|INSIGHT for connection checks.</para>
+  /// </summary>
+  /// <param name="jobId">"Job ID" of a Task to check status for. Valid Relay Task IDs are UUID formatted, but invalid ids are accepted to confirm connection.</param>
+  /// <returns>An array. Always empty for non-valid Job IDs. Task API spec unclear about response for valid IDs.</returns>
+  [HttpPost("status/{jobId}")]
+  [SwaggerOperation("Check Task Status by Job ID, or test Task API Connection.")]
+  [SwaggerResponse(200)]
+  [SwaggerResponse(401)]
+  public async Task<List<object>> Status(string jobId)
+  {
+    // TODO: What do we put in it for VALID IDs? Swagger spec unclear.
+    return [];
+  }
+
   # region Dummy NextJob
 
   private static AvailabilityJob DummyAvailability(string collectionId) => new()
