@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Hutch.Rackit;
 using Hutch.Rackit.TaskApi.Models;
+using Hutch.Relay.Auth;
 using Hutch.Relay.Constants;
 using Hutch.Relay.Services;
 using Hutch.Relay.Services.Contracts;
@@ -29,6 +30,7 @@ public class TaskController(
   [SwaggerResponse(403)]
   [SwaggerResponse(404)]
   [SwaggerResponse(500)]
+  [Authorize(Policy = nameof(AuthPolicies.IsTaskApiCollectionOwner))]
   public async Task<IActionResult> Next(string collectionId)
   {
     // We can still support returning dummy jobs in a test mode
@@ -51,11 +53,11 @@ public class TaskController(
   [SwaggerResponse(403)]
   [SwaggerResponse(404)]
   [SwaggerResponse(409)]
+  [Authorize(Policy = nameof(AuthPolicies.IsTaskApiCollectionOwner))]
   public async Task<IActionResult> Result(Guid uuid, string collectionId, [FromBody] JobResult result)
   {
     try
     {
-
       var subtask = await relayTaskService.GetSubTask(uuid);
 
       // Check if the parent Task has already been submitted.
@@ -99,13 +101,13 @@ public class TaskController(
   /// 
   /// <para>Used by BC|INSIGHT for connection checks.</para>
   /// </summary>
-  /// <param name="jobId">"Job ID" of a Task to check status for. Valid Relay Task IDs are UUID formatted, but invalid ids are accepted to confirm connection.</param>
+  /// <param name="uuid">"Job ID" of a Task to check status for. Valid Relay Task IDs are UUID/GUID formatted, but invalid ids are accepted to confirm connection.</param>
   /// <returns>An array. Always empty for non-valid Job IDs. Task API spec unclear about response for valid IDs.</returns>
-  [HttpPost("status/{jobId}")]
+  [HttpPost("status/{uuid}")]
   [SwaggerOperation("Check Task Status by Job ID, or test Task API Connection.")]
   [SwaggerResponse(200)]
   [SwaggerResponse(401)]
-  public async Task<List<object>> Status(string jobId)
+  public async Task<List<object>> Status(string uuid)
   {
     // TODO: What do we put in it for VALID IDs? Swagger spec unclear.
     return [];

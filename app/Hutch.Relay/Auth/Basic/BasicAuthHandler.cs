@@ -87,7 +87,7 @@ internal class BasicAuthHandler : AuthenticationHandler<BasicAuthSchemeOptions>
     }
 
     // Create the Identity and Principal
-    var identity = new ClaimsIdentity([], Scheme.Name);
+    var identity = new ClaimsIdentity([new(ClaimTypes.Name, clientId)], Scheme.Name);
     return new ClaimsPrincipal(identity);
   }
 
@@ -96,34 +96,14 @@ internal class BasicAuthHandler : AuthenticationHandler<BasicAuthSchemeOptions>
     if (!Request.Headers.ContainsKey("Authorization"))
       return AuthenticateResult.Fail("Missing Authorization Header");
 
-    // Get collectionId from the route
-    if (!Request.RouteValues.TryGetValue("collectionId", out var routeCollectionId) || routeCollectionId == null)
-      return AuthenticateResult.Fail("Missing collectionId in route.");
-
     try
     {
-      var routeCollectionGuid = Guid.Parse(routeCollectionId.ToString() ?? string.Empty);
-
       var (clientId, clientSecret) = ParseBasicAuthHeader(Request.Headers.Authorization!);
 
       var claimsPrincipal = await Authenticate(clientId, clientSecret);
 
       if (claimsPrincipal is not null)
       {
-        // Check if the collection ID matches a SubNode for this user
-        var clientCollections = _db.SubNodes.AsNoTracking()
-          .Where(subNode =>
-            subNode.RelayUsers.Select(user => user.UserName)
-              .Contains(clientId))
-          .Select(x => x.Id)
-          .ToList();
-
-        if (!clientCollections.Contains(routeCollectionGuid))
-        {
-          Logger.LogWarning("collectionId \'{RouteCollectionId}\' is not valid for clientId \'{ClientId}\'.", routeCollectionId, clientId);
-          return AuthenticateResult.Fail("Collection ID is not valid for client credentials.");
-        }
-
         Logger.LogInformation("Credentials validated for Client: {ClientId}", clientId);
 
         return AuthenticateResult.Success(new AuthenticationTicket(

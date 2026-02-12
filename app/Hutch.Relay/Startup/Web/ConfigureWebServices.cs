@@ -1,6 +1,7 @@
 using Hutch.Rackit;
 using Hutch.Rackit.TaskApi;
 using Hutch.Rackit.TaskApi.Contracts;
+using Hutch.Relay.Auth;
 using Hutch.Relay.Auth.Basic;
 using Hutch.Relay.Config;
 using Hutch.Relay.Config.Beacon;
@@ -46,10 +47,19 @@ public static class ConfigureWebServices
 
     b.Services.AddIdentityCore<RelayUser>(DefaultIdentityOptions.Configure)
       .AddEntityFrameworkStores<ApplicationDbContext>();
+
     b.Services.AddControllers().AddJsonOptions(DefaultJsonOptions.Configure);
     b.Services.AddEndpointsApiExplorer();
+
     b.Services.AddAuthentication("Basic")
       .AddScheme<BasicAuthSchemeOptions, BasicAuthHandler>("Basic", opts => { opts.Realm = "relay"; });
+
+
+    b.Services.AddAuthorizationBuilder()
+      .AddPolicy(nameof(AuthPolicies.IsAuthenticated), AuthPolicies.IsAuthenticated)
+      .AddPolicy(nameof(AuthPolicies.IsTaskApiCollectionOwner), AuthPolicies.IsTaskApiCollectionOwner)
+      .SetDefaultPolicy(AuthPolicies.IsAuthenticated);
+
     b.Services.AddSwaggerGen(o =>
     {
       o.UseOneOfForPolymorphism();
@@ -64,11 +74,11 @@ public static class ConfigureWebServices
       });
 
       // Upstream GA4GH Beacon API Docs definition
-       o.SwaggerDoc(ApiExplorerGroups.BeaconName, new()
-       {
-         Title = ApiExplorerGroups.BeaconTitle,
-         Version = BeaconApiConstants.ApiVersion,
-         Description = "A partial GA4GH Beacon v2 implementation supporting summary responses to individuals queries."
+      o.SwaggerDoc(ApiExplorerGroups.BeaconName, new()
+      {
+        Title = ApiExplorerGroups.BeaconTitle,
+        Version = BeaconApiConstants.ApiVersion,
+        Description = "A partial GA4GH Beacon v2 implementation supporting summary responses to individuals queries."
       });
     });
 
