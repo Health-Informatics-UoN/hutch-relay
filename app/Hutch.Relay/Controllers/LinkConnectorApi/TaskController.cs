@@ -103,7 +103,7 @@ public class TaskController(
   /// </summary>
   /// <param name="uuid">"Job ID" of a Task to check status for. Valid Relay Task IDs are UUID/GUID formatted, but invalid ids are accepted to confirm connection.</param>
   /// <returns>An array. Always empty for non-valid Job IDs. Task API spec unclear about response for valid IDs.</returns>
-  [HttpPost("status/{uuid}")]
+  [HttpGet("status/{uuid}")]
   [SwaggerOperation("Check Task Status by Job ID, or test Task API Connection.")]
   [SwaggerResponse(200)]
   [SwaggerResponse(401)]
