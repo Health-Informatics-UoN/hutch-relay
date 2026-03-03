@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/lib/">
+    <Project Path="lib/Hutch.Rackit/Hutch.Rackit.csproj" />
+  </Folder>
+  <Folder Name="/samples/" />
+  <Folder Name="/samples/RACKit/">
+    <Project Path="samples/RACKit/BasicTaskApi/BasicTaskApi.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Hutch.Rackit.Tests/Hutch.Rackit.Tests.csproj" />
+    <Project Path="tests/Hutch.Relay.Tests/Hutch.Relay.Tests.csproj" />
+  </Folder>
+  <Project Path="app/Hutch.Relay/Hutch.Relay.csproj" />
+</Solution>
