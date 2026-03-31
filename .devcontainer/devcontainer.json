@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/dotnet-postgres
 {
-  "name": "C# (.NET) and PostgreSQL",
+  "name": "Hutch Relay",
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
@@ -11,25 +11,16 @@
         "EditorConfig.EditorConfig",
         "ms-azuretools.vscode-docker",
         "ms-dotnettools.csdevkit",
-        "biomejs.biome",
-        "github.copilot-chat"
       ]
     }
   },
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},
-  // Configure tool-specific properties.
-  // "customizations": {},
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [
     5432, // postgres
     15672 // Rabbit GUI
   ],
-  // "portsAttributes": {
-  //		"5001": {
-  //			"protocol": "https"
-  //		}
-  // }
 
   // Use 'postCreateCommand' to run commands after the container is created.
   // "postCreateCommand": "./.devcontainer/postCreateCommand.sh",
