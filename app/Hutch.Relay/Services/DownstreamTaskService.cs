@@ -33,6 +33,15 @@ public class DownstreamTaskService(
       return;
     }
 
+    // Skip if this task has already been enqueued (e.g. poller restarted mid-processing or short poll interval)
+    try
+    {
+      await relayTasks.Get(task.Uuid);
+      logger.LogInformation("Task {Id} already exists, skipping.", task.Uuid);
+      return;
+    }
+    catch (KeyNotFoundException) { }
+
     var relayTask = await relayTasks.Create(new()
     {
       Id = task.Uuid,
