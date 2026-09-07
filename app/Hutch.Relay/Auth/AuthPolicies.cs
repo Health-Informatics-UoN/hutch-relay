@@ -31,8 +31,21 @@ public class AuthPolicies
 
           // Get request `collectionId` from route
           var routeCollectionId = (string?)httpContext?.Request.RouteValues.GetValueOrDefault("collectionId");
-          if (!Guid.TryParse(routeCollectionId, out var routeCollectionGuid)) return false;
+          if (routeCollectionId is null) return false;
 
+          var separatorIndex = routeCollectionId.IndexOf('.');
+
+          var collectionId = separatorIndex >= 0
+            ? routeCollectionId[..separatorIndex]
+            : routeCollectionId;
+
+          if (!Guid.TryParse(collectionId, out var routeCollectionGuid))
+          {
+            logger?.LogWarning(
+              "Could not parse collectionId: {CollectionId}",
+              collectionId);
+            return false;
+          }
           // Check if the collection ID matches a SubNode for this user
           var username = context.User.Identity?.Name;
           if (username is null) return false; // should be impossible since we require an authenticated user, but if it does happen, they're unauthorised
@@ -46,7 +59,7 @@ public class AuthPolicies
 
           if (!clientCollections.Contains(routeCollectionGuid))
           {
-            logger?.LogWarning("collectionId \'{RouteCollectionId}\' is not valid for clientId \'{ClientId}\'.", routeCollectionId, username);
+            logger?.LogWarning("Collection {CollectionId} is not valid for clientId {Username}", collectionId, username);
             return false;
           }
 
@@ -54,4 +67,3 @@ public class AuthPolicies
         })
         .Build();
 }
-
