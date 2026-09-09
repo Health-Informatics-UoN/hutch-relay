@@ -23,11 +23,11 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
     <PackageReference Include="Spectre.Console" Version="0.54.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.4" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.2.3" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta6.25358.103" />
-    <PackageReference Include="UoN.AspNetCore.VersionMiddleware" Version="2.0.0" />
-    <PackageReference Include="UoN.VersionInformation.DependencyInjection" Version="2.0.0" />
+    <PackageReference Include="UoN.AspNetCore.VersionMiddleware" Version="3.0.0" />
+    <PackageReference Include="UoN.VersionInformation.DependencyInjection" Version="3.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\lib\Hutch.Rackit\Hutch.Rackit.csproj" />

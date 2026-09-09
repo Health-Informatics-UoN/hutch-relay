@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Hutch.Rackit.TaskApi.Models;
 using Hutch.Relay.Config;
+using Hutch.Relay.Helpers;
 using Hutch.Relay.Services.Contracts;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
@@ -12,18 +13,21 @@ namespace Hutch.Relay.Services.RabbitQueues;
 public class RabbitDownstreamTaskQueue(IRabbitConnectionManager rabbit)
   : IDownstreamTaskQueue
 {
-  public async Task Publish<T>(string subnodeId, T message) where T : TaskApiBaseResponse
+  public async Task Publish<T>(string subnodeId, string taskType, T message) where T : TaskApiBaseResponse
   {
+    var queueType = TaskTypeHelper.GetQueueType(taskType);
+    var queueName = $"{subnodeId}.{queueType}";
+
     // TODO: Consider how we could optionally use a longer lived channel for publishing?
     // This could work due to how we only publish from the UpstreamTaskPoller thread and scope?
-    await using var channel = await rabbit.ConnectChannel(subnodeId);
+    await using var channel = await rabbit.ConnectChannel(queueName);
 
     var body = Encoding.UTF8.GetBytes(
       JsonSerializer.Serialize(message));
 
     await channel.BasicPublishAsync(
       exchange: string.Empty,
-      routingKey: subnodeId,
+      routingKey: queueName,
       body: body,
       mandatory: false,
       basicProperties: new BasicProperties
