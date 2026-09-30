@@ -99,6 +99,7 @@ public class ResultsServiceTests
 
     var expected = new JobResult()
     {
+      Status = "ok",
       Uuid = relayTask.Id,
       CollectionId = relayTask.Collection,
     };
