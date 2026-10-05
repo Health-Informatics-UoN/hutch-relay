@@ -10,4 +10,5 @@ public static class Features
   //   this is defined by using these constants as the OptionsModel section names
   public const string UpstreamTaskApi = "UpstreamTaskApi";
   public const string Beacon = "Beacon";
+  public const string TypedQueues = "TypedQueues";
 }
