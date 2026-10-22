@@ -15,10 +15,11 @@ public interface IDownstreamTaskQueue
   /// Send a message with the provided RelayTask Body to the queue
   /// </summary>
   /// <param name="subnodeId">The ID for the SubNode this RelayTask is intended for</param>
+  /// <param name="taskType">The Task Type</param>
   /// <param name="taskBody">The body of the task; may be any valid Task type</param>
   /// <typeparam name="T">The Task type for the provided body</typeparam>
   /// <returns></returns>
-  public Task Publish<T>(string subnodeId, T taskBody) where T : TaskApiBaseResponse;
+  public Task Publish<T>(string subnodeId, string taskType, T taskBody) where T : TaskApiBaseResponse;
 
   /// <summary>
   /// Checks a given SubNode's queue and returns a task if there is one.
