@@ -8,6 +8,11 @@ on:
   push:
     branches: [main]
     paths: [app/Hutch.Relay/**]
+  pull_request:
+    branches: [main]
+    paths:
+      - app/Hutch.Relay/**
+      - .github/workflows/release.relay.dev.yml
 
 env:
   project: ./app/Hutch.Relay
@@ -34,6 +39,7 @@ jobs:
           project: ${{ env.project }}/Hutch.Relay.csproj
 
   publish-binaries:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     needs: [init]
     runs-on: ubuntu-latest
 
@@ -117,6 +123,9 @@ jobs:
 
   # Publish Edge Container Image to GHCR
   publish-containers:
+    if: >-
+      ${{ github.event_name == 'push' ||
+          github.event.pull_request.head.repo.full_name == github.repository }}
     needs: [init]
     runs-on: ubuntu-latest
 
@@ -156,12 +165,14 @@ jobs:
           # - RFC3339 is not suitable for docker tags, so we squash the date
           # - We tag both the short (7-char prefixed) and full sha commit hashes; both are useful
           # - `edge` represents latest main branch commit (potentially unstable)
+          # - `pr-<number>` represents the latest build for a pull request, for PR testing
           # TODO: Add workflow run so we can backtrace to it to get other artifacts e.g. published binaries
           tags: |
             type=sha
             ${{ github.sha }}
-            type=raw,value={{date 'YYYYMMDDHHmmss[Z]'}}
-            edge
+            type=raw,value={{date 'YYYYMMDDHHmmss[Z]'}},enable=${{ github.event_name == 'push' }}
+            type=raw,value=edge,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+            type=ref,event=pr
           # Label notes:
           # - Static labels are applied in the Dockerfile
           # - Date format in `org.opencontainers.image.created` must be RFC3339
