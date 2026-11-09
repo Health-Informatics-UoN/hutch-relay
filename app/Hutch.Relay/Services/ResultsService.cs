@@ -8,8 +8,8 @@ using Hutch.Relay.Constants;
 using Hutch.Relay.Models;
 using Hutch.Relay.Services.Contracts;
 using Hutch.Relay.Services.JobResultAggregators;
-using Hutch.Relay.Services.RabbitQueues;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 
 namespace Hutch.Relay.Services;
 
@@ -156,9 +156,17 @@ public class ResultsService(
     };
 
     // Set the correct upstream values in the JobResult, and set the aggregate, obfuscated QueryResult data.
+    // Set the JobResult status to "ok" if at least one subtask status is "ok" otherwise set to "error"
+    var results = subTasks.Where(subTask => subTask.Result is not null).ToList();
+  
+    var allSubTasksErrored = results.Count > 0 &&
+      results.All(subTask =>
+        string.Equals(JsonSerializer.Deserialize<JobResult>(subTask.Result!)?.Status, "error"));
+  
     return new()
     {
       Uuid = relayTask.Id,
+      Status = allSubTasksErrored ? "error" : "ok",
       CollectionId = relayTask.Collection,
       Results = aggregator.Process(relayTask.Collection, subTasks)
     };
