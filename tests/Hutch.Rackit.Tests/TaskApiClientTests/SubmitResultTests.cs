@@ -122,6 +122,27 @@ public class SubmitResultTests
   }
 
   [Fact]
+  public async Task DoesNotAppendRoutePrefix_WhenDisabled()
+  {
+    var options = new ApiClientOptions
+    {
+      BaseUrl = "http://example.com",
+      CollectionId = "collection-001",
+      Username = "api-user",
+      Password = "abc123",
+      AppendRoutePrefix = false
+    };
+    var http = new MockHttpMessageHandler();
+
+    http.When(Url.Combine(options.BaseUrl, "task/result", _jobId, options.CollectionId))
+      .Respond(HttpStatusCode.OK, new StringContent("Job saved"));
+
+    var client = new TaskApiClient(http.ToHttpClient(), Options.Create(options), _logger);
+
+    await client.SubmitResultAsync(_jobId, new());
+  }
+
+  [Fact]
   public async Task UsesOverrideOptions()
   {
     var http = new MockHttpMessageHandler();

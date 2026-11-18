@@ -31,4 +31,10 @@ public class ApiClientOptions
   /// Time in milliseconds that endpoint polling methods will wait between requests
   /// </summary>
   public int PollingFrequency { get; set; } = 5000;
+  
+  /// <summary>
+  /// Determines whether the API route prefix is automatically appended to the configured BaseUrl.
+  /// Enabled by default.
+  /// </summary>
+  public bool AppendRoutePrefix { get; set; } = true;
 }
