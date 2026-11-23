@@ -59,7 +59,7 @@ public class DownstreamTaskServiceTests
     var queues = new Mock<IDownstreamTaskQueue>();
     var queue = new List<AvailabilityJob>();
     queues
-      .Setup(x => x.Publish(relaySubTask.Owner.Id.ToString(), availabilityTask))
+      .Setup(x => x.Publish(relaySubTask.Owner.Id.ToString(),TaskTypes.TaskApi_Availability, availabilityTask))
       .Returns(() =>
       {
         queue.Add(availabilityTask);
@@ -104,6 +104,6 @@ public class DownstreamTaskServiceTests
     // Assert
     tasks.Verify(x => x.Create(It.IsAny<RelayTaskModel>()), Times.Never);
     tasks.Verify(x => x.Create(It.IsAny<RelayTaskModel>()), Times.Never);
-    queues.Verify(x => x.Publish(It.IsAny<string>(), It.IsAny<AvailabilityJob>()), Times.Never);
+    queues.Verify(x => x.Publish(It.IsAny<string>(), TaskTypes.TaskApi_Availability,It.IsAny<AvailabilityJob>()), Times.Never);
   }
 }

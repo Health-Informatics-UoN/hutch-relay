@@ -32,6 +32,7 @@ public class DownstreamTaskService(
       logger.LogWarning("No Subnodes are configured; not enqueueing Task.");
       return;
     }
+    var taskType = IRelayTaskService.GetTaskApiType(task);
 
     // Skip if this task has already been enqueued (e.g. poller restarted mid-processing or short poll interval)
     try
@@ -45,7 +46,7 @@ public class DownstreamTaskService(
     var relayTask = await relayTasks.Create(new()
     {
       Id = task.Uuid,
-      Type = IRelayTaskService.GetTaskApiType(task),
+      Type = taskType,
       Collection = task.Collection
     });
 
@@ -60,7 +61,7 @@ public class DownstreamTaskService(
       task.Owner = subnode.Owner;
 
       // Queue the task for the subnode
-      await downstreamTaskQueue.Publish(subnode.Id.ToString(), task);
+      await downstreamTaskQueue.Publish(subnode.Id.ToString(), taskType, task);
     }
   }
 }

@@ -32,8 +32,10 @@ public class TaskApiClient(
   /// adding it if it does not
   /// </summary>
   /// <returns></returns>
-  internal static string GetBaseUrlWithRoutePrefix(string baseUrl)
+  internal string GetBaseUrlWithRoutePrefix(string baseUrl)
   {
+    if (!Options.AppendRoutePrefix)
+      return baseUrl;
     var parts = baseUrl.Split('/').ToList();
     var lastPart = parts[^1];
     var expectedPrefixPart = lastPart == string.Empty

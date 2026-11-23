@@ -92,6 +92,29 @@ public class FetchQueryTests
     Assert.Null(result);
   }
 
+  [Fact]
+  public async Task DoesNotAppendRoutePrefix_WhenDisabled()
+  {
+    var options = new ApiClientOptions
+    {
+      BaseUrl = "http://example.com",
+      CollectionId = "collection-001",
+      Username = "api-user",
+      Password = "abc123",
+      AppendRoutePrefix = false
+    };
+    var http = new MockHttpMessageHandler();
+
+    http.When(Url.Combine(options.BaseUrl, "task/nextjob", options.CollectionId + ".a"))
+      .Respond(HttpStatusCode.NoContent);
+
+    var client = new TaskApiClient(http.ToHttpClient(), Options.Create(options), _logger);
+
+    var result = await client.FetchNextJobAsync<AvailabilityJob>();
+
+    Assert.Null(result);
+  }
+
   [Theory]
   [InlineData(".a")] // Availability Jobs
   [InlineData(".b")] // Collection Analysis Jobs

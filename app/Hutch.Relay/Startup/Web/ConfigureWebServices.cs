@@ -29,7 +29,8 @@ public static class ConfigureWebServices
     // Feature Management
     b.Configuration.DeclareOptionsModelFeatures([
       typeof(TaskApiPollingOptions),
-      typeof(RelayBeaconOptions)
+      typeof(RelayBeaconOptions),
+      typeof(TypedQueuesOptions)
     ]);
     b.Services.AddFeatureManagement();
 
