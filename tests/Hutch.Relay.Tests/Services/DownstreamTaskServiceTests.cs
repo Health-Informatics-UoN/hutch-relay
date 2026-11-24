@@ -36,6 +36,9 @@ public class DownstreamTaskServiceTests
     var subnodes = new List<SubNodeModel>([relaySubTask.Owner]);
 
     var tasks = new Mock<IRelayTaskService>();
+    tasks.Setup(x => x.Get(It.IsAny<string>()))
+      .ThrowsAsync(new KeyNotFoundException());
+
     var taskDb = new List<RelayTaskModel>();
     tasks.Setup(x =>
         x.Create(It.IsAny<RelayTaskModel>()))
