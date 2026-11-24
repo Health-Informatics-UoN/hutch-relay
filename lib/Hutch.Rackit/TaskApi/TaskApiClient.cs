@@ -364,11 +364,17 @@ public class TaskApiClient(
 
     var body = await response.Content.ReadAsStringAsync();
 
-    if (body != "Job saved" || !response.IsSuccessStatusCode)
+    if ((!body.Contains("Result received successfully.", StringComparison.OrdinalIgnoreCase)
+         && !body.Contains("Job saved", StringComparison.OrdinalIgnoreCase))
+        || !response.IsSuccessStatusCode)
     {
       const string message = "Unsuccessful Response from Submit Results Endpoint";
+
       logger.LogError(message);
-      logger.LogDebug("Response Status {Status}, and Body: {Body}", response.StatusCode, body);
+      logger.LogDebug(
+        "Response Status {Status}, and Body: {Body}",
+        response.StatusCode,
+        body);
 
       throw new RackitApiClientException(message, response);
     }
