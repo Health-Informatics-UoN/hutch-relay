@@ -364,7 +364,7 @@ public class TaskApiClient(
 
     var body = await response.Content.ReadAsStringAsync();
 
-    if ((!body.Contains("Result received successfully.", StringComparison.OrdinalIgnoreCase)
+    if ((!body.Contains("Result received successfully", StringComparison.OrdinalIgnoreCase)
          && !body.Contains("Job saved", StringComparison.OrdinalIgnoreCase))
         || !response.IsSuccessStatusCode)
     {
