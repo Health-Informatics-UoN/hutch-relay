@@ -364,7 +364,9 @@ public class TaskApiClient(
 
     var body = await response.Content.ReadAsStringAsync();
 
-    if (body != "Job saved" || !response.IsSuccessStatusCode)
+    if ((!body.Contains("Result received successfully", StringComparison.OrdinalIgnoreCase)
+         && !body.Contains("Job saved", StringComparison.OrdinalIgnoreCase))
+        || !response.IsSuccessStatusCode)
     {
       const string message = "Unsuccessful Response from Submit Results Endpoint";
       logger.LogError(message);
